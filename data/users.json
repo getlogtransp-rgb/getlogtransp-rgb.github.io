@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "iter": 310000,
+  "users": [
+    {
+      "login": "rafael.miyahara",
+      "name": "Rafael Miyahara",
+      "role": "admin",
+      "active": true,
+      "salt": "RnGcUk2cCspD+qcg5h2hOQ==",
+      "iv": "xVcPJTVzcH/RXI7z",
+      "key": "8fw16Qn3l7slaYMWx9NebnXDIRT3cd+wgKIgr9AY5ta1iI7FuO9HCC2LfXc/MK1w",
+      "created": "2026-10-04T23:55:54.908Z"
+    }
+  ]
+}
