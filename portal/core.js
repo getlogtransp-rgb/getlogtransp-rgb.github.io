@@ -95,7 +95,8 @@ function agenda(ult,agora=new Date()){
   while(domingo(p.dia))p={dia:somaDia(p.dia,1),hm:HORARIOS[0]};
   const ms=instante(p.dia,p.hm).getTime(),t=agora.getTime();
   const estado=t<ms?"prevista":t<ms+20*60000?"processando":"atrasada";
-  return {ultima:u&&{...u,label:rotulo(u.dia,u.hm,agora)},proxima:{...p,ms,label:rotulo(p.dia,p.hm,agora)},estado};
+  // Última atualização mostra o horário real em que o arquivo foi gravado no Drive (não o horário da agenda).
+  return {ultima:u&&{...u,label:rotulo(spDia(ult),spHM(ult),agora)},proxima:{...p,ms,label:rotulo(p.dia,p.hm,agora)},estado};
 }
 const ESTADO_TXT={prevista:"",processando:"processando",atrasada:"aguardando"};
 
