@@ -30,20 +30,6 @@
         "ct": "l4vejHwJPcXH8eSwA4bJVhDaETmvkUU2WU7ZE0kBX+ZGvB1chlwgPtw8T0/fyW7r2J/NIMlk+IP/+4ynzoeUVQJGOWtidSeHkkf/jHV2ar49jFUQCejBd9uU9TlvNYnm+IHKgCEG9X/sRyMpaRshyIqvDToE4YU9KJPjb9mIEsIu"
       },
       "created": "2026-10-05T16:24:11.888Z"
-    },
-    {
-      "login": "rmiyahara97",
-      "role": "ajudante",
-      "active": true,
-      "salt": "n9ky4v8np7+b8zFd95EyYw==",
-      "iv": "ngX8YSYQC/oWtFvA",
-      "key": "zFXSu23buzzXUInZrR97X5v5Em6H7rDEaoVbDj8cnQlpcrGzPEc621ZjxRE/0Tbq",
-      "pwEm": "2026-10-05T16:52:59.897Z",
-      "p": {
-        "iv": "Lj7ZJrnvjHGD4W5J",
-        "ct": "RhvDPJcxLNIwVv0DY7xIqeUJSBe1k52vnOjGcFnislu2spgBFHbgUPgWFEzPY3ITwN/wIpnpEQ3JCRQkf1mOSqMj74wA4DpYtISokywR9LY5gggRVoYIB0ek/AAaEGN7YYHl2IInfungSZZOQzGk2gu6GYNr/roYhJqRUWEgET0MOroLumo="
-      },
-      "created": "2026-10-05T16:52:59.897Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
