@@ -118,7 +118,7 @@ function marcar_(d, eu) {
   const dup = existe_(v, eu.login, d.dia, d.tipo);
   if (dup > 0) return { ok: true, repetido: true, id: v[dup][11] };
   const foto = salvaFoto_(d.foto, `${d.dia} ${eu.login} ${d.tipo}`);
-  grava_({ ...d, login: eu.login, role: eu.role, foto, origem: 'App' });
+  grava_(Object.assign({}, d, { login: eu.login, role: eu.role, foto: foto, origem: 'App' }));
   return { ok: true };
 }
 function listar_(d, eu) {
@@ -159,7 +159,7 @@ function adm_(d, eu) {
     sh.getRange(i + 1, 2).setValue(d.hora + ':00');
     sh.getRange(i + 1, 13).setValue("'" + ts);
     sh.getRange(i + 1, 15).setValue('Corrigida pelo administrador');
-    audita_(eu, 'Editou marcação', d.id, r[3], antes, { ...antes, hora: d.hora }, d.motivo);
+    audita_(eu, 'Editou marcação', d.id, r[3], antes, Object.assign({}, antes, { hora: d.hora }), d.motivo);
     return { ok: true };
   }
   if (d.op === 'excluir') {
