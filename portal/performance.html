@@ -336,9 +336,10 @@ tr[data-setf]{cursor:pointer}
 </main>
 <div class="toast" id="toast"></div>
 
-<script src="/portal/perf-guard.js?v=5"></script>
+<script src="/portal/perf-guard.js?v=6"></script>
+<script src="/portal/drive-api.js?v=6"></script>
 <script>
-const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:30,CHECAR_A_CADA_SEG:120,META:98,ALERTA:80,EMPRESA_PROPRIA:"GET"};
+const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:98,ALERTA:80,EMPRESA_PROPRIA:"GET"};
 const COLS={DATA:"DATA",SID:"SELLER ID",SELLER:"SELLER",CLI:"CLIENTE",MA:"MOTORISTA ATRIBUÍDO",MO:"MOTORISTA OFICIAL",WB:"WAYBILL REFERÊNCIA",END:"ENDEREÇO",BAI:"BAIRRO",CID:"CIDADE",CEP:"CEP",REG:"REGIÃO",PRI:"TIPO DE PRIORIDADE",ST:"STATUS DO SELLER",HORA:"HORA",CDP:"COLETADO DO PREVISTO",NC:"NÃO COLETADO",ADI:"COLETA ADIANTADA",TOT:"COLETADO TOTAL",NOR:"COLETADO DS FM NOR",NDES:"COLETADO NÃO DESCARREGADO",JUS:"JUSTIFICADO",NJ:"NÃO JUSTIFICADO",JTXT:"JUSTIFICATIVA"};
 const NAO_ATRIB="NÃO ATRIBUÍDO NA GERAL";
 const FILTROS=[["sel","Seller","seller"],["cli","Cliente","cli"],["reg","Região","reg"],["end","Endereço","end"],["bai","Bairro","bai"],["cid","Cidade","cid"],["ma","Motorista","ma"],["emp","Quem coletou","emp"],["des","Descarregado","des"],["sit","Situação","sit"],["pri","Prioridade","pri"]];
@@ -413,7 +414,7 @@ function ingest(dk,json,lastMod){
 }
 function candidateDates(){const out=[];const d=new Date();d.setHours(12,0,0,0);for(let i=0;i<CONFIG.DIAS_HISTORICO;i++){const w=d.getDay();if(w!==0&&(CONFIG.INCLUIR_SABADO||w!==6))out.push(new Date(d));d.setDate(d.getDate()-1)}return out}
 const urlFor=d=>encodeURI(CONFIG.PASTA+CONFIG.PREFIXO+fmtD(d)+".json");
-async function fetchDay(d,bust){const r=await fetch(urlFor(d)+(bust?`?v=${Date.now()}`:""),{cache:bust?"no-store":"default"});if(!r.ok)return {miss:true};const txt=await window.GL_OPEN(await r.text());const lm=r.headers.get("Last-Modified");return {txt,lm:lm?new Date(lm):null}}
+async function fetchDay(d,bust){const x=await window.GL_API.dia(fmtD(d),!!window.GL_FORCE);if(!x)return {miss:true};return {txt:window.GL_FILTRA(x.txt),lm:x.lm}}
 async function embeddedPreview(){return window.GL_FINAL?window.GL_FINAL():null}
 async function useEmbeddedPreview(){
   try{const p=await embeddedPreview();if(!p)return false;S.src="previa";for(const [k,v] of Object.entries(p))ingest(k,v,null);afterLoad();return true}catch(e){console.warn("Falha ao carregar prévia embutida",e);return false}
@@ -428,12 +429,13 @@ async function loadAll(){
   if(!found)return showEmpty();
   afterLoad();setInterval(checkUpdates,CONFIG.CHECAR_A_CADA_SEG*1000);
 }
-async function checkUpdates(){
-  if(S.src!=="http"||document.hidden)return;
+async function checkUpdates(force){
+  if(S.src!=="http")return;if(!force&&(document.hidden||!window.GL_API.naJanela("performance")))return;window.GL_FORCE=!!force;
   const t=new Date();t.setHours(12,0,0,0);const tries=[t];const l=S.dates[0];if(l&&l!==keyD(t))tries.push(k2d(l));
   let changed=false;
   for(const d of tries){try{const x=await fetchDay(d,true);if(x.miss)continue;const k=keyD(d);const sig=x.txt.length+"|"+(x.lm?x.lm.getTime():"");if(S.meta.get(k)?.sig===sig)continue;ingest(k,JSON.parse(x.txt),x.lm).forEach(kk=>S.meta.get(kk).sig=sig);changed=true}catch(e){}}
   S.lastCheck=new Date();
+  window.GL_FORCE=false;
   if(changed){const wasLatest=S.to===S.dates[0];const prev=S.dates[0];afterLoad(true);if(wasLatest&&S.from===S.to){S.from=S.to=S.dates[0]}else if(wasLatest)S.to=S.dates[0];render();toast("Dados atualizados")}else renderHeader();
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdates()});

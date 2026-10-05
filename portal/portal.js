@@ -58,9 +58,10 @@ $('#scrim').onclick=()=>{$('.side').classList.remove('open');$('#scrim').classLi
 const h=location.hash.slice(1);show(can(h)?h:ACC[ME.role][0]);
 }
 addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(ME&&can(h)&&h!==CUR)show(h)});
-let CUR='';function show(v){if(!can(v))return;CUR=v;if(location.hash.slice(1)!==v)location.hash=v;document.title=(SHORT[v]||'Portal')+' | GETLOG';$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);if(['dash','coletados','forecast'].includes(v)&&!LOADING){M().innerHTML='<p class="hint">Carregando dados…</p>';loadReal().then(()=>VIEWS[v]())}else if(LOADING&&['dash','coletados','forecast'].includes(v))LOADING.then(()=>VIEWS[v]());else VIEWS[v]()}
+let CUR='';function show(v){if(!can(v))return;CUR=v;if(location.hash.slice(1)!==v)location.hash=v;document.title=(SHORT[v]||'Portal')+' | GETLOG';$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);if(v==='forecast'){if(!LOADF)M().innerHTML='<p class="hint">Carregando dados…</p>';loadF(false).then(()=>{if(CUR===v)VIEWS[v]()});return}
+if(['dash','coletados'].includes(v)&&!LOADING){M().innerHTML='<p class="hint">Carregando dados…</p>';loadReal().then(()=>VIEWS[v]())}else if(LOADING&&['dash','coletados'].includes(v))LOADING.then(()=>VIEWS[v]());else VIEWS[v]()}
 const M=()=>$('#main');
-const top=(t,sub,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div>${upd?`<span class="upd"><i></i>Última atualização: ${esc(upd)}</span>`:''}</div>`;
+const top=(t,sub,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${upd?`<span class="upd"><i></i>Última atualização: ${esc(upd)}</span>`:''}${['dash','coletados','forecast'].includes(CUR)?`<button class="btn btn-ghost" type="button" data-glref style="padding:8px 14px">Atualizar</button>`:''}</div></div>`;
 const demoNote='<div class="notice"><b>Protótipo com dados fictícios.</b> Os números reais entram quando a API dos dados oficiais for conectada.</div>';
 let REAL=false,LOADING=null;
 // Monta as linhas a partir de {dia:{colunas,linhas,atualizado_em}}. "t" = pacotes da GETLOG que chegaram na DS FM NOR.
@@ -73,10 +74,22 @@ function rows(){if(!ROWS)ROWS=build(GL_DEMO.days(62));return ROWS}
 async function openDay(o){let raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct));
 if(o.z==='gzip')raw=await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();return JSON.parse(dec.decode(raw))}
 // Lê os dias publicados pela automação do Drive (portal/dados). Sem arquivos, fica nos dados de exemplo.
-function loadReal(){return LOADING||(LOADING=(async()=>{try{const idx=await getJSON('/portal/dados/index.json');const all={};
-await Promise.all(Object.keys(idx).map(async f=>{const m=f.match(/^(\d{2})\.(\d{2})\.(\d{4})\.json$/);if(!m)return;try{const r=await fetch('/portal/dados/'+encodeURIComponent(f)+'?v='+encodeURIComponent(idx[f]));if(!r.ok)return;const d=await openDay(await r.json());
-if(Array.isArray(d.colunas))all[`${m[3]}-${m[2]}-${m[1]}`]=d;else Object.assign(all,d)}catch(e){console.warn('dia ilegível',f,e)}}));
+let FORCE=false,SIGP='',ROWSF=null,LOADF=null,UPDF='',SIGF='';
+function loadReal(){return LOADING||(LOADING=(async()=>{try{const L=await GL_API.lista(FORCE);SIGP=L.map(x=>x.dia+x.modificadoEm).join('|');const all={};
+await Promise.all(L.map(async x=>{const m=x.dia.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);if(!m)return;try{const r=await GL_API.dia(x.dia,FORCE);if(!r)return;const d=JSON.parse(r.txt);
+if(Array.isArray(d.colunas))all[`${m[3]}-${m[2]}-${m[1]}`]=d;else Object.assign(all,d)}catch(e){console.warn('dia ilegível',x.dia,e)}}));
 const b=build(all);if(b.length){ROWS=b;REAL=true}}catch(e){}})())}
+function buildF(g){const c=g.colunas,ix=n=>c.indexOf(n);const I={d:ix('DATA'),s:ix('SELLER'),b:ix('BAIRRO'),ci:ix('CIDADE'),m:ix('MOTORISTA'),pri:ix('PRIORIDADE ?'),a:ix('AJUDANTE?')};
+const CL=['SHEIN BRA','SHEIN D2D','TIKTOK','KWAI'].map(n=>[n,ix(n)]).filter(x=>x[1]>=0);const g2=(r,i)=>i<0?'':String(r[i]??'').trim();const out=[];
+for(const r of g.linhas){const d=g2(r,I.d);if(!/^\d{4}-\d{2}-\d{2}$/.test(d))continue;for(const [cn,ci] of CL){const p=+g2(r,ci).replace(',','.')||0;if(!p)continue;out.push({d,s:g2(r,I.s),c:cn,r:g2(r,I.ci),b:g2(r,I.b),ci:g2(r,I.ci),m:g2(r,I.m)||'SEM MOTORISTA',p,pri:g2(r,I.pri),a:g2(r,I.a)})}}return out}
+function loadF(reload,force){if(LOADF&&!reload)return LOADF;LOADF=(async()=>{try{const j=await GL_API.geral(!!force);const sig=j.dados.arquivos.map(a=>a.arquivo+':'+a.linhas).join('|');ROWSF=buildF(j.dados);SIGF=sig;const [dd,hh='']=String(j.atualizadoEm).split('T');UPDF=dd.split('-').reverse().join('/')+(hh?' às '+hh.slice(0,5):'')}catch(e){console.warn('geral',e);if(!ROWSF)ROWSF=[]}})();return LOADF}
+async function refreshData(force){const v=CUR;
+if(v==='forecast'){const s0=SIGF;await loadF(true,force);if(force||SIGF!==s0)if(CUR===v)VIEWS[v]();return}
+if(['dash','coletados'].includes(v)){const s0=SIGP;FORCE=!!force;LOADING=null;await loadReal();FORCE=false;if(force||SIGP!==s0)if(CUR===v)VIEWS[v]()}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-glref]');if(!b)return;b.disabled=true;b.textContent='Atualizando…';
+if(CUR==='perf'){const f=$('#pf');Promise.resolve(f&&f.contentWindow&&f.contentWindow.checkUpdates&&f.contentWindow.checkUpdates(true)).finally(()=>{b.disabled=false;b.textContent='Atualizar'});return}
+refreshData(true).finally(()=>{b.disabled=false;b.textContent='Atualizar'})});
+setInterval(()=>{if(document.hidden||!ME)return;if(CUR==='forecast'&&GL_API.naJanela('geral'))refreshData(false);else if(['dash','coletados'].includes(CUR)&&GL_API.naJanela('performance'))refreshData(false)},GL_API.INTERVALO_MS);
 const dn=()=>REAL?'':demoNote;
 const nm=m=>{m=String(m||'');const i=m.indexOf(' - ');return i>0?m.slice(i+3):m};
 const keyD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -113,7 +126,7 @@ const draw=n=>{$('#dch').innerHTML=vbars(dates.slice(-n).map(k=>[lblD(k),tot(k)]
 $$('#seg button').forEach(b=>b.onclick=()=>{$$('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw(+b.dataset.n)});
 $$('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go))};
 VIEWS.coletados=()=>{const R=rows();const own=ME.role==='ajudante';const base=own?R.filter(r=>norm(r.a)===norm(ME.ref)):R;
-M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente as coletas em que você participou':'Pacotes da GETLOG recebidos na DS FM NOR',UPD)+dn()+`
+M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente as coletas em que você participou':'Pacotes da GETLOG recebidos na DS FM NOR',UPD)+dn()+`<p style="margin:-6px 0 14px"><a class="btn btn-ghost" style="padding:8px 14px" href="${GL_API.PASTA_COLETADOS}" target="_blank" rel="noopener">Acessar pasta dos coletados</a></p>
 <div class="filters">${periodUI('per',['dia','semana','quinzena','mes'])}${own?'':`<select id="fm" aria-label="Motorista">${opts(base.map(r=>nm(r.m)),'Todos os motoristas')}</select>`}
 <select id="fr" aria-label="Região">${opts(base.map(r=>r.r),'Todas as regiões')}</select><input id="fs" type="search" placeholder="Buscar seller" aria-label="Seller"></div><div id="cout"></div>`;
 const run=()=>{const [a,b,lbl]=periodRange($('#per'));const fm=own?'':$('#fm').value,fr=$('#fr').value,fs=norm($('#fs').value);
@@ -127,7 +140,7 @@ ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coleta
 <div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados</p></div></div>${hbars(group(f,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
 <div class="box mt"><div class="box-head"><div><h3>Detalhe por seller</h3><p>${N(sel.length)} sellers com coleta${sel.length>200?' · mostrando os 200 maiores':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Seller</th><th>Cliente</th><th>Região</th>${own?'':'<th>Motorista</th>'}<th class="n">Pacotes</th></tr></thead><tbody>${sel.slice(0,200).map(([k,v])=>{const [s,c,r,m]=k.split('|');return `<tr><td>${esc(s)}</td><td>${esc(c)}</td><td>${esc(r)}</td>${own?'':`<td>${esc(m)}</td>`}<td class="n">${N(v)}</td></tr>`}).join('')}</tbody></table></div></div>`:'<p class="empty box mt">Nenhuma coleta encontrada para esse filtro. Troque o período ou limpe os filtros.</p>'}`};
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));$('#fs').addEventListener('input',run);run()};
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=5" title="Performance de coleta" id="pf"></iframe></div>`;
+VIEWS.perf=()=>{M().innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-ghost" type="button" data-glref style="padding:8px 14px">Atualizar</button></div><div class="perf-wrap"><iframe src="/portal/performance.html?v=6" title="Performance de coleta" id="pf"></iframe></div>`;
 const f=$('#pf');const fit=()=>{try{const h=f.contentDocument.documentElement.scrollHeight;if(h)f.style.height=Math.max(h,innerHeight-40)+'px'}catch(e){}};f.addEventListener('load',()=>{fit();try{new ResizeObserver(fit).observe(f.contentDocument.body)}catch(e){}})};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
@@ -138,8 +151,8 @@ const geo=(b,ci)=>{const k=(b+'|'+ci).toUpperCase();if(k in GEO)return Promise.r
 return geoQ=geoQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent([b,ci,'SP'].filter(Boolean).join(', ')));const j=await r.json();if(j[0])v=[+j[0].lat,+j[0].lon]}catch(e){}
 GEO[k]=v;try{localStorage.setItem(GEO_KEY,JSON.stringify(GEO))}catch(e){}await new Promise(t=>setTimeout(t,1100));return v})};
 const hsh=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return h};
-VIEWS.forecast=()=>{const R=rows();const dates=[...new Set(R.map(r=>r.d))].sort().reverse();
-M().innerHTML=top('Forecast','Sellers e pacotes previstos por motorista e região',UPD)+dn()+`
+VIEWS.forecast=()=>{const R=ROWSF||[];const dates=[...new Set(R.map(r=>r.d))].sort().reverse();
+M().innerHTML=top('Forecast','Sellers e pacotes previstos por motorista e cidade · aba GERAL',UPDF)+`
 <div class="filters"><select id="xd" aria-label="Dia">${dates.map(d=>`<option value="${d}">${d.split('-').reverse().join('/')}</option>`).join('')}</select>
 <select id="xr" aria-label="Região"></select><select id="xm" aria-label="Motorista"></select><select id="xc" aria-label="Cliente"></select><select id="xp" aria-label="Prioridade"></select><input id="xs" type="search" placeholder="Buscar seller ou bairro" aria-label="Buscar"></div>
 <div id="xk"></div><div class="grid-2"><div class="box"><div class="box-head"><div><h3>Mapa dos sellers previstos</h3><p>Cada cor é um motorista · círculo maior = mais pacotes · posição aproximada pelo bairro</p></div></div><div id="xmap" style="height:460px;border-radius:12px"></div><p class="hint" id="xgeo"></p></div>
