@@ -34,10 +34,10 @@
       "login": "claudio.marques",
       "role": "admin",
       "active": true,
-      "salt": "FR1eXJV7OGqyGwyWBY1xEA==",
-      "iv": "pkmFR5BVWyDp8Q4R",
-      "key": "vkJqs4Jh/1aNsDBQ6QhCg65NHjXI4+/06flw8V8K8q1MDCMPWo6xRfYs2NATnsZt",
-      "pwEm": "2026-10-05T17:13:44.372Z",
+      "salt": "UNbX958QB6fJ8eadOkRSzA==",
+      "iv": "N7eOKAzU2pADPheR",
+      "key": "UZXv9w0xW2s1r/OygsLJK+aAa1QzypVBFg1G5P3GpP/kph7C/tcy5hkN1NJoAPVK",
+      "pwEm": "2026-10-05T17:16:02.879Z",
       "p": {
         "iv": "KGK4ISHdGM+5Wpkm",
         "ct": "N5/af3aTJhRtZgF+BtOU2ZGoOtTtdrkuEAyjbbjDTADNRGZBR1BTstQdPoNkMAGShUCmEpF8UYvBrrDU/AmEiofDZOI4UH8hz4Oz+LNpKWqR3BwzRAAfuNUIvDDroHsY+Di1eyizRyrHni8tVPPhyEYtSal8QWIFznTS7MKkCedPdBFrUTNL"
