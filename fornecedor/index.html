@@ -11,9 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/site.css?v=4">
+<link rel="stylesheet" href="/assets/site.css?v=5">
 <meta property="og:title" content="Área do Fornecedor | GETLOG Transportes">
 <meta property="og:description" content="Acompanhe previsão, volume coletado, próxima janela e situação operacional.">
+<meta property="og:image" content="/assets/logo-getlog.webp">
 </head>
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
@@ -25,14 +26,15 @@
 </ul>
 <div class="nav-actions">
 <a class="icon-btn" href="/portal/" aria-label="Área do Funcionário"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-4 4.5-6 8-6s6.4 2 8 6"/></svg><span class="tip">Área do Funcionário</span></a>
-<a class="icon-btn" href="/fornecedor/" aria-label="Área do Fornecedor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span class="tip">Área do Fornecedor</span></a>
+<a class="icon-btn" href="/cliente/" aria-label="Área do Cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span class="tip">Área do Cliente</span></a>
 <a class="btn btn-primary" href="/contato/">Solicite uma proposta</a>
 </div>
 <button class="menu-toggle" aria-controls="menu" aria-expanded="false" aria-label="Abrir menu"><span></span></button>
 </div>
 </header>
 <main id="conteudo">
-<section class="page-hero"><div class="wrap"><div class="kicker">ÁREA DO FORNECEDOR</div><h1>Sua coleta, de forma simples.</h1><p class="lead">Acompanhe previsão, volume coletado, próxima janela e situação operacional.</p><p style="margin-top:16px;display:inline-block;padding:6px 12px;border-radius:999px;background:#fff1e6;color:#b44b00;font-weight:600;font-size:.85rem">Dados ilustrativos</p></div></section>
+
+<section class="page-hero"><div class="wrap"><div class="kicker">ÁREA DO FORNECEDOR</div><h1>Sua coleta, de forma simples.</h1><p class="lead">Acompanhe previsão, volume coletado, próxima janela e situação operacional.</p><p class="form-note" style="margin-top:16px;display:inline-block;padding:6px 12px;border-radius:999px;background:#fff1e6;color:#b44b00;font-weight:600">Dados ilustrativos</p></div></section>
 <section class="section" style="padding-top:48px"><div class="wrap">
 <div class="cards kpis">
 <div class="card"><small style="color:var(--muted)">Previsto para hoje</small><h2 style="margin-top:6px">2.450</h2><p>pacotes</p></div>
@@ -41,29 +43,33 @@
 <div class="card"><small style="color:var(--muted)">Status</small><h2 style="margin-top:6px;color:#13965a">Confirmada</h2><p>Rota em acompanhamento</p></div>
 </div>
 <div class="split" style="margin-top:24px;align-items:stretch">
-<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><small style="color:var(--muted)">Coleta do dia</small><h3>21 de agosto de 2026</h3></div><b style="color:var(--orange)">Em andamento: 94,6%</b></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><small style="color:var(--muted)">Coleta do dia</small><h3>21 de agosto de 2026</h3></div><b style="color:var(--orange)">Em andamento · 94,6%</b></div>
 <div style="height:10px;border-radius:99px;background:var(--soft);margin:18px 0 22px;overflow:hidden"><div style="width:94.6%;height:100%;background:var(--orange)"></div></div>
 <ol style="list-style:none;padding:0;margin:0;display:grid;gap:14px">
 <li style="display:flex;justify-content:space-between;gap:12px"><span><b>Pacotes preparados</b><br><small style="color:var(--muted)">Previsão recebida pela GETLOG</small></span><b style="color:#13965a">Concluído</b></li>
 <li style="display:flex;justify-content:space-between;gap:12px"><span><b>Motorista em rota</b><br><small style="color:var(--muted)">Chegada prevista entre 14h e 15h</small></span><b style="color:var(--orange)">Atual</b></li>
 <li style="display:flex;justify-content:space-between;gap:12px"><span><b>Finalização da coleta</b><br><small style="color:var(--muted)">Consolidação após a retirada</small></span><b style="color:var(--muted)">Pendente</b></li>
 </ol></div>
-<div class="panel-dark"><h3>Fale com a operação GETLOG</h3><p style="margin-top:10px">Informe o nome da empresa, seller e o motivo do contato para agilizar o atendimento.</p><div class="actions"><a class="btn btn-primary" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg>Falar pelo WhatsApp</a></div><p style="margin-top:22px"><b style="color:#fff">Horário operacional</b><br>Segunda a sábado</p></div>
+<div class="panel-dark"><h3>Já é cliente GETLOG?</h3><p style="margin-top:10px">Entre com o usuário e a senha enviados pela GETLOG para acompanhar suas coletas.</p><div class="actions"><a class="btn btn-primary" href="/cliente/">Acessar minhas coletas</a></div><h3 style="margin-top:28px">Fale com a operação GETLOG</h3><p style="margin-top:10px">Informe o nome da empresa, seller e o motivo do contato para agilizar o atendimento.</p><div class="actions"><a class="btn btn-primary" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg>Falar pelo WhatsApp</a></div><p style="margin-top:22px"><b style="color:#fff">Horário operacional</b><br>Segunda a sábado</p></div>
 </div>
 <p class="note">Tela demonstrativa. Os dados serão substituídos pelas informações oficiais após a integração e definição do acesso individual.</p>
-</div></section></main>
+</div></section>
+</main>
 <footer class="site-footer">
 <div class="wrap">
 <div class="foot-grid">
-<div><span class="logo-chip"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="98" height="40" loading="lazy"></span><p>Tecnologia, controle e inteligência para operações logísticas que precisam ir mais longe.</p></div>
+<div>
+<span class="logo-chip"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="98" height="40" loading="lazy"></span>
+<p>Tecnologia, controle e inteligência para operações logísticas que precisam ir mais longe.</p>
+</div>
 <div><h4>GETLOG</h4><ul><li><a href="/sobre/">Sobre nós</a></li><li><a href="/servicos/">Soluções logísticas</a></li><li><a href="/tecnologia/">Tecnologia</a></li><li><a href="/trabalhe-conosco/">Trabalhe conosco</a></li><li><a href="/contato/">Fale conosco</a></li></ul></div>
-<div><h4>Portais</h4><ul><li><a href="/portal/">Área do Funcionário</a></li><li><a href="/fornecedor/">Área do Fornecedor</a></li></ul></div>
+<div><h4>Portais</h4><ul><li><a href="/portal/">Área do Funcionário</a></li><li><a href="/fornecedor/">Área do Fornecedor</a></li><li><a href="/cliente/">Acesso do cliente</a></li></ul></div>
 <div><h4>Contato</h4><ul><li><a href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener">WhatsApp: +55 11 98914-1009</a></li><li><a href="mailto:comercialadm@getlogbr.com">comercialadm@getlogbr.com</a></li><li><a href="mailto:admtegservice@gmail.com">admtegservice@gmail.com</a></li></ul></div>
 </div>
 <div class="foot-bottom"><span>© <span id="ano">2026</span> GETLOG Transportes. Todos os direitos reservados.</span><span>Privacidade e segurança da informação</span></div>
 </div>
 </footer>
 <a class="wa-float" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener" aria-label="Falar pelo WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg></a>
-<script src="/assets/site.js?v=4" defer></script>
+<script src="/assets/site.js?v=5" defer></script>
 </body>
 </html>

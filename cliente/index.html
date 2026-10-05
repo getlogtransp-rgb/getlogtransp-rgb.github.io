@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acompanhamento de coletas | GETLOG</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#001645">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<link rel="stylesheet" href="/cliente/cliente.css?v=5">
+</head>
+<body>
+<section id="login" class="lg">
+<div class="lg-card">
+<img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="120" height="48" class="lg-logo">
+<h1>Acompanhamento de coletas</h1>
+<p>Área exclusiva para clientes GETLOG.</p>
+<form id="f" novalidate>
+<label for="u">Usuário</label><input id="u" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+<label for="p">Senha</label><input id="p" type="password" autocomplete="current-password" required>
+<div id="m" class="m" role="status" aria-live="polite"></div>
+<button id="go">Entrar</button>
+</form>
+</div>
+</section>
+<div id="app" hidden></div>
+<script src="/assets/demo.js?v=5" defer></script>
+<script src="/cliente/cliente.js?v=5" defer></script>
+</body>
+</html>

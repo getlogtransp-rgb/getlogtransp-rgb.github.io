@@ -11,9 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
-<link rel="stylesheet" href="/assets/site.css?v=4">
+<link rel="stylesheet" href="/assets/site.css?v=5">
 <meta property="og:title" content="GETLOG Transportes | Especialistas em First Mile">
 <meta property="og:description" content="Coletamos seus pacotes diretamente nos fornecedores e entregamos no destino definido pela sua operação. Mais de 100 mil pacotes por dia em São Paulo e Região Metropolitana.">
+<meta property="og:image" content="/assets/logo-getlog.webp">
 </head>
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
@@ -21,18 +22,19 @@
 <div class="wrap nav">
 <a class="brand" href="/" aria-label="GETLOG Transportes, página inicial"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="128" height="52"></a>
 <ul class="menu" id="menu">
-<li><a href="/" aria-current="page">Início</a></li><li><a href="/sobre/">A GETLOG</a></li><li><a href="/servicos/">Soluções</a></li><li><a href="/tecnologia/">Tecnologia</a></li><li><a href="/trabalhe-conosco/">Trabalhe conosco</a></li><li><a href="/contato/">Contato</a></li>
+<li><a href="/" aria-current=page>Início</a></li><li><a href="/sobre/">A GETLOG</a></li><li><a href="/servicos/">Soluções</a></li><li><a href="/tecnologia/">Tecnologia</a></li><li><a href="/trabalhe-conosco/">Trabalhe conosco</a></li><li><a href="/contato/">Contato</a></li>
 </ul>
 <div class="nav-actions">
 <a class="icon-btn" href="/portal/" aria-label="Área do Funcionário"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.6-4 4.5-6 8-6s6.4 2 8 6"/></svg><span class="tip">Área do Funcionário</span></a>
-<a class="icon-btn" href="/fornecedor/" aria-label="Área do Fornecedor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span class="tip">Área do Fornecedor</span></a>
+<a class="icon-btn" href="/cliente/" aria-label="Área do Cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/></svg><span class="tip">Área do Cliente</span></a>
 <a class="btn btn-primary" href="/contato/">Solicite uma proposta</a>
 </div>
 <button class="menu-toggle" aria-controls="menu" aria-expanded="false" aria-label="Abrir menu"><span></span></button>
 </div>
 </header>
 <main id="conteudo">
-<section class="hero"><div class="wrap hero-grid">
+
+<section class="hero"><canvas id="net" aria-hidden="true"></canvas><div class="wrap hero-grid">
 <div>
 <div class="kicker">ESPECIALISTAS EM FIRST MILE</div>
 <h1>O primeiro passo da sua logística, <span class="hl">feito para ir mais longe.</span></h1>
@@ -42,7 +44,10 @@
 <div class="flow-card" aria-label="Operação First Mile: coleta e entrega de ponta a ponta">
 <div class="fc-top"><div><div class="fc-eyebrow">OPERAÇÃO FIRST MILE</div><div class="fc-title">Coleta e entrega de ponta a ponta</div></div><span class="live"><i></i>Operação ativa</span></div>
 <div class="fc-flow">
-<svg class="track" viewBox="0 0 1000 56" preserveAspectRatio="none" aria-hidden="true"><line x1="125" y1="28" x2="375" y2="28" stroke="#f86800" stroke-width="3" vector-effect="non-scaling-stroke"/><line x1="375" y1="28" x2="875" y2="28" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="7 7" vector-effect="non-scaling-stroke" class="dash"/></svg>
+<svg class="track" viewBox="0 0 1000 56" preserveAspectRatio="none" aria-hidden="true">
+<line x1="125" y1="28" x2="375" y2="28" stroke="#f86800" stroke-width="3" vector-effect="non-scaling-stroke"/>
+<line x1="375" y1="28" x2="875" y2="28" stroke="rgba(255,255,255,.28)" stroke-width="2" stroke-dasharray="7 7" vector-effect="non-scaling-stroke" class="dash"/>
+</svg>
 <div class="truck" aria-hidden="true"><svg viewBox="0 0 64 36" aria-hidden="true"><rect x="2" y="4" width="36" height="22" rx="3" fill="#fff"/><rect x="2" y="4" width="36" height="5" rx="2" fill="#ffd2b0"/><path d="M38 11h12.5a3 3 0 0 1 2.5 1.4l6 9.1a3 3 0 0 1 .5 1.6V26a2 2 0 0 1-2 2H38z" fill="#f86800"/><path d="M42 14h8l4 6h-12z" fill="#0b2d72"/><rect x="0" y="24" width="60" height="4" rx="2" fill="#0b2d72" opacity=".35"/><circle cx="13" cy="28" r="5" fill="#0c1831" stroke="#fff" stroke-width="2"/><circle cx="49" cy="28" r="5" fill="#0c1831" stroke="#fff" stroke-width="2"/></svg></div>
 <ol class="fc-steps">
 <li><div class="node"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16"/><path d="M15 10h4a1 1 0 0 1 1 1v10"/><path d="M8 8h3M8 12h3M8 16h3M3 21h18"/></svg></div><strong>Fornecedor</strong><span>Pacotes preparados</span></li>
@@ -59,11 +64,13 @@
 </div>
 </div>
 </div></section>
-<section class="stats" aria-label="GETLOG em números"><div class="wrap"><ul><li><b>+6 anos</b><span>de experiência</span></li><li><b>+150</b><span>veículos parceiros</span></li><li><b>+100 mil</b><span>pacotes coletados por dia</span></li><li><b>Até 1,5 m</b><span>pequenos e médios volumes</span></li></ul></div></section>
+<section class="stats" aria-label="GETLOG em números"><div class="wrap"><ul>
+<li><b>+6 anos</b><span>de experiência</span></li><li><b>+150</b><span>veículos parceiros</span></li><li><b>+100 mil</b><span>pacotes coletados por dia</span></li><li><b>Até 1,5 m</b><span>pequenos e médios volumes</span></li>
+</ul></div></section>
 <section class="section"><div class="wrap">
 <div class="section-head"><div><div class="kicker">EXPERIÊNCIA COMPROVADA</div><h2>Coletas para grandes marcas e plataformas</h2></div><p>Estrutura preparada para diferentes perfis e volumes do comércio digital.</p></div>
 <div class="logos"><div class="logo-tile"><img src="https://cdn.simpleicons.org/tiktok/000000" alt="" width="28" height="28" loading="lazy">TikTok</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=shein.com" alt="" width="28" height="28" loading="lazy">SHEIN</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=nuvemshop.com.br" alt="" width="28" height="28" loading="lazy">Nuvemshop</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=kwai.com" alt="" width="28" height="28" loading="lazy">Kwai</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=estoca.com.br" alt="" width="28" height="28" loading="lazy">Estoca</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=olist.com" alt="" width="28" height="28" loading="lazy">Olist</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=enjoei.com.br" alt="" width="28" height="28" loading="lazy">Enjoei</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=fmlogistic.com.br" alt="" width="28" height="28" loading="lazy">FM Transportes</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=frenet.com.br" alt="" width="28" height="28" loading="lazy">Frenet</div><div class="logo-tile"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=tpl.com.br" alt="" width="28" height="28" loading="lazy">TPL</div></div>
-<div class="partners"><span class="lbl">Principais parceiros logísticos</span><div class="partner"><span class="imile">iMile</span>Delivery</div><div class="partner"><span class="jt">J&amp;T</span>Express</div></div>
+<div class="partners"><span class="lbl">Principais parceiros logísticos</span><div class="partner"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=imile.com" alt="" width="28" height="28" loading="lazy">iMile Delivery</div><div class="partner"><img src="https://www.google.com/s2/favicons?sz=64&amp;domain=jtexpress.com.br" alt="" width="28" height="28" loading="lazy">J&amp;T Express</div></div>
 </div></section>
 <section class="section soft"><div class="wrap split">
 <div><div class="kicker">FIRST MILE GETLOG</div><h2>A operação começa no fornecedor. A confiança começa com a GETLOG.</h2></div>
@@ -73,7 +80,7 @@
 </div></section>
 <section class="section"><div class="wrap">
 <div class="section-head"><div><div class="kicker">CAPACIDADE FLEXÍVEL</div><h2>O veículo certo para cada coleta</h2></div><p>Mais de 150 veículos parceiros, com motoristas e ajudantes operacionais para dimensionar cada coleta com agilidade e eficiência.</p></div>
-<div class="fleet"><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="20" r="5"/><circle cx="32" cy="20" r="5"/><path d="M8 20l7-9h8l4 9M21 11l-2-4h-4M27 20l-3-9h5"/></svg><b>Moto</b><span>até 0,15 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19v-4l4-1 4-6h14l6 6 6 1v4"/><circle cx="11" cy="20" r="3.5"/><circle cx="29" cy="20" r="3.5"/><path d="M14.5 20h11M3 19h4.5M32.5 19H37"/></svg><b>Carro</b><span>até 0,8 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20V8h20l6 5 7 2v5"/><path d="M23 8v6h6"/><circle cx="11" cy="21" r="3.5"/><circle cx="29" cy="21" r="3.5"/></svg><b>Fiorino</b><span>até 3 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20V5h24l7 7 3 3v5"/><path d="M27 5v8h7"/><circle cx="11" cy="21" r="3.5"/><circle cx="29" cy="21" r="3.5"/></svg><b>Van</b><span>8 a 12 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="24" height="15" rx="1"/><path d="M26 9h6l5 6v5H26"/><circle cx="10" cy="21" r="3.5"/><circle cx="31" cy="21" r="3.5"/></svg><b>VUC</b><span>18 a 22 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="2" width="27" height="17" rx="1"/><path d="M28 8h5l5 6v6H28"/><circle cx="8" cy="21" r="3.5"/><circle cx="17" cy="21" r="3.5"/><circle cx="32" cy="21" r="3.5"/></svg><b>3/4</b><span>25 a 30 m³</span></div></div>
+<div class="fleet"><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="20" r="5"/><circle cx="32" cy="20" r="5"/><path d="M8 20l7-9h8l4 9M21 11l-2-4h-4M27 20l-3-9h5"/></svg><b>Moto</b><span>até 0,15 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19v-4l4-1 4-6h14l6 6 6 1v4"/><circle cx="11" cy="20" r="3.5"/><circle cx="29" cy="20" r="3.5"/><path d="M14.5 20h11M3 19h4.5M32.5 19H37"/></svg><b>Carro</b><span>até 0,8 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V8h20l6 5 7 2v5"/><path d="M23 8v6h6"/><circle cx="11" cy="21" r="3.5"/><circle cx="29" cy="21" r="3.5"/></svg><b>Fiorino</b><span>até 3 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20V5h24l7 7 3 3v5"/><path d="M27 5v8h7"/><circle cx="11" cy="21" r="3.5"/><circle cx="29" cy="21" r="3.5"/></svg><b>Van</b><span>8 a 12 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="24" height="15" rx="1"/><path d="M26 9h6l5 6v5H26"/><circle cx="10" cy="21" r="3.5"/><circle cx="31" cy="21" r="3.5"/></svg><b>VUC</b><span>18 a 22 m³</span></div><div class="vehicle"><svg viewBox="0 0 40 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2" width="27" height="17" rx="1"/><path d="M28 8h5l5 6v6H28"/><circle cx="8" cy="21" r="3.5"/><circle cx="17" cy="21" r="3.5"/><circle cx="32" cy="21" r="3.5"/></svg><b>3/4</b><span>25 a 30 m³</span></div></div>
 <p class="note">Cubagens referenciais, sujeitas a variações conforme o modelo e a carroceria do veículo.</p>
 <div class="coverage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><div><b>Cobertura operacional</b><p style="color:var(--slate)">São Paulo Capital e Região Metropolitana, com atendimento no litoral e parceiros estratégicos no interior paulista.</p></div></div>
 </div></section>
@@ -83,19 +90,24 @@
 <a class="portal-link" href="/portal/"><div><small>Acesso com login</small><b>Área do Funcionário</b><span>Coletas, indicadores e comunicados.</span></div><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
 <a class="portal-link" href="/fornecedor/"><div><small>Visão operacional</small><b>Área do Fornecedor</b><span>Coletas, previsão, status e indicadores.</span></div><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
 </div></div></section>
-<section class="section"><div class="wrap"><div class="cta"><div><h2>Seu First Mile pode ser mais inteligente.</h2><p>Conte para a GETLOG o que sua empresa precisa.</p></div><div class="actions" style="margin-top:0"><a class="btn btn-primary" href="/contato/">Solicite uma proposta</a><a class="btn btn-light" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg>Fale pelo WhatsApp</a></div></div></div></section></main>
+<section class="section"><div class="wrap"><div class="cta"><div><h2>Seu First Mile pode ser mais inteligente.</h2><p>Conte para a GETLOG o que sua empresa precisa.</p></div><div class="actions" style="margin-top:0"><a class="btn btn-primary" href="/contato/">Solicite uma proposta</a><a class="btn btn-light" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg>Fale pelo WhatsApp</a></div></div></div></section>
+</main>
 <footer class="site-footer">
 <div class="wrap">
 <div class="foot-grid">
-<div><span class="logo-chip"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="98" height="40" loading="lazy"></span><p>Tecnologia, controle e inteligência para operações logísticas que precisam ir mais longe.</p></div>
+<div>
+<span class="logo-chip"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="98" height="40" loading="lazy"></span>
+<p>Tecnologia, controle e inteligência para operações logísticas que precisam ir mais longe.</p>
+</div>
 <div><h4>GETLOG</h4><ul><li><a href="/sobre/">Sobre nós</a></li><li><a href="/servicos/">Soluções logísticas</a></li><li><a href="/tecnologia/">Tecnologia</a></li><li><a href="/trabalhe-conosco/">Trabalhe conosco</a></li><li><a href="/contato/">Fale conosco</a></li></ul></div>
-<div><h4>Portais</h4><ul><li><a href="/portal/">Área do Funcionário</a></li><li><a href="/fornecedor/">Área do Fornecedor</a></li></ul></div>
+<div><h4>Portais</h4><ul><li><a href="/portal/">Área do Funcionário</a></li><li><a href="/fornecedor/">Área do Fornecedor</a></li><li><a href="/cliente/">Acesso do cliente</a></li></ul></div>
 <div><h4>Contato</h4><ul><li><a href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener">WhatsApp: +55 11 98914-1009</a></li><li><a href="mailto:comercialadm@getlogbr.com">comercialadm@getlogbr.com</a></li><li><a href="mailto:admtegservice@gmail.com">admtegservice@gmail.com</a></li></ul></div>
 </div>
 <div class="foot-bottom"><span>© <span id="ano">2026</span> GETLOG Transportes. Todos os direitos reservados.</span><span>Privacidade e segurança da informação</span></div>
 </div>
 </footer>
 <a class="wa-float" href="https://wa.me/5511989141009?text=Ol%C3%A1%21%20Conheci%20a%20GETLOG%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20uma%20solu%C3%A7%C3%A3o%20de%20First%20Mile%20para%20minha%20opera%C3%A7%C3%A3o." target="_blank" rel="noopener" aria-label="Falar pelo WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1s-.5-.1-.7.1-.8 1-1 1.2-.4.2-.7.1a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.5-.6.3-.5v-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.4 3.4 0 0 0-1 2.5 5.9 5.9 0 0 0 1.2 3.1 13.5 13.5 0 0 0 5.2 4.6c.7.3 1.3.5 1.7.6a4.2 4.2 0 0 0 1.9.1 3.1 3.1 0 0 0 2-1.4 2.5 2.5 0 0 0 .2-1.4c-.1-.1-.3-.2-.6-.3M12 21.8a9.9 9.9 0 0 1-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4A9.9 9.9 0 1 1 12 21.8m8.4-18.3A11.8 11.8 0 0 0 1.7 17.7L0 24l6.4-1.7a11.8 11.8 0 0 0 5.6 1.4 11.9 11.9 0 0 0 8.4-20.2"/></svg></a>
-<script src="/assets/site.js?v=4" defer></script>
+<script src="/assets/site.js?v=5" defer></script>
+<script src="/assets/net.js?v=5" defer></script>
 </body>
 </html>
