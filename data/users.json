@@ -34,15 +34,16 @@
       "login": "claudio.marques",
       "role": "admin",
       "active": true,
-      "salt": "UNbX958QB6fJ8eadOkRSzA==",
-      "iv": "N7eOKAzU2pADPheR",
-      "key": "UZXv9w0xW2s1r/OygsLJK+aAa1QzypVBFg1G5P3GpP/kph7C/tcy5hkN1NJoAPVK",
-      "pwEm": "2026-10-05T17:16:02.879Z",
+      "salt": "eK7pXmmrd15f3gAIY7bnFA==",
+      "iv": "+/VrJyB/nz4EL3Zj",
+      "key": "8lGl+XnOVnzC4BiyHMM1NMVKpJHBQ/xujqUvERNrqY9TVLdG4WEh0dpb+Vasyxci",
+      "pwEm": "2026-10-05T19:08:27.557Z",
       "p": {
         "iv": "KGK4ISHdGM+5Wpkm",
         "ct": "N5/af3aTJhRtZgF+BtOU2ZGoOtTtdrkuEAyjbbjDTADNRGZBR1BTstQdPoNkMAGShUCmEpF8UYvBrrDU/AmEiofDZOI4UH8hz4Oz+LNpKWqR3BwzRAAfuNUIvDDroHsY+Di1eyizRyrHni8tVPPhyEYtSal8QWIFznTS7MKkCedPdBFrUTNL"
       },
-      "created": "2026-10-05T17:13:44.372Z"
+      "created": "2026-10-05T17:13:44.372Z",
+      "ah": "562472ea7a8d79f380c6a39beef1c346be7341bddf4719a7fb68c766ee5e25fb"
     },
     {
       "login": "murilo.moura",
