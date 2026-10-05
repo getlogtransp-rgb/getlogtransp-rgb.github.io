@@ -226,7 +226,7 @@ const tot2=H.reduce((s,x)=>s+x.jt,0);
 const dias=[...new Set(L.flatMap(x=>[...x.dias.keys()]))].sort();
 const resumo=(()=>{const m=new Map();for(const r of rows()){if(r.d<a||r.d>b||(fr&&r.r!==fr))continue;let o=m.get(r.d);if(!o)m.set(r.d,o={d:r.d,p:0,c:0,t:0,mot:0,ii:[],jj:[]});o.p+=r.p||0;o.c+=r.cp||0;o.t+=r.t}
 for(const x of L)for(const [d,v] of x.dias){const o=m.get(d);if(!o)continue;o.mot++;if(v.i!=null){o.ii.push(v.i);o.jj.push(v.f-v.i)}}
-return [...m.values()].map(o=>({...o,i:avg(o.ii),j:avg(o.jj)})).sort((p,q)=>p.d<q.d?1:-1)})();
+return [...m.values()].filter(o=>o.p>0||o.t>0||o.mot>0).map(o=>({...o,i:avg(o.ii),j:avg(o.jj)})).sort((p,q)=>p.d<q.d?1:-1)})();
 // Escala da linha do tempo: da hora cheia antes do 1º bip até a hora cheia depois do último.
 const h0=H.length?Math.floor(Math.min(...H.map(x=>x.i))/60)*60:360,h1=H.length?Math.ceil(Math.max(...H.map(x=>x.f))/60)*60:1320,span=Math.max(60,h1-h0);
 const pos=v=>((v-h0)/span*100).toFixed(2);const marks=[];for(let h=h0;h<=h1;h+=60)marks.push(h);
@@ -280,7 +280,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=15" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=16" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
