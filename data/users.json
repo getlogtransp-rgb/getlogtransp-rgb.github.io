@@ -17,21 +17,6 @@
       "_troca": false
     },
     {
-      "login": "2108296101",
-      "role": "admin",
-      "active": true,
-      "salt": "gesQLp3dhVt57iwyIk9MSg==",
-      "iv": "d/aaoxbUKtANbx5E",
-      "key": "iZI7YYqm/KYRpb6NguF0eRODlS+KYFC1C+6s1qAE/WKGosOwl0bve32X4fGYjpSc",
-      "mustChange": true,
-      "pwEm": "2026-10-05T16:24:11.888Z",
-      "p": {
-        "iv": "b+Xswr247oT7Yboo",
-        "ct": "l4vejHwJPcXH8eSwA4bJVhDaETmvkUU2WU7ZE0kBX+ZGvB1chlwgPtw8T0/fyW7r2J/NIMlk+IP/+4ynzoeUVQJGOWtidSeHkkf/jHV2ar49jFUQCejBd9uU9TlvNYnm+IHKgCEG9X/sRyMpaRshyIqvDToE4YU9KJPjb9mIEsIu"
-      },
-      "created": "2026-10-05T16:24:11.888Z"
-    },
-    {
       "login": "d21049861101",
       "role": "colaborador",
       "active": true,
