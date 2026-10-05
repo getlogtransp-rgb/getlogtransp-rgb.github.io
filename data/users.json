@@ -10,11 +10,40 @@
       "iv": "9uKi4gVH6wRLtDOf",
       "key": "iRS4bmWY3A0+Z0qn6CSqBklizLQlX6UNj0+noOeKVgGPNwS2ZRlU2xiUUOrus4zN",
       "p": {
-        "iv": "3r47jKUzjgPhfCZ2",
-        "ct": "JIynLbxWQcLSw/Ka4Y9OGeHzCiu/etkvetnVxRhgC98eVcH63xdp6nVrourzrHzMUYb51E0mugDDYHWOYdXVU6pB7nIbhtUc1gem4Sq9GgZ9Mgi9uXERDCZrH+sWxZPLOahKmIyMTfSIUKuhGoAPMkxfJpd1uGdgg9/BQt54S5vn52w1"
+        "iv": "wswcCztXdMpse4PU",
+        "ct": "+qOy3j+vWwoCdrYn+av1HhsYetZBZRwUgs5g1HEeVhrPKuHQDplpySt9GRbphnPccYImdTEJEZ0zynOkc9ZfawX6J5uigtAhp/bz/oG7fMLXcB9IZjj0xs/YCOYxtR+mSsP8MXbk5cUF8fL/BhvD2YDdDNe2Ibi1rzXeUtfdkDs5GMfGZoFw6dEMawV46bc6rT8="
       },
       "created": "2026-10-05T13:36:43.609132+00:00",
       "_troca": false
+    },
+    {
+      "login": "2108296101",
+      "role": "admin",
+      "active": true,
+      "salt": "gesQLp3dhVt57iwyIk9MSg==",
+      "iv": "d/aaoxbUKtANbx5E",
+      "key": "iZI7YYqm/KYRpb6NguF0eRODlS+KYFC1C+6s1qAE/WKGosOwl0bve32X4fGYjpSc",
+      "mustChange": true,
+      "pwEm": "2026-10-05T16:24:11.888Z",
+      "p": {
+        "iv": "b+Xswr247oT7Yboo",
+        "ct": "l4vejHwJPcXH8eSwA4bJVhDaETmvkUU2WU7ZE0kBX+ZGvB1chlwgPtw8T0/fyW7r2J/NIMlk+IP/+4ynzoeUVQJGOWtidSeHkkf/jHV2ar49jFUQCejBd9uU9TlvNYnm+IHKgCEG9X/sRyMpaRshyIqvDToE4YU9KJPjb9mIEsIu"
+      },
+      "created": "2026-10-05T16:24:11.888Z"
+    },
+    {
+      "login": "rmiyahara97",
+      "role": "ajudante",
+      "active": true,
+      "salt": "n9ky4v8np7+b8zFd95EyYw==",
+      "iv": "ngX8YSYQC/oWtFvA",
+      "key": "zFXSu23buzzXUInZrR97X5v5Em6H7rDEaoVbDj8cnQlpcrGzPEc621ZjxRE/0Tbq",
+      "pwEm": "2026-10-05T16:52:59.897Z",
+      "p": {
+        "iv": "Lj7ZJrnvjHGD4W5J",
+        "ct": "RhvDPJcxLNIwVv0DY7xIqeUJSBe1k52vnOjGcFnislu2spgBFHbgUPgWFEzPY3ITwN/wIpnpEQ3JCRQkf1mOSqMj74wA4DpYtISokywR9LY5gggRVoYIB0ek/AAaEGN7YYHl2IInfungSZZOQzGk2gu6GYNr/roYhJqRUWEgET0MOroLumo="
+      },
+      "created": "2026-10-05T16:52:59.897Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
