@@ -55,9 +55,10 @@ $$('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)
 $('#sair').onclick=()=>{sessionStorage.removeItem(S_KEY);location.reload()};
 $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.add('on')};
 $('#scrim').onclick=()=>{$('.side').classList.remove('open');$('#scrim').classList.remove('on')};
-show(ACC[ME.role][0]);
+const h=location.hash.slice(1);show(can(h)?h:ACC[ME.role][0]);
 }
-function show(v){if(!can(v))return;$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);if(['dash','coletados','forecast'].includes(v)&&!LOADING){M().innerHTML='<p class="hint">Carregando dados…</p>';loadReal().then(()=>VIEWS[v]())}else if(LOADING&&['dash','coletados','forecast'].includes(v))LOADING.then(()=>VIEWS[v]());else VIEWS[v]()}
+addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(ME&&can(h)&&h!==CUR)show(h)});
+let CUR='';function show(v){if(!can(v))return;CUR=v;if(location.hash.slice(1)!==v)location.hash=v;document.title=(SHORT[v]||'Portal')+' | GETLOG';$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);if(['dash','coletados','forecast'].includes(v)&&!LOADING){M().innerHTML='<p class="hint">Carregando dados…</p>';loadReal().then(()=>VIEWS[v]())}else if(LOADING&&['dash','coletados','forecast'].includes(v))LOADING.then(()=>VIEWS[v]());else VIEWS[v]()}
 const M=()=>$('#main');
 const top=(t,sub,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div>${upd?`<span class="upd"><i></i>Última atualização: ${esc(upd)}</span>`:''}</div>`;
 const demoNote='<div class="notice"><b>Protótipo com dados fictícios.</b> Os números reais entram quando a API dos dados oficiais for conectada.</div>';
@@ -117,14 +118,14 @@ M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente 
 <select id="fr" aria-label="Região">${opts(base.map(r=>r.r),'Todas as regiões')}</select><input id="fs" type="search" placeholder="Buscar seller" aria-label="Seller"></div><div id="cout"></div>`;
 const run=()=>{const [a,b,lbl]=periodRange($('#per'));const fm=own?'':$('#fm').value,fr=$('#fr').value,fs=norm($('#fs').value);
 const f=base.filter(r=>r.d>=a&&r.d<=b&&(!fm||nm(r.m)===fm)&&(!fr||r.r===fr)&&(!fs||norm(r.s).includes(fs)));
-const tot=f.reduce((x,r)=>x+r.t,0);const days=[...new Set(f.map(r=>r.d))];const sel=group(f,r=>r.s+'|'+r.c+'|'+r.r+'|'+nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]);
+const tot=f.reduce((x,r)=>x+r.t,0);const days=[...new Set(f.map(r=>r.d))];const sel=group(f,r=>r.s+'|'+r.c+'|'+r.r+'|'+nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]).filter(x=>x[1]>0);
 $('#cout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Dias com coleta</small><b>${days.length}</b><span>No período</span></div><div class="kpi"><small>Média por dia</small><b>${N(Math.round(tot/Math.max(1,days.length)))}</b><span>Pacotes</span></div><div class="kpi"><small>Sellers atendidos</small><b>${N(new Set(f.map(r=>r.s)).size)}</b><span>No período</span></div></div>
 ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coletados por dia</h3><p>${esc(lbl)}</p></div></div>${vbars(group(f,r=>lblD(r.d),r=>r.t))}</div>
 <div class="grid-2 eq">${own?'':`<div class="box"><div class="box-head"><div><h3>Ranking de motoristas</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>`}
 <div class="box"><div class="box-head"><div><h3>Top sellers</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>r.s,r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>
 <div class="box"><div class="box-head"><div><h3>Por região</h3><p>Pacotes coletados</p></div></div>${hbars(group(f,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
 <div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados</p></div></div>${hbars(group(f,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
-<div class="box mt"><div class="box-head"><div><h3>Detalhe por seller</h3><p>${N(new Set(f.map(r=>r.s)).size)} sellers${sel.length>200?' · mostrando os 200 maiores':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Seller</th><th>Cliente</th><th>Região</th>${own?'':'<th>Motorista</th>'}<th class="n">Pacotes</th></tr></thead><tbody>${sel.slice(0,200).map(([k,v])=>{const [s,c,r,m]=k.split('|');return `<tr><td>${esc(s)}</td><td>${esc(c)}</td><td>${esc(r)}</td>${own?'':`<td>${esc(m)}</td>`}<td class="n">${N(v)}</td></tr>`}).join('')}</tbody></table></div></div>`:'<p class="empty box mt">Nenhuma coleta encontrada para esse filtro. Troque o período ou limpe os filtros.</p>'}`};
+<div class="box mt"><div class="box-head"><div><h3>Detalhe por seller</h3><p>${N(sel.length)} sellers com coleta${sel.length>200?' · mostrando os 200 maiores':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Seller</th><th>Cliente</th><th>Região</th>${own?'':'<th>Motorista</th>'}<th class="n">Pacotes</th></tr></thead><tbody>${sel.slice(0,200).map(([k,v])=>{const [s,c,r,m]=k.split('|');return `<tr><td>${esc(s)}</td><td>${esc(c)}</td><td>${esc(r)}</td>${own?'':`<td>${esc(m)}</td>`}<td class="n">${N(v)}</td></tr>`}).join('')}</tbody></table></div></div>`:'<p class="empty box mt">Nenhuma coleta encontrada para esse filtro. Troque o período ou limpe os filtros.</p>'}`};
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));$('#fs').addEventListener('input',run);run()};
 VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=5" title="Performance de coleta" id="pf"></iframe></div>`;
 const f=$('#pf');const fit=()=>{try{const h=f.contentDocument.documentElement.scrollHeight;if(h)f.style.height=Math.max(h,innerHeight-40)+'px'}catch(e){}};f.addEventListener('load',()=>{fit();try{new ResizeObserver(fit).observe(f.contentDocument.body)}catch(e){}})};
@@ -311,4 +312,7 @@ M().innerHTML=top('App GETLOG','Aplicativo para motoristas, ajudantes e equipe')
 <div class="app-grid"><div class="phone"><div class="notch"></div><div class="screen" id="scr"></div><div class="ph-nav">${['inicio','coletas','ponto'].map(k=>`<button data-s="${k}">${({inicio:'Início',coletas:'Coletas',ponto:'Ponto'})[k]}</button>`).join('')}</div></div>
 <div class="box"><h3>O que o app vai fazer</h3><ul class="feature-list"><li>Rota do dia com os sellers em ordem</li><li>Bipagem dos pacotes pela câmera</li><li>Ponto com foto e localização</li><li>Avisos da operação em tempo real</li><li>Funciona com internet fraca</li></ul><button class="btn btn-ghost mt" disabled>Baixar app (em breve)</button></div></div>`;
 const set=k=>{$('#scr').innerHTML=scr[k];$$('[data-s]').forEach(b=>b.dataset.s===k?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'))};$$('[data-s]').forEach(b=>b.onclick=()=>set(b.dataset.s));set('inicio')};
+// Mantém a pessoa logada ao recarregar ou abrir o link de outra tela na mesma aba.
+(async()=>{let x=null;try{x=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(!x||!x.k)return;
+try{await loadDB();const usr=DB.users.find(u=>u.login===x.login);if(usr&&usr.active!==false)await start(usr,b2u(x.k))}catch(e){sessionStorage.removeItem(S_KEY)}})();
 })();
