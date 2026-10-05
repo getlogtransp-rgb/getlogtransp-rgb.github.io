@@ -10,25 +10,11 @@
       "iv": "9uKi4gVH6wRLtDOf",
       "key": "iRS4bmWY3A0+Z0qn6CSqBklizLQlX6UNj0+noOeKVgGPNwS2ZRlU2xiUUOrus4zN",
       "p": {
-        "iv": "wswcCztXdMpse4PU",
-        "ct": "+qOy3j+vWwoCdrYn+av1HhsYetZBZRwUgs5g1HEeVhrPKuHQDplpySt9GRbphnPccYImdTEJEZ0zynOkc9ZfawX6J5uigtAhp/bz/oG7fMLXcB9IZjj0xs/YCOYxtR+mSsP8MXbk5cUF8fL/BhvD2YDdDNe2Ibi1rzXeUtfdkDs5GMfGZoFw6dEMawV46bc6rT8="
+        "iv": "3r47jKUzjgPhfCZ2",
+        "ct": "JIynLbxWQcLSw/Ka4Y9OGeHzCiu/etkvetnVxRhgC98eVcH63xdp6nVrourzrHzMUYb51E0mugDDYHWOYdXVU6pB7nIbhtUc1gem4Sq9GgZ9Mgi9uXERDCZrH+sWxZPLOahKmIyMTfSIUKuhGoAPMkxfJpd1uGdgg9/BQt54S5vn52w1"
       },
-      "created": "2026-10-05T13:36:43.609132+00:00"
-    },
-    {
-      "login": "2108296101",
-      "role": "admin",
-      "active": true,
-      "salt": "gesQLp3dhVt57iwyIk9MSg==",
-      "iv": "d/aaoxbUKtANbx5E",
-      "key": "iZI7YYqm/KYRpb6NguF0eRODlS+KYFC1C+6s1qAE/WKGosOwl0bve32X4fGYjpSc",
-      "mustChange": true,
-      "pwEm": "2026-10-05T16:24:11.888Z",
-      "p": {
-        "iv": "b+Xswr247oT7Yboo",
-        "ct": "l4vejHwJPcXH8eSwA4bJVhDaETmvkUU2WU7ZE0kBX+ZGvB1chlwgPtw8T0/fyW7r2J/NIMlk+IP/+4ynzoeUVQJGOWtidSeHkkf/jHV2ar49jFUQCejBd9uU9TlvNYnm+IHKgCEG9X/sRyMpaRshyIqvDToE4YU9KJPjb9mIEsIu"
-      },
-      "created": "2026-10-05T16:24:11.888Z"
+      "created": "2026-10-05T13:36:43.609132+00:00",
+      "_troca": false
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
