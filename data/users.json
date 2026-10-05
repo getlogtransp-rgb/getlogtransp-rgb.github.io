@@ -30,6 +30,20 @@
         "ct": "l4vejHwJPcXH8eSwA4bJVhDaETmvkUU2WU7ZE0kBX+ZGvB1chlwgPtw8T0/fyW7r2J/NIMlk+IP/+4ynzoeUVQJGOWtidSeHkkf/jHV2ar49jFUQCejBd9uU9TlvNYnm+IHKgCEG9X/sRyMpaRshyIqvDToE4YU9KJPjb9mIEsIu"
       },
       "created": "2026-10-05T16:24:11.888Z"
+    },
+    {
+      "login": "d21049861101",
+      "role": "colaborador",
+      "active": true,
+      "salt": "OeAO1mqc9g6mNSJYd8Sd1A==",
+      "iv": "PWHC5GcUujYFi5S/",
+      "key": "tyqe0Waoyt1zLiDIqK0DIKiFEVbMxsc4KWYaHL32oAkon90QYJY8kik3mE1zl1n4",
+      "pwEm": "2026-10-05T17:03:18.666Z",
+      "p": {
+        "iv": "RkXDkUVIbQbdcsY1",
+        "ct": "41vJrIZIzoujHpXB+jzBSk02m/aAdLVUGkGd0jE4NZGyKpVqUBXOW64gdC3GQ1rAgVwh4YQvhOXE+pGBHhRrasmkf6tiNseiGFgxTokQorSNgO4sOfLWPyAH7OIerYPUaByM2UQ9t+B6aZ/mnkpDLSCBssv75cLxqLcM59nSg8C8rVwoKpYZeQ=="
+      },
+      "created": "2026-10-05T17:03:18.667Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
