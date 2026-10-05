@@ -27,7 +27,7 @@ const avisar=mud=>{const e=estado();for(const f of [...SUBS])try{f(e,mud)}catch(
 // Consulta só a lista (leve). Se algum arquivo mudou, avisa quem estiver na tela com os dias alterados.
 const verificar=()=>VERIF||(VERIF=(async()=>{const antes=new Map(((await LISTA?.catch(()=>[]))||[]).map(x=>[x.dia,x.modificadoEm]));let L;
 try{const p=get('fonte=lista',true).then(j=>{if(!j.ok)throw new Error(j.erro);return j.dados});L=await p;LISTA=p;LISTA_EM=Date.now();ERRO=false}catch(e){ERRO=true;console.warn('verificação',e);avisar([]);return []}
-const mud=L.filter(x=>antes.get(x.dia)!==x.modificadoEm).map(x=>x.dia);ULT=ultimaMod(L);avisar(antes.size?mud:[]);return mud})().finally(()=>{VERIF=null;programar()}));
+const mud=L.filter(x=>antes.get(x.dia)!==x.modificadoEm).map(x=>x.dia);ULT=ultimaMod(L);avisar(antes.size?mud:L.map(x=>x.dia));return mud})().finally(()=>{VERIF=null;programar()}));
 // Dorme até o próximo horário previsto; a partir dele confere a cada 2 min até a atualização entrar.
 function programar(){clearTimeout(TMR);if(!SUBS.size||document.hidden)return;const a=C().agenda(ULT);const falta=a.proxima.ms-Date.now();
 TMR=setTimeout(verificar,falta>0?Math.min(falta+60000,6*3600000):(a.estado==='atrasada'?5:2)*60000)}

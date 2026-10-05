@@ -338,7 +338,7 @@ tr[data-setf]{cursor:pointer}
 
 <script src="/portal/perf-guard.js?v=7"></script>
 <script src="/portal/core.js?v=1"></script>
-<script src="/portal/drive-api.js?v=8"></script>
+<script src="/portal/drive-api.js?v=9"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:98,ALERTA:80,EMPRESA_PROPRIA:"GET"};
 const {COLS,NAO_ATRIB,num,str,empOf,nameOf,toRecords,parseDT,metaUpdate,normRows}=window.GL_CORE;
@@ -392,7 +392,8 @@ async function useEmbeddedPreview(){
 const dDia=s=>{const [d,m,y]=s.split(".");return new Date(+y,m-1,+d,12)};
 // Abre primeiro os dias mais recentes (e o período do link), mostra a tela e completa o histórico em segundo plano.
 async function loadAll(){
-  const L=window.GL_API.ordem(await window.GL_API.lista());
+  let L=window.GL_API.ordem(await window.GL_API.lista());
+  if(!L.length&&location.protocol!=="file:"){await new Promise(r=>setTimeout(r,2500));L=window.GL_API.ordem(await window.GL_API.lista(true))}
   if(!L.length){if(location.protocol==="file:"){S.src="local";return showPicker()}return showEmpty()}
   const lim=keyD(new Date(Date.now()-CONFIG.DIAS_HISTORICO*864e5)),de=new URLSearchParams(location.search).get("de");
   const ds=L.map(x=>dDia(x.dia)).filter(d=>keyD(d)>=lim);
@@ -405,10 +406,11 @@ async function loadAll(){
   if(!S.dates.length)showEmpty();
 }
 // Chamado pela camada de dados quando a lista do Drive é conferida (no horário previsto ou pelo botão Atualizar).
-let FORCED=false,UNSUB=null;
+let FORCED=false,UNSUB=null,RELOAD=false;
 const sub=()=>{if(!UNSUB){UNSUB=window.GL_API.assinar(onUpdate);addEventListener("pagehide",UNSUB)}};
 async function onUpdate(est,mud){
   S.agenda=est;S.lastCheck=new Date();if(S.src!=="http")return;
+  if(!S.dates.length){if((FORCED||mud.length)&&!RELOAD){RELOAD=true;FORCED=false;try{await loadAll()}finally{RELOAD=false}}return}
   let changed=false;
   for(const s of mud){const d=dDia(s),k=keyD(d);try{const x=await fetchDay(d);if(x.miss||S.meta.get(k)?.sig===x.sig)continue;ingest(k,x.json,x.lm).forEach(kk=>S.meta.get(kk).sig=x.sig);changed=true}catch(e){console.warn("Atualização",s,e)}}
   if(changed){const wasLatest=S.to===S.dates[0];afterLoad(true);if(wasLatest&&S.from===S.to){S.from=S.to=S.dates[0]}else if(wasLatest)S.to=S.dates[0];render();toast("Dados atualizados")}
@@ -469,7 +471,8 @@ function sellerState(rows){
     let st="—";
     if(collected)st="Coletado";
     else if(justified){const x=g.rows.find(r=>isJustifiedStatus(r.st));st=x?.st||"Justificado"}
-    else{const x=g.rows.filter(r=>r.pen>0).sort((a,b)=>b.pen-a.pen)[0];st=x?.st||g.rows[0]?.st||"—"}
+    else if(g.pen>0){const x=g.rows.filter(r=>r.pen>0).sort((a,b)=>b.pen-a.pen)[0];st=normStatus(x?.st)==="ACEITA"?"Aceita":"Em rota"}
+    else{const v=normStatus(g.rows[0]?.st);st=!v||v==="EM ROTA"||v==="ACEITA"||v==="COLETADO"?"Sem pendência":g.rows[0].st}
     m.set(g.k,{sit:visited||g.pen<=0?"Finalizado":"Pendente",st,pen:visited?0:g.pen,visited,collected,justified,prev:g.prev,col:g.col});
   }
   return m;

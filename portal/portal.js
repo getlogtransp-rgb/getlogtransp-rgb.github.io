@@ -55,10 +55,11 @@ go.disabled=true;go.textContent='Verificando...';msg.textContent='';
 try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console.warn('login',err);msg.className='msg err';msg.textContent=err.message==='off'?'Este acesso está desativado. Fale com o administrador.':err.message==='db'?'Não foi possível carregar os acessos. Verifique a conexão e tente de novo.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar'}});
 // Volta para a sessão do dia sem pedir senha, conferindo antes se o acesso continua valendo.
 (async()=>{let m='';try{m=sessionStorage.getItem('getlog_msg')||'';sessionStorage.removeItem('getlog_msg')}catch(e){}if(m){msg.className='msg err';msg.textContent=m}
-const x=sessGet();if(!x){sessDel();$('#u').focus();return}
+const fim=()=>{document.documentElement.classList.remove('sess');sessDel();$('#u').focus()};
+const x=sessGet();if(!x){fim();return}
 try{await loadDB();const usr=DB.users.find(u=>u.login===x.login);
 if(!usr||usr.active===false||usr.role!==x.role||(usr.pwEm||'')!==(x.pwEm||''))throw new Error('revogado');
-await start(usr,b2u(x.k),x)}catch(e){console.warn('sessão',e);sessDel();$('#u').focus()}})();
+await start(usr,b2u(x.k),x)}catch(e){console.warn('sessão',e);fim()}})();
 // ---- Autorização no servidor do ponto (Apps Script) ----
 const PLAN=()=>CFG.pontoUrl&&CFG.pontoToken;
 let PV=null;const versao=()=>PV||(PV=fetch(CFG.pontoUrl+'?versao=1',{cache:'no-store'}).then(r=>r.json()).then(j=>j.versao||1).catch(()=>{PV=null;return 0}));
@@ -200,7 +201,7 @@ ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coleta
 <div class="box mt"><div class="box-head"><div><h3>Detalhe por seller</h3><p>${N(sel.length)} linhas${sel.length>200?' · mostrando as 200 maiores (use a busca para achar outras)':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Seller</th><th>Seller ID</th><th>Cliente</th><th>Região</th>${own?'':'<th>Motorista</th>'}<th class="n">Pacotes</th></tr></thead><tbody>${sel.slice(0,200).map(([k,v])=>{const [s,id,c,r,m]=k.split('|');return `<tr><td>${esc(s)}</td><td>${esc(id||'—')}</td><td>${esc(c)}</td><td>${esc(r)}</td>${own?'':`<td>${esc(m)}</td>`}<td class="n">${N(v)}</td></tr>`}).join('')}</tbody></table></div></div>`:vazio('Nenhuma coleta encontrada para esse filtro. Troque o período ou limpe os filtros.')}`};
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fs').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=9" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=10" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
