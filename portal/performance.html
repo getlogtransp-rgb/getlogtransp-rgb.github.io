@@ -470,7 +470,8 @@ function applyF(rows,skip){
 }
 function sum(rows){const a={prev:0,col:0,nc:0,adi:0,tot:0,nor:0,ndes:0,jus:0,pen:0};for(const r of rows)for(const k in a)a[k]+=r[k];return a}
 function groupBy(rows,fn){const m=new Map();for(const r of rows){const k=fn(r);let g=m.get(k);if(!g){g={k,rows:[],prev:0,col:0,adi:0,tot:0,jus:0,pen:0};m.set(k,g)}g.rows.push(r);g.prev+=r.prev;g.col+=r.col;g.adi+=r.adi;g.tot+=r.tot;g.jus+=r.jus;g.pen+=r.pen}return [...m.values()]}
-const sKey=r=>r.sid+"|"+r.cli;
+// Chave do seller = nome do seller + cliente (regra do dono).
+const sKey=r=>normStatus(r.seller)+"|"+r.cli;
 // Linha sem nenhum número (previsto, coletado, justificado, em rota) não aparece nas listas.
 const temInfo=g=>g.prev>0||g.col>0||g.jus>0||g.pen>0||g.tot>0;
 const JUSTIFIED_STATUS=new Set(["LOJA FECHADA","FECHADA","PRODUTO INDISPONIVEL","CODIGO DE COLETA NAO INFORMADO","ENDERECO DIVERGENTE","NAO LOCALIZEI O ENDERECO","ERRO DO SISTEMA","PACOTE CANCELADO","KWAI - ERRO NA OCORRENCIA","DROP RECEBEU","DROP CANCELADO OU FORA DA DS FM NOR","PACOTE CANCELADO OU FORA DA DS FM NOR"]);
@@ -480,11 +481,11 @@ function sellerState(rows){
   const m=new Map();
   for(const g of groupBy(rows,sKey)){
     const collected=g.rows.some(r=>r.col>0||r.tot>0);
-    const justified=g.rows.some(r=>isJustifiedStatus(r.st));
+    const justified=g.rows.some(r=>isJustifiedStatus(r.st)||(r.jus>0&&normStatus(r.st)!=="BAIXA INDEVIDA"));
     const visited=collected||justified;
-    // Baixa indevida é pendência não justificada: o seller fica Pendente mesmo que outra linha dele tenha coleta ou justificativa.
+    // Baixa indevida é pendência não justificada; mas se alguém coletou ou justificou esse seller, ele conta como visitado.
     const bx=g.rows.filter(r=>normStatus(r.st)==="BAIXA INDEVIDA");
-    if(bx.length){const pen=bx.reduce((s,r)=>s+Math.max(r.pen,r.prev-r.col,0),0)||Math.max(g.pen,1);m.set(g.k,{sit:"Pendente",st:bx[0].st,pen,visited:false,collected,justified:false,prev:g.prev,col:g.col});continue}
+    if(bx.length&&!collected&&!g.rows.some(r=>r.jus>0&&normStatus(r.st)!=="BAIXA INDEVIDA")){const pen=bx.reduce((s,r)=>s+Math.max(r.pen,r.prev-r.col,0),0)||Math.max(g.pen,1);m.set(g.k,{sit:"Pendente",st:bx[0].st,pen,visited:false,collected,justified:false,prev:g.prev,col:g.col});continue}
     let st="—";
     // Coletado e entregue no DROP: mostra "DROP Recebeu" em vez de "Coletado" para não esconder esse status.
     if(collected){const d=g.rows.find(r=>normStatus(r.st)==="DROP RECEBEU");st=d?d.st:"Coletado"}
