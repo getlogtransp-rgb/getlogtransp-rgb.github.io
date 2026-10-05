@@ -279,7 +279,7 @@ tr[data-setf]{cursor:pointer}
 .ms-v label{position:absolute;left:0;right:0;height:34px}
 .ms-group{display:flex;align-items:center;gap:6px;padding:5px 8px 2px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3);font-weight:700}.ms-group label{flex:1;padding:4px 0}.ms-toggle{border:1px solid transparent;background:transparent;color:var(--ink-3);width:26px;height:26px;border-radius:6px;padding:0;display:grid;place-items:center;transition:background .15s ease,border-color .15s ease,color .15s ease}.ms-toggle svg{width:14px;height:14px;transition:transform .18s ease}.ms-toggle.open svg{transform:rotate(180deg)}.ms-toggle:hover{background:var(--bg);border-color:var(--line);color:var(--navy)}
 .status-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:-1px 0 12px}
-.status-item{border:1px solid var(--line);border-left:3px solid var(--line);background:var(--card);border-radius:9px;padding:8px 10px;text-align:left;min-width:0}.status-item.pending{border-color:rgba(247,101,10,.55);border-left-color:var(--or);background:var(--or-s);box-shadow:0 0 0 1px rgba(247,101,10,.06)}.status-item.pending b,.status-item.pending span{color:var(--or)}
+.status-item{border:1px solid var(--line);border-left:3px solid var(--line);background:var(--card);border-radius:9px;padding:8px 10px;text-align:left;min-width:0}.status-item .pend-tag{display:inline-block;margin-top:5px;padding:1px 7px;border-radius:99px;background:var(--or-s);color:var(--or);font-style:normal;font-size:11px;font-weight:600}
 .status-item:hover{background:var(--bg)}
 .status-item b{display:block;white-space:normal;overflow:visible;text-overflow:clip;font-size:12.5px;line-height:1.25;overflow-wrap:anywhere}
 .status-item span{display:block;color:var(--ink-3);font-size:11.5px;line-height:1.25;margin-top:3px;white-space:normal}
@@ -336,12 +336,12 @@ tr[data-setf]{cursor:pointer}
 </main>
 <div class="toast" id="toast"></div>
 
-<script src="/portal/perf-guard.js?v=6"></script>
-<script src="/portal/drive-api.js?v=6"></script>
+<script src="/portal/perf-guard.js?v=7"></script>
+<script src="/portal/core.js?v=1"></script>
+<script src="/portal/drive-api.js?v=8"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:98,ALERTA:80,EMPRESA_PROPRIA:"GET"};
-const COLS={DATA:"DATA",SID:"SELLER ID",SELLER:"SELLER",CLI:"CLIENTE",MA:"MOTORISTA ATRIBUÍDO",MO:"MOTORISTA OFICIAL",WB:"WAYBILL REFERÊNCIA",END:"ENDEREÇO",BAI:"BAIRRO",CID:"CIDADE",CEP:"CEP",REG:"REGIÃO",PRI:"TIPO DE PRIORIDADE",ST:"STATUS DO SELLER",HORA:"HORA",CDP:"COLETADO DO PREVISTO",NC:"NÃO COLETADO",ADI:"COLETA ADIANTADA",TOT:"COLETADO TOTAL",NOR:"COLETADO DS FM NOR",NDES:"COLETADO NÃO DESCARREGADO",JUS:"JUSTIFICADO",NJ:"NÃO JUSTIFICADO",JTXT:"JUSTIFICATIVA"};
-const NAO_ATRIB="NÃO ATRIBUÍDO NA GERAL";
+const {COLS,NAO_ATRIB,num,str,empOf,nameOf,toRecords,parseDT,metaUpdate,normRows}=window.GL_CORE;
 const FILTROS=[["sel","Seller","seller"],["cli","Cliente","cli"],["reg","Região","reg"],["end","Endereço","end"],["bai","Bairro","bai"],["cid","Cidade","cid"],["ma","Motorista","ma"],["emp","Quem coletou","emp"],["des","Descarregado","des"],["sit","Situação","sit"],["pri","Prioridade","pri"]];
 const EXTRA_FILTROS=[["st","Status","st"]];
 const TODOS_FILTROS=[...FILTROS,...EXTRA_FILTROS];
@@ -353,8 +353,6 @@ const nf=new Intl.NumberFormat("pt-BR");
 const N=v=>nf.format(Math.round(v||0));
 const P=v=>isFinite(v)?(v*100).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})+"%":"—";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const num=v=>{if(typeof v==="number")return v;if(v==null||v==="")return 0;const n=Number(String(v).replace(/\./g,"").replace(",","."));return isFinite(n)?n:0};
-const str=v=>v==null?"":String(v).trim();
 const pad=n=>String(n).padStart(2,"0");
 const fmtD=d=>`${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()}`;
 const keyD=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -364,10 +362,9 @@ const lblF=k=>{const [y,m,d]=k.split("-");return `${d}/${m}/${y}`};
 const wk=["dom","seg","ter","qua","qui","sex","sáb"];
 const lblDW=k=>`${wk[k2d(k).getDay()]} ${lblD(k)}`;
 const hhmm=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
-const empOf=m=>{m=str(m);if(!m)return "SEM MOTORISTA";const i=m.indexOf(" - ");return i>0?m.slice(0,i).trim():m};
-const nameOf=m=>{m=str(m);const i=m.indexOf(" - ");return i>0?m.slice(i+3).trim():m};
 const empLbl=e=>e===CONFIG.EMPRESA_PROPRIA?"GETLOG":e;
-const optLbl=(k,v)=>k==="ma"?(v===NAO_ATRIB?"Sem motorista atribuído":nameOf(v)):k==="emp"?empLbl(v):k==="sit"&&String(v).includes("::")?String(v).split("::")[1]:v;
+const SIDS=new Map();const sellerLbl=v=>{const ids=SIDS.get(v);return ids&&ids.size?v+" | "+[...ids].join(", "):v};
+const optLbl=(k,v)=>k==="sel"?sellerLbl(v):k==="ma"?(v===NAO_ATRIB?"Sem motorista atribuído":nameOf(v)):k==="emp"?empLbl(v):k==="sit"&&String(v).includes("::")?String(v).split("::")[1]:v;
 const priorGroup=v=>["NORMAL","FORA DO PREVISTO"].includes(str(v).toUpperCase())?"Normal":"Prioridades";
 const perfCls=v=>v*100>=CONFIG.META?"ok":v*100>=CONFIG.ALERTA?"warn":"bad";
 const perfColor=v=>({ok:"var(--ok-b)",warn:"var(--warn-b)",bad:"var(--bad-b)"})[perfCls(v)];
@@ -375,35 +372,8 @@ const perfTxt=v=>({ok:"Na meta",warn:"Atenção",bad:"Crítico"})[perfCls(v)];
 const initials=n=>{const p=nameOf(n).split(/\s+/).filter(Boolean);return ((p[0]||"?")[0]+((p[1]||"")[0]||"")).toUpperCase()};
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2400)}
 
-function toRecords(j){
-  if(Array.isArray(j)){if(!j.length)return [];if(Array.isArray(j[0])){const h=j[0].map(str);return j.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}return j}
-  if(j&&typeof j==="object"){
-    const hk=["colunas","columns","cabecalho","header","headers"].find(k=>Array.isArray(j[k]));
-    const rk=["linhas","rows","dados","data","registros","values","valores"].find(k=>Array.isArray(j[k]));
-    if(hk&&rk){const h=j[hk].map(str);return j[rk].map(r=>Array.isArray(r)?Object.fromEntries(h.map((k,i)=>[k,r[i]])):r)}
-    if(rk)return toRecords(j[rk]);
-    const arrs=Object.entries(j).filter(([k,v])=>Array.isArray(v));
-    if(arrs.length&&arrs.every(([k,v])=>!v.length||typeof v[0]!=="object")&&arrs.some(([k])=>k.trim().toUpperCase()===COLS.SELLER)){const len=Math.max(...arrs.map(([k,v])=>v.length));const out=[];for(let i=0;i<len;i++){const o={};for(const [k,v] of arrs)o[k]=v[i];out.push(o)}return out}
-    const big=arrs.sort((a,b)=>b[1].length-a[1].length)[0];if(big)return toRecords(big[1]);
-  }
-  return [];
-}
-function parseDT(v){if(v==null)return null;if(typeof v==="number"){const d=new Date(v>1e12?v:v*1000);return isNaN(d)?null:d}const s=String(v).trim();const m=s.match(/^(\d{2})[\/.](\d{2})[\/.](\d{4})[ T]?(\d{2}):(\d{2})(?::(\d{2}))?/);if(m)return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));const d=new Date(s);return isNaN(d)?null:d}
-function metaUpdate(j){if(!j||Array.isArray(j)||typeof j!=="object")return null;for(const k of Object.keys(j)){if(/atualiza|gerad|updated|modified|timestamp/i.test(k)&&typeof j[k]!=="object"){const d=parseDT(j[k]);if(d)return d}}return null}
-function normRows(recs,fk){
-  const out=[];
-  for(const r0 of recs){
-    const r={};for(const k in r0)r[k.trim().toUpperCase()]=r0[k];
-    const seller=str(r[COLS.SELLER]);if(!seller&&!str(r[COLS.SID]))continue;
-    let dk=fk;const m=str(r[COLS.DATA]).match(/^(\d{2})\/(\d{2})\/(\d{4})/);if(m)dk=`${m[3]}-${m[2]}-${m[1]}`;
-    const cdp=num(r[COLS.CDP]),nc=num(r[COLS.NC]);const ma=str(r[COLS.MA])||NAO_ATRIB,mo=str(r[COLS.MO]);
-    const tot=num(r[COLS.TOT]),pen=num(r[COLS.NJ]),ndes=num(r[COLS.NDES]);
-    out.push({dk,sid:str(r[COLS.SID]),seller:seller||str(r[COLS.SID]),cli:str(r[COLS.CLI])||"SEM CLIENTE",ma,mo,emp:empOf(mo),wb:str(r[COLS.WB]),end:str(r[COLS.END]),bai:str(r[COLS.BAI]),cid:str(r[COLS.CID]),cep:str(r[COLS.CEP]),reg:str(r[COLS.REG])||"Sem região",pri:str(r[COLS.PRI])||"—",st:str(r[COLS.ST])||"—",sit:pen>0?"Pendente":"Finalizado",des:tot>0?(ndes>0?"Não":"Sim"):"—",outro:tot>0&&mo&&ma!==mo?"Sim":"Não",hora:str(r[COLS.HORA]),prev:cdp+nc,col:cdp,nc,adi:num(r[COLS.ADI]),tot,nor:num(r[COLS.NOR]),ndes,jus:num(r[COLS.JUS]),pen,jtxt:str(r[COLS.JTXT])});
-  }
-  return out;
-}
 function ingest(dk,json,lastMod){
-  const rows=normRows(toRecords(json),dk);const g=new Map();for(const r of rows){if(!g.has(r.dk))g.set(r.dk,[]);g.get(r.dk).push(r)}
+  const rows=normRows(toRecords(json),dk);for(const r of rows)if(r.sid){let x=SIDS.get(r.seller);if(!x)SIDS.set(r.seller,x=new Set());x.add(r.sid)}const g=new Map();for(const r of rows){if(!g.has(r.dk))g.set(r.dk,[]);g.get(r.dk).push(r)}
   if(!g.size&&dk)g.set(dk,[]);
   for(const [k,v] of g){
     S.byDate.set(k,v);let upd=metaUpdate(json)||lastMod||null;
@@ -414,31 +384,39 @@ function ingest(dk,json,lastMod){
 }
 function candidateDates(){const out=[];const d=new Date();d.setHours(12,0,0,0);for(let i=0;i<CONFIG.DIAS_HISTORICO;i++){const w=d.getDay();if(w!==0&&(CONFIG.INCLUIR_SABADO||w!==6))out.push(new Date(d));d.setDate(d.getDate()-1)}return out}
 const urlFor=d=>encodeURI(CONFIG.PASTA+CONFIG.PREFIXO+fmtD(d)+".json");
-async function fetchDay(d,bust){const x=await window.GL_API.dia(fmtD(d),!!window.GL_FORCE);if(!x)return {miss:true};return {txt:window.GL_FILTRA(x.txt),lm:x.lm}}
+async function fetchDay(d){const x=await window.GL_API.dia(fmtD(d));if(!x)return {miss:true};return {json:x.json,lm:x.lm?new Date(x.lm.getTime()):null,sig:x.sig}}
 async function embeddedPreview(){return window.GL_FINAL?window.GL_FINAL():null}
 async function useEmbeddedPreview(){
   try{const p=await embeddedPreview();if(!p)return false;S.src="previa";for(const [k,v] of Object.entries(p))ingest(k,v,null);afterLoad();return true}catch(e){console.warn("Falha ao carregar prévia embutida",e);return false}
 }
+const dDia=s=>{const [d,m,y]=s.split(".");return new Date(+y,m-1,+d,12)};
+// Abre primeiro os dias mais recentes (e o período do link), mostra a tela e completa o histórico em segundo plano.
 async function loadAll(){
-  
-  const ds=candidateDates();let err=0,found=0;
-  const res=await Promise.all(ds.map((d,i)=>fetchDay(d,i<2).then(x=>({d,x})).catch(()=>{err++;return {d,x:{miss:true}}})));
-  for(const {d,x} of res){if(x.miss)continue;try{const ks=ingest(keyD(d),JSON.parse(x.txt),x.lm);ks.forEach(k=>S.meta.get(k).sig=x.txt.length+"|"+(x.lm?x.lm.getTime():""));found++}catch(e){console.warn("JSON inválido",urlFor(d),e)}}
-  
-  if(!found&&(location.protocol==="file:"||err===ds.length)){S.src="local";return showPicker()}
-  if(!found)return showEmpty();
-  afterLoad();setInterval(checkUpdates,CONFIG.CHECAR_A_CADA_SEG*1000);
+  const L=window.GL_API.ordem(await window.GL_API.lista());
+  if(!L.length){if(location.protocol==="file:"){S.src="local";return showPicker()}return showEmpty()}
+  const lim=keyD(new Date(Date.now()-CONFIG.DIAS_HISTORICO*864e5)),de=new URLSearchParams(location.search).get("de");
+  const ds=L.map(x=>dDia(x.dia)).filter(d=>keyD(d)>=lim);
+  const first=ds.filter((d,i)=>i<2||(de&&keyD(d)>=de)),rest=ds.filter(d=>!first.includes(d));
+  const take=async list=>{let n=0;await window.GL_API.pool(list,6,async d=>{const x=await fetchDay(d);if(x.miss)return;try{ingest(keyD(d),x.json,x.lm).forEach(k=>S.meta.get(k).sig=x.sig);n++}catch(e){console.warn("Dia ilegível",fmtD(d),e)}});return n};
+  const found=await take(first);
+  if(found)afterLoad();
+  sub();
+  if(rest.length&&await take(rest))afterLoad(!!found);
+  if(!S.dates.length)showEmpty();
 }
-async function checkUpdates(force){
-  if(S.src!=="http")return;if(!force&&(document.hidden||!window.GL_API.naJanela("performance")))return;window.GL_FORCE=!!force;
-  const t=new Date();t.setHours(12,0,0,0);const tries=[t];const l=S.dates[0];if(l&&l!==keyD(t))tries.push(k2d(l));
+// Chamado pela camada de dados quando a lista do Drive é conferida (no horário previsto ou pelo botão Atualizar).
+let FORCED=false,UNSUB=null;
+const sub=()=>{if(!UNSUB){UNSUB=window.GL_API.assinar(onUpdate);addEventListener("pagehide",UNSUB)}};
+async function onUpdate(est,mud){
+  S.agenda=est;S.lastCheck=new Date();if(S.src!=="http")return;
   let changed=false;
-  for(const d of tries){try{const x=await fetchDay(d,true);if(x.miss)continue;const k=keyD(d);const sig=x.txt.length+"|"+(x.lm?x.lm.getTime():"");if(S.meta.get(k)?.sig===sig)continue;ingest(k,JSON.parse(x.txt),x.lm).forEach(kk=>S.meta.get(kk).sig=sig);changed=true}catch(e){}}
-  S.lastCheck=new Date();
-  window.GL_FORCE=false;
-  if(changed){const wasLatest=S.to===S.dates[0];const prev=S.dates[0];afterLoad(true);if(wasLatest&&S.from===S.to){S.from=S.to=S.dates[0]}else if(wasLatest)S.to=S.dates[0];render();toast("Dados atualizados")}else renderHeader();
+  for(const s of mud){const d=dDia(s),k=keyD(d);try{const x=await fetchDay(d);if(x.miss||S.meta.get(k)?.sig===x.sig)continue;ingest(k,x.json,x.lm).forEach(kk=>S.meta.get(kk).sig=x.sig);changed=true}catch(e){console.warn("Atualização",s,e)}}
+  if(changed){const wasLatest=S.to===S.dates[0];afterLoad(true);if(wasLatest&&S.from===S.to){S.from=S.to=S.dates[0]}else if(wasLatest)S.to=S.dates[0];render();toast("Dados atualizados")}
+  else{if(S.dates.length)renderHeader();if(FORCED)toast(est.erro?"Sem conexão com os dados. Tente de novo em instantes.":"Os dados já estão atualizados")}
+  FORCED=false;
 }
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkUpdates()});
+async function checkUpdates(force){if(S.src!=="http")return;FORCED=!!force;await window.GL_API.verificar()}
+
 
 
 function loadURLState(){const p=new URLSearchParams(location.search);const a=p.get("de"),b=p.get("ate");if(a&&b){S.from=a;S.to=b}for(const [k] of TODOS_FILTROS){const vals=p.getAll("f_"+k);if(vals.length)S.f[k]=new Set(vals)}S.metric=p.get("met")||null}
@@ -462,7 +440,7 @@ function showPicker(){
   $("#fpick").onchange=e=>take([...e.target.files]);
   const dz=$("#drop");["dragover","dragenter"].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add("on")}));["dragleave","drop"].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove("on")}));dz.addEventListener("drop",e=>take([...e.dataTransfer.files]));
 }
-function showEmpty(){$("#app").innerHTML=`<div class="state"><h2>Nenhum dado publicado ainda</h2><p>Os arquivos aparecem aqui assim que forem enviados para a pasta <b>${esc(CONFIG.PASTA.replace(/\/$/,""))}</b>. A página confere sozinha a cada ${Math.round(CONFIG.CHECAR_A_CADA_SEG/60)} min.</p></div>`;$("#hdrSub").textContent="Sem dados";setTimeout(()=>location.reload(),CONFIG.CHECAR_A_CADA_SEG*1000)}
+function showEmpty(){$("#app").innerHTML=`<div class="state"><h2>Nenhum dado disponível ainda</h2><p>Os números aparecem aqui assim que a próxima atualização for publicada. A página confere sozinha nos horários previstos.</p></div>`;$("#hdrSub").textContent="Sem dados";sub()}
 
 const inRange=k=>k>=S.from&&k<=S.to;
 const rangeDates=()=>S.dates.filter(inRange);
@@ -515,11 +493,10 @@ const IC={
 
 
 function renderHeader(){
-  const k=rangeDates()[0]||S.to;const upd=S.meta.get(k)?.upd;const latest=k===S.dates[0];
-  const nx=upd?new Date(upd.getTime()+CONFIG.INTERVALO_ATUALIZACAO_MIN*60000):null;
-  $("#hLast").textContent=upd?`${lblD(keyD(upd))} às ${hhmm(upd)}`:"—";
-  $("#hNext").textContent=latest&&nx?(nx<new Date()?`${hhmm(nx)} · aguardando`:hhmm(nx)):"Dia encerrado";
-  const lv=$("#hLive");lv.innerHTML=`<span class="dot ${S.src==="http"?"":"off"}"></span>${S.src==="http"?(S.lastCheck?`Conferido às ${hhmm(S.lastCheck)}`:"Ao vivo"):S.src==="previa"?"Dados fictícios do protótipo":"Arquivos locais"}`;
+  const a=S.agenda;
+  $("#hLast").textContent=a&&a.ultima?a.ultima.label:"—";
+  $("#hNext").textContent=a?a.proxima.label+(a.estado!=="prevista"?" · "+window.GL_CORE.ESTADO_TXT[a.estado]:""):"—";
+  const lv=$("#hLive"),on=S.src==="http"&&!a?.erro;lv.innerHTML=`<span class="dot ${on?"":"off"}"></span>${S.src==="http"?(a?.erro?"Sem conexão":S.lastCheck?`Conferido às ${hhmm(S.lastCheck)}`:"Ao vivo"):S.src==="previa"?"Dados de exemplo":"Arquivos locais"}`;
 }
 
 
@@ -640,7 +617,7 @@ function homeHTML(rows,t){
   const sth=(l,c,r)=>`<th class="s ${r?"r":""}" data-col="${c}">${l}</th>`;
   return `<section class="hero"><div class="pcard"><h2>Performance de visita <span class="tag ${cls}">${perfTxt(isFinite(pv)?pv:0)}</span></h2><div class="gauge">${gaugeSVG(pv)}</div><div class="pv"><b data-count="${(pv*100).toFixed(2)}" data-pct="1" style="color:${perfColor(isFinite(pv)?pv:0)}">0%</b><span class="aqua">Sellers visitados ${N(visited)} de ${N(sellers.length)}</span><span>Meta ${meta}%</span></div><div class="pbar"><i style="width:${Math.min(100,w(t.col+t.jus))}%;background:${perfColor(isFinite(pv)?pv:0)}"></i><u style="left:${meta}%"></u></div><div class="pmeta top-metrics" style="margin-top:14px"><div><small>Performance de coleta</small><b style="color:${perfColor(isFinite(pc)?pc:0)}">${P(pc)}${kpiDelta(t,"pc")}</b></div><div class="unload-metric ${S.unloadOpen?"on":""}" data-unload-toggle="1"><small>Performance de descarregamento</small><b style="color:${perfColor(t.tot?discharged/t.tot:0)}">${P(t.tot?discharged/t.tot:NaN)}</b><span class="sub">${N(unloadDriverCount)} motoristas · ${N(t.ndes)} pacotes não descarregados</span></div><div><small>Ainda em rota</small><b style="color:var(--or-2)">${N(t.pen)}</b></div><div><small>Coletado GETLOG</small><b>${N(getTot)} <em>${P(t.tot?getTot/t.tot:NaN)}</em></b></div>${S.unloadOpen?`<div class="unload-list">${unloadDrivers.length?unloadDrivers.map(g=>`<div class="unload-row"><span>${esc(g.k===NAO_ATRIB?"Sem motorista identificado":nameOf(g.k))}</span><b>${N(g.ndes)} pacotes</b></div>`).join(""):`<div class="unload-empty">Nenhum motorista com pacote pendente de descarregamento.</div>`}</div>`:""}</div></div>
   <div class="kpis"><div class="kpi ${S.metric==="prev"?"metric-on":""}" data-metric="prev"><div class="l">Previsto</div><div class="v" data-count="${t.prev}">0</div><div class="h">${N(sellers.length)} sellers ${kpiDelta(t,"prev")}</div></div><div class="kpi ${S.metric==="col"?"metric-on":""}" data-metric="col"><div class="l">Coletado do previsto</div><div class="v" data-count="${t.col}">0</div><div class="h">${P(pc)} do previsto ${kpiDelta(t,"col")}</div></div><div class="kpi ${S.metric==="jus"?"metric-on":""}" data-metric="jus"><div class="l">Justificado</div><div class="v" data-count="${t.jus}">0</div><div class="h">${P(t.prev?t.jus/t.prev:NaN)} do previsto ${kpiDelta(t,"jus")}</div></div><div class="kpi hot ${S.metric==="pen"?"metric-on":""}" data-metric="pen"><div class="l">Em rota</div><div class="v" data-count="${t.pen}">0</div><div class="h">${N(sPend.length)} sellers · ${N(motRoute)} motoristas ${kpiDelta(t,"pen")}</div><button data-go="pend">Ver lista</button></div><div class="kpi ${S.metric==="adi"?"metric-on":""}" data-metric="adi"><div class="l">Coleta adiantada</div><div class="v" data-count="${t.adi}">0</div><div class="h">Além do previsto ${kpiDelta(t,"adi")}</div></div><div class="kpi ${S.metric==="tot"?"metric-on":""}" data-metric="tot"><div class="l">Coletado total</div><div class="v" data-count="${t.tot}">0</div><div class="h">${N(discharged)} descarregados ${kpiDelta(t,"tot")}</div></div><div class="kpi ${S.metric==="third"?"metric-on":""}" data-metric="third"><div class="l">Coletado terceiros</div><div class="v" data-count="${thirdTot}">0</div><div class="h">${P(t.tot?thirdTot/t.tot:NaN)} do coletado total</div></div><div class="kpi ${S.metric==="des"?"metric-on":""}" data-metric="des"><div class="l">Descarregado</div><div class="v" data-count="${discharged}">0</div><div class="h">${P(t.tot?discharged/t.tot:NaN)} do coletado total</div></div><div class="kpi ${S.metric==="ndes"?"metric-on":""}" data-metric="ndes"><div class="l">Não descarregado</div><div class="v" data-count="${t.ndes}">0</div><div class="h">${P(t.tot?t.ndes/t.tot:NaN)} do coletado total ${kpiDelta(t,"ndes")}</div></div><div class="kpi"><div class="l">Motoristas</div><div class="v" data-count="${motCol}">0</div><div class="h">coletaram de ${N(motAtr)} atribuídos</div></div></div></section>
-  <section class="status-strip">${statuses.map(g=>`<button class="status-item ${g.pen>0?"pending":""}" data-setf="st" data-v="${esc(g.k)}"><b>${esc(g.k)}</b><span>${N(g.sellers)} sellers · ${N(g.prev)} previstos${g.pen>0?` · ${N(g.pen)} não justificados`:""}</span></button>`).join("")}</section>
+  <section class="status-strip">${statuses.map(g=>`<button class="status-item" data-setf="st" data-v="${esc(g.k)}"><b>${esc(g.k)}</b><span>${N(g.sellers)} sellers · ${N(g.prev)} previstos</span>${g.pen>0?`<em class="pend-tag">${N(g.pen)} não justificados</em>`:""}</button>`).join("")}</section>
   <section class="grid">  <div class="card c12 gap-card"><div class="ch"><div><h3>Onde está o gap</h3><p>Top 10 motorista + região + cliente com mais pacotes em rota. Clique para detalhar os sellers.</p></div></div><div class="gap-list">${gaps.length?gaps.map((g,i)=>{const id=g.k,open=S.gapOpen.has(id);return `<div class="gap-item" data-open="${open?1:0}"><button class="gap-row" data-gap="${esc(id)}" aria-expanded="${open}"><b>${i+1}. ${esc(g.ma===NAO_ATRIB?"Sem motorista":nameOf(g.ma))}</b><small>${esc(g.reg)} · ${esc(g.cli)}</small><strong>${N(g.pen)}<small>${P(g.pen/gapTotal)}</small></strong><svg class="gap-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></button><div class="gap-body">${g.sellers.map(x=>`<button class="gap-seller" data-setf="sel" data-v="${esc(x.seller)}"><b>${esc(x.seller)}</b><span>${esc(x.end||"Sem endereço")}${x.bai?" · "+esc(x.bai):""}</span><strong>${N(x.prev)}<small>previstos · ${N(x.pen)} em rota</small></strong></button>`).join("")}</div></div>`}).join(""):'<div class="empty">Sem gap pendente</div>'}</div></div></section>
   <section class="alerts">${topM?`<button class="al" data-setf="ma" data-v="${esc(topM.k)}"><span class="ic">${IC.truck}</span><div><small>Motorista com mais pendências</small><strong>${esc(nameOf(topM.k))}</strong><span>${N(topM.pen)} pacotes em ${N(new Set(topM.rows.filter(r=>r.pen>0).map(sKey)).size)} sellers</span></div></button>`:`<div class="al n"><span class="ic">${IC.truck}</span><div><small>Motoristas</small><strong>Nenhum pacote em rota</strong><span>Rotas resolvidas</span></div></div>`}${topS?`<button class="al" data-setf="sel" data-v="${esc(topS.seller)}"><span class="ic">${IC.store}</span><div><small>Seller com mais pendências</small><strong>${esc(topS.seller)}</strong><span>${N(topS.pen)} pacotes · ${esc(topS.cli)}</span></div></button>`:`<div class="al n"><span class="ic">${IC.store}</span><div><small>Sellers</small><strong>Sem pendências</strong><span>Nenhum seller aguardando</span></div></div>`}</section>
   <section class="grid"><div class="card c7"><div class="ch"><div><h3>Destino do previsto</h3><p>Cada pacote previsto termina em um destes grupos</p></div></div><div class="stack"><div style="width:${w(t.col)}%;background:var(--navy)"></div><div style="width:${w(t.jus)}%;background:var(--aqua)"></div><div style="width:${w(t.pen)}%;background:var(--or)"></div></div><div class="leg"><div style="border-color:var(--navy)"><small>Coletado</small><b>${N(t.col)}</b><em>${P(t.prev?t.col/t.prev:NaN)}</em></div><div style="border-color:var(--aqua)"><small>Justificado</small><b>${N(t.jus)}</b><em>${P(t.prev?t.jus/t.prev:NaN)}</em></div><div style="border-color:var(--or)"><small>Em rota</small><b>${N(t.pen)}</b><em>${P(t.prev?t.pen/t.prev:NaN)}</em></div></div><div class="note">Além do previsto entraram <b>${N(t.adi)}</b> pacotes adiantados, somando <b>${N(t.tot)}</b> coletados no total.</div></div>
@@ -656,7 +633,7 @@ function homeHTML(rows,t){
 }
 function sellerTable(sellers){
   const q=S.tQ.toLowerCase();let list=sellers.map(s=>({...s,ma:s.maList.join(" "),pv:s.pv}));
-  if(q)list=list.filter(s=>(s.seller+" "+s.ma+" "+s.mo+" "+s.bai+" "+s.cid+" "+s.cep+" "+s.end+" "+s.cli+" "+s.jtxt).toLowerCase().includes(q));
+  if(q)list=list.filter(s=>(s.seller+" "+s.sid+" "+s.ma+" "+s.mo+" "+s.bai+" "+s.cid+" "+s.cep+" "+s.end+" "+s.cli+" "+s.jtxt).toLowerCase().includes(q));
   const {k,d}=S.tSort;list.sort((a,b)=>{const x=a[k]??"",y=b[k]??"";return (typeof x==="string"?String(x).localeCompare(String(y),"pt-BR",{numeric:true}):(x-y))*d||b.pen-a.pen});
   const per=25,pages=Math.max(1,Math.ceil(list.length/per));S.tPage=Math.min(S.tPage,pages-1);const pg=list.slice(S.tPage*per,S.tPage*per+per);
   const th=(key,l,r)=>`<th class="s ${r?"r":""}" data-sort="${key}" ${S.tSort.k===key?`aria-sort="${S.tSort.d<0?"descending":"ascending"}"`:""}>${l}</th>`;
@@ -672,14 +649,14 @@ function pendData(rows){
 }
 function pendHTML(rows,t){
   const {drivers,bySeller}=pendData(rows);const q=S.pQ.toLowerCase();
-  const ds=q?drivers.map(d=>({...d,list:d.list.filter(s=>(d.ma+" "+s.seller+" "+s.bai+" "+s.cli+" "+s.reg).toLowerCase().includes(q))})).filter(d=>d.list.length):drivers;
+  const ds=q?drivers.map(d=>({...d,list:d.list.filter(s=>(d.ma+" "+s.seller+" "+s.sid+" "+s.bai+" "+s.cli+" "+s.reg).toLowerCase().includes(q))})).filter(d=>d.list.length):drivers;
   const big=[...bySeller].sort((a,b)=>b.pen-a.pen)[0];
   return `<section><div class="ph"><div><h2>Pendentes em rota</h2><p>Sellers com pacotes ainda não coletados e sem justificativa, por motorista.</p></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" id="cpPend">${IC.copy}Copiar resumo</button><button class="btn or" id="expPend">${IC.dl}Baixar pendentes</button></div></div>
     <div class="kpis psum"><div class="kpi hot"><div class="l">Pacotes em rota</div><div class="v">${N(t.pen)}</div><div class="h">${P(t.prev?t.pen/t.prev:NaN)} do previsto</div></div>
     <div class="kpi"><div class="l">Sellers aguardando</div><div class="v">${N(bySeller.length)}</div><div class="h">${big?`Maior: ${esc(big.seller)} (${N(big.pen)})`:"—"}</div></div>
     <div class="kpi"><div class="l">Motoristas com pendência</div><div class="v">${N(drivers.filter(d=>d.ma!==NAO_ATRIB).length)}</div><div class="h">${drivers.some(d=>d.ma===NAO_ATRIB)?"Mais o grupo sem motorista":"Todos atribuídos"}</div></div></div>
-    <div class="tools"><label class="search">${IC.search}<input id="pQ" type="search" placeholder="Buscar motorista, seller, bairro ou região" value="${esc(S.pQ)}"></label><button class="btn" id="pAll">${S.pOpen.size?"Recolher todos":"Abrir todos"}</button></div>
+    <div class="tools"><label class="search">${IC.search}<input id="pQ" type="search" placeholder="Buscar motorista, seller (nome ou ID), bairro ou região" value="${esc(S.pQ)}"></label><button class="btn" id="pAll">${S.pOpen.size?"Recolher todos":"Abrir todos"}</button></div>
     ${ds.length?ds.map(d=>{const open=S.pOpen.has(d.ma)||!!q;const na=d.ma===NAO_ATRIB;return `<div class="drv ${na?"na":""}" data-open="${open?1:0}"><button data-drv="${esc(d.ma)}" aria-expanded="${open}"><span class="av">${na?"!":esc(initials(d.ma))}</span><span class="nm">${esc(na?"Sem motorista atribuído":nameOf(d.ma))}<small>${na?"Sem motorista atribuído":esc(empLbl(empOf(d.ma)))} · ${N(d.list.length)} sellers</small></span><span class="tt">${N(d.pen)}<small>em rota</small></span>${IC.chev}</button>
       <div class="body">${d.list.map(s=>`<div class="sl clickcell" data-setf="sel" data-v="${esc(s.seller)}"><b>${esc(s.seller)}</b><span class="q">${N(s.pen)}<small>de ${N(s.prev)}</small></span><span>${esc(s.end)}${s.bai?" · "+esc(s.bai):""}</span><div class="tags"><span class="pill p-n">${esc(s.cli)}</span><span class="pill p-n">${esc(s.reg)}</span>${s.pri&&s.pri!=="Normal"?`<span class="pill p-warn">${esc(s.pri)}</span>`:""}${stPill(s.st,true)}${s.mo?`<span class="pill p-ok">Coletou: ${esc(s.mo)}</span>`:""}</div></div>`).join("")}</div></div>`}).join(""):`<div class="state"><h2>Nada pendente</h2><p>${q?"Nenhum resultado para essa busca.":"Todos os pacotes previstos foram coletados ou justificados."}</p></div>`}</section>`;
 }
@@ -725,7 +702,7 @@ function go(v){S.view=v;try{history.replaceState(null,"",v==="pend"?"#pendentes"
 $("#btnPend").onclick=()=>go("pend");
 $("#btnHome").onclick=()=>go("home");
 window.addEventListener("hashchange",()=>{const v=location.hash==="#pendentes"?"pend":"home";if(v!==S.view){S.view=v;renderMain()}});
-loadAll().catch(e=>{console.error(e);showEmpty()});
+if(!window.GL_BLOQ)loadAll().catch(e=>{console.warn(e);showEmpty()});
 </script>
 </body>
 </html>
