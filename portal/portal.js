@@ -11,7 +11,8 @@ const norm=s=>String(s||'').trim().toLowerCase();
 let CFG={},DB=null,MASTER=null,MASTER_RAW=null,ME=null,AVISOS=[],ESCALAS=[],ROWS=null;
 const ROLE_LBL={admin:'Administrador',colaborador:'Colaborador',ajudante:'Ajudante',motorista:'Motorista',fornecedor:'Fornecedor'};
 const VEIC=['Fiorino','Van','VUC','HR','3/4','Carreta','Carro','Moto'];
-const ACC={admin:['dash','coletados','perf','forecast','ponto','pontoadm','avisos','usuarios','escalas','app'],colaborador:['dash','coletados','perf','forecast','ponto','avisos','app'],ajudante:['coletados','ponto','avisos','app'],motorista:['perf','avisos','app']};
+const LIVE=['dash','coletados','equipe'];
+const ACC={admin:['dash','coletados','equipe','perf','forecast','ponto','pontoadm','avisos','usuarios','escalas','app'],colaborador:['dash','coletados','equipe','perf','forecast','ponto','avisos','app'],ajudante:['coletados','ponto','avisos','app'],motorista:['perf','avisos','app']};
 async function kek(pw,salt,iter){const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function seal(obj){const iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},MASTER,enc.encode(JSON.stringify(obj))))}}
 async function open_(o){return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct))))}
@@ -79,9 +80,9 @@ if(Date.now()>SESS.exp){encerrar('Sua sessão do dia terminou. Entre novamente.'
 return true}
 function vigiar(){clearInterval(VIGT);VIGT=setInterval(()=>{if(!document.hidden)conferirAcesso()},5*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)conferirAcesso()})}
 const ic=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-const IC={dash:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),coletados:ic('<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>'),perf:ic('<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>'),forecast:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),ponto:ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'),pontoadm:ic('<path d="M9 5H5v14h14v-4"/><path d="M9 13l3 3 9-9"/>'),avisos:ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),usuarios:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>'),escalas:ic('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h3M8 17h8"/>'),app:ic('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:ic('<path d="M6 6l12 12M18 6 6 18"/>'),cam:ic('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
-const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast']]],['Pessoas',[['ponto','Bater ponto'],['pontoadm','Controle de ponto']]],['Comunicação',[['avisos','Avisos']]],['Gestão',[['usuarios','Usuários e acessos'],['escalas','Escalas']]],['Aplicativo',[['app','App GETLOG']]]];
-const SHORT={dash:'Início',coletados:'Coletados',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
+const IC={dash:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),coletados:ic('<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>'),equipe:ic('<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>'),perf:ic('<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>'),forecast:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),ponto:ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'),pontoadm:ic('<path d="M9 5H5v14h14v-4"/><path d="M9 13l3 3 9-9"/>'),avisos:ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),usuarios:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>'),escalas:ic('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h3M8 17h8"/>'),app:ic('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:ic('<path d="M6 6l12 12M18 6 6 18"/>'),cam:ic('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
+const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','Pacotes coletados'],['equipe','Quem trabalhou'],['perf','Performance'],['forecast','Forecast']]],['Pessoas',[['ponto','Bater ponto'],['pontoadm','Controle de ponto']]],['Comunicação',[['avisos','Avisos']]],['Gestão',[['usuarios','Usuários e acessos'],['escalas','Escalas']]],['Aplicativo',[['app','App GETLOG']]]];
+const SHORT={dash:'Início',coletados:'Coletados',equipe:'Quem trabalhou',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
 const can=v=>ACC[ME.role].includes(v);
 function shell(){
 const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}">${IC[v]}<span>${l}</span>${v==='app'?'<span class="badge">Em breve</span>':''}</button>`).join('')}).join('');
@@ -106,7 +107,7 @@ GEN++;CUR=v;if(location.hash.slice(1)!==v)location.hash=v;document.title=(SHORT[
 $$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));fechaMenu();
 M().classList.toggle('full',v==='perf');scrollTo(0,0);conferirAcesso();
 if(v==='forecast'){const g=GEN;if(ROWSF){VIEWS[v]();if(Date.now()-LOADF_EM>15*60000){const s0=SIGF;loadF(true).then(()=>{if(vivo(g)&&SIGF!==s0)VIEWS[v]()})}}else{M().innerHTML=SKEL;loadF().then(()=>{if(vivo(g))VIEWS[v]()})}return}
-if(['dash','coletados'].includes(v)){const g=GEN;assinarDados();if(!DIAS.size){M().innerHTML=SKEL;loadReal().then(()=>{if(vivo(g))VIEWS[v]()})}else VIEWS[v]();return}
+if(LIVE.includes(v)){const g=GEN;assinarDados();if(!DIAS.size){M().innerHTML=SKEL;loadReal().then(()=>{if(vivo(g))VIEWS[v]()})}else VIEWS[v]();return}
 VIEWS[v]()}
 const M=()=>$('#main');
 const SKEL='<div class="skel-wrap" aria-busy="true"><span class="sk h"></span><div class="kpi-grid"><span class="sk k"></span><span class="sk k"></span><span class="sk k"></span><span class="sk k"></span></div><span class="sk b"></span></div>';
@@ -114,7 +115,7 @@ const toast=t=>{let d=$('#toast');if(!d){d=document.createElement('div');d.id='t
 // Última/Próxima atualização: a próxima só avança quando a atualização do horário é confirmada nos dados.
 let AGENDA=null;
 const updHTML=()=>{const a=AGENDA;if(!a)return '';return `<span class="upd" id="upd"><i class="${a.erro?'off':a.estado==='prevista'?'':'wait'}"></i><span>Última atualização: <b>${esc(a.ultima?a.ultima.label:'—')}</b></span><span>Próxima: <b>${esc(a.proxima.label)}</b>${a.estado!=='prevista'?` <em>${C.ESTADO_TXT[a.estado]}</em>`:''}${a.erro?' <em>sem conexão</em>':''}</span></span>`};
-const top=(t,sub,live,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div><div class="top-act">${live?updHTML():upd?`<span class="upd"><i></i>Atualizado: ${esc(upd)}</span>`:''}${['dash','coletados','forecast'].includes(CUR)?`<button class="btn btn-ghost btn-sm" type="button" data-glref aria-label="Atualizar dados">↻ Atualizar</button>`:''}</div></div>`;
+const top=(t,sub,live,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div><div class="top-act">${live?updHTML():upd?`<span class="upd"><i></i>Atualizado: ${esc(upd)}</span>`:''}${[...LIVE,'forecast'].includes(CUR)?`<button class="btn btn-ghost btn-sm" type="button" data-glref aria-label="Atualizar dados">↻ Atualizar</button>`:''}</div></div>`;
 const vazio=t=>`<div class="box empty-state"><h3>Sem dados para mostrar</h3><p>${t}</p></div>`;
 // ---- Dados operacionais: mesma fonte e mesma leitura da Performance (GL_CORE.normRows) ----
 const C=window.GL_CORE;
@@ -126,11 +127,11 @@ const diaKey=s=>s.split('.').reverse().join('-');
 // Abre a semana mais recente e mostra; o restante do histórico entra em segundo plano e atualiza só a tela aberta.
 function loadReal(){return LOADING||(LOADING=(async()=>{const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
 const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
-await take(ds.slice(0,7));if(ds.length>7)take(ds.slice(7)).then(()=>{ROWS=null;if(['dash','coletados'].includes(CUR))VIEWS[CUR]()});
+await take(ds.slice(0,7));if(ds.length>7)take(ds.slice(7)).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
 if(!L.length)LOADING=null})())}
 function assinarDados(){const un=GL_API.assinar(async(est,mud)=>{AGENDA=est;let ch=false;
 const min=[...DIAS.keys()].map(diaKey).sort()[0]||'';for(const s of mud){if(!DIAS.has(s)&&diaKey(s)<min)continue;try{const r=await GL_API.dia(s);if(r){ingestDia(s,r);ch=true}}catch(e){console.warn('atualização',s,e)}}
-if(!['dash','coletados'].includes(CUR))return;if(ch){VIEWS[CUR]();toast('Dados atualizados')}else{const u=$('#upd');if(u)u.outerHTML=updHTML();if(REFRESH){toast(est.erro?'Sem conexão com os dados. Tente de novo em instantes.':'Os dados já estão atualizados')}}REFRESH=false});onLeave(un)}
+if(!LIVE.includes(CUR))return;if(ch){VIEWS[CUR]();toast('Dados atualizados')}else{const u=$('#upd');if(u)u.outerHTML=updHTML();if(REFRESH){toast(est.erro?'Sem conexão com os dados. Tente de novo em instantes.':'Os dados já estão atualizados')}}REFRESH=false});onLeave(un)}
 let REFRESH=false;
 // Forecast (aba GERAL): arquivo único, recarregado ao abrir a tela se tiver mais de 15 min ou pelo botão Atualizar.
 let ROWSF=null,LOADF=null,LOADF_EM=0,UPDF='',SIGF='';
@@ -200,6 +201,20 @@ ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coleta
 <div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados</p></div></div>${hbars(group(f,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
 <div class="box mt"><div class="box-head"><div><h3>Detalhe por seller</h3><p>${N(sel.length)} linhas${sel.length>200?' · mostrando as 200 maiores (use a busca para achar outras)':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Seller</th><th>Seller ID</th><th>Cliente</th><th>Região</th>${own?'':'<th>Motorista</th>'}<th class="n">Pacotes</th></tr></thead><tbody>${sel.slice(0,200).map(([k,v])=>{const [s,id,c,r,m]=k.split('|');return `<tr><td>${esc(s)}</td><td>${esc(id||'—')}</td><td>${esc(c)}</td><td>${esc(r)}</td>${own?'':`<td>${esc(m)}</td>`}<td class="n">${N(v)}</td></tr>`}).join('')}</tbody></table></div></div>`:vazio('Nenhuma coleta encontrada para esse filtro. Troque o período ou limpe os filtros.')}`};
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fs').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
+// Quem trabalhou: motoristas GETLOG (e ajudantes) com coleta no período — mesma base de Pacotes coletados.
+const EF={};
+VIEWS.equipe=()=>{const R=rows().filter(r=>r.t>0&&r.m);const ult=R[R.length-1]?.d;
+M().innerHTML=top('Quem trabalhou','Motoristas e ajudantes com coleta no período · mesma base da Performance',true)+(!R.length?vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora.'):`<div class="filters">${periodUI('eper',['dia','semana','quinzena','mes'],ult)}<select id="er" aria-label="Região">${opts(R.map(r=>r.r),'Todas as regiões')}</select><input id="es" type="search" placeholder="Buscar motorista ou ajudante" aria-label="Buscar motorista ou ajudante" autocomplete="off"></div><div id="eout"></div>`);
+if(!R.length)return;
+const K=['#eper .pm','#eper .pd','#eper .pmo','#eper .pq','#er','#es'];
+for(const id of K){const el=$(id),v=EF[id];if(el&&v!=null&&(!el.options||[...el.options].some(o=>o.value===v)))el.value=v}
+const run=()=>{const [a,b,lbl]=periodRange($('#eper'));const fr=$('#er').value,fs=C.nk($('#es').value);for(const id of K){const el=$(id);if(el)EF[id]=el.value}
+const P=new Map();for(const r of R){if(r.d<a||r.d>b||(fr&&r.r!==fr))continue;const k=nm(r.m);let x=P.get(k);if(!x)P.set(k,x={m:k,aj:new Set(),d:new Set(),s:new Set(),rg:new Set(),t:0});if(r.a&&!/^(n[aã]o|sim|-)$/i.test(r.a))x.aj.add(r.a);x.d.add(r.d);x.s.add(r.sid||r.s);x.rg.add(r.r);x.t+=r.t}
+const L=[...P.values()].filter(x=>!fs||C.nk(x.m+' '+[...x.aj].join(' ')).includes(fs)).sort((p,q)=>q.t-p.t);
+const tot=L.reduce((s,x)=>s+x.t,0);const aj=new Set(L.flatMap(x=>[...x.aj]));const multi=b>a;
+$('#eout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Motoristas que trabalharam</small><b>${L.length}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Ajudantes</small><b>${aj.size}</b><span>No período</span></div><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>GETLOG</span></div><div class="kpi"><small>Média por motorista</small><b>${N(Math.round(tot/Math.max(1,L.length)))}</b><span>Pacotes</span></div></div>
+${L.length?`<div class="box mt"><div class="box-head"><div><h3>Lista de quem trabalhou</h3><p>${esc(lbl)}</p></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>Motorista</th><th>Ajudante</th><th>Região</th>${multi?'<th class="n">Dias</th>':''}<th class="n">Sellers</th><th class="n">Pacotes</th></tr></thead><tbody>${L.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.m)}</td><td>${esc([...x.aj].join(', ')||'—')}</td><td>${esc([...x.rg].join(', '))}</td>${multi?`<td class="n">${x.d.size}</td>`:''}<td class="n">${N(x.s.size)}</td><td class="n">${N(x.t)}</td></tr>`).join('')}</tbody></table></div></div>`:vazio('Ninguém com coleta nesse filtro. Troque o período ou limpe os filtros.')}`};
+$$('#eper select,#eper input,#er').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#es').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
 VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=10" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
