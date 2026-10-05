@@ -427,7 +427,7 @@ if(!PLAN()){m.textContent='A planilha do ponto ainda não está conectada. Fale 
 bt.disabled=true;m.className='msg';m.textContent='Salvando…';
 try{const w=await wrapFor(a),av=await credencial(ME.login,a),dados={...w,em:new Date().toISOString(),ah:await hashHex(av)};
 if(await v2())await api('senha',dados);else{const r=await fetch(CFG.pontoUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:CFG.pontoToken,acao:'senha',login:ME.login,...dados})});const j=await r.json();if(!j.ok)throw new Error(j.erro)}
-SESS.av=av;SESS.troca=false;sessSet(SESS);d.remove();done(true)}catch(x){bt.disabled=false;if(!NEGADO[x.code]){m.className='msg err';m.textContent='Não foi possível salvar agora. Verifique a internet e tente de novo.'}}}})}
+SESS.av=av;SESS.troca=false;sessSet(SESS);d.remove();done(true)}catch(x){bt.disabled=false;if(!NEGADO[x.code]){m.className='msg err';const c=x.code||x.message||'rede';m.textContent=!PLAN()?'Servidor do ponto não configurado. Fale com o administrador.':c==='token'?'Servidor do ponto recusou a chave (token). Fale com o administrador.':'Não foi possível salvar agora (erro: '+c+'). Tente de novo; se repetir, envie este código ao administrador.'}}}})}
 // Nome fica exatamente como digitado; o vínculo com os dados usa o nome normalizado (GL_CORE.casar).
 const mkProf=u=>({name:u.name,tel:u.tel||'',placa:String(u.placa||'').toUpperCase().replace('-',''),modelo:u.modelo||'',escala:u.escala||'',cliente:u.cliente||'',ref:['motorista','ajudante'].includes(u.role)?u.name:''});
 // ah = hash da credencial do servidor para a senha definida pelo admin (o servidor confere sem conhecer a senha).
