@@ -479,7 +479,8 @@ function sellerState(rows){
     const justified=g.rows.some(r=>isJustifiedStatus(r.st));
     const visited=collected||justified;
     let st="—";
-    if(collected)st="Coletado";
+    // Coletado e entregue no DROP: mostra "DROP Recebeu" em vez de "Coletado" para não esconder esse status.
+    if(collected){const d=g.rows.find(r=>normStatus(r.st)==="DROP RECEBEU");st=d?d.st:"Coletado"}
     else if(justified){const x=g.rows.find(r=>isJustifiedStatus(r.st));st=x?.st||"Justificado"}
     else if(g.pen>0){const x=g.rows.filter(r=>r.pen>0).sort((a,b)=>b.pen-a.pen)[0];st=normStatus(x?.st)==="ACEITA"?"Aceita":"Em rota"}
     else{const v=normStatus(g.rows[0]?.st);st=!v||v==="EM ROTA"||v==="ACEITA"||v==="COLETADO"?"Sem pendência":g.rows[0].st}
