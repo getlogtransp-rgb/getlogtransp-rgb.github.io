@@ -45,7 +45,7 @@ const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','
 const SHORT={dash:'Início',coletados:'Coletados',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
 const can=v=>ACC[ME.role].includes(v);
 function shell(){
-const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}">${IC[v]}<span>${l}</span>${v==='forecast'?'<span class="badge">Teste</span>':v==='app'?'<span class="badge">Em breve</span>':''}</button>`).join('')}).join('');
+const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}">${IC[v]}<span>${l}</span>${v==='app'?'<span class="badge">Em breve</span>':''}</button>`).join('')}).join('');
 const mob=ACC[ME.role].filter(v=>SHORT[v]).slice(0,4);
 $('#app').innerHTML=`<div class="app"><aside class="side" aria-label="Menu do portal"><a class="logo-chip" href="/"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="88" height="36"></a>${groups}
 <div class="who"><b>${esc(ME.name)}</b><span>${ROLE_LBL[ME.role]}</span><div class="row"><a href="/">Ver site</a><button class="out" id="sair" type="button">Sair</button></div></div></aside>
@@ -57,15 +57,26 @@ $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.a
 $('#scrim').onclick=()=>{$('.side').classList.remove('open');$('#scrim').classList.remove('on')};
 show(ACC[ME.role][0]);
 }
-function show(v){if(!can(v))return;$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);VIEWS[v]()}
+function show(v){if(!can(v))return;$$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));$('.side').classList.remove('open');$('#scrim').classList.remove('on');scrollTo(0,0);if(['dash','coletados','forecast'].includes(v)&&!LOADING){M().innerHTML='<p class="hint">Carregando dados…</p>';loadReal().then(()=>VIEWS[v]())}else if(LOADING&&['dash','coletados','forecast'].includes(v))LOADING.then(()=>VIEWS[v]());else VIEWS[v]()}
 const M=()=>$('#main');
 const top=(t,sub,upd)=>`<div class="topbar"><div><h1>${t}</h1><p>${sub}</p></div>${upd?`<span class="upd"><i></i>Última atualização: ${esc(upd)}</span>`:''}</div>`;
 const demoNote='<div class="notice"><b>Protótipo com dados fictícios.</b> Os números reais entram quando a API dos dados oficiais for conectada.</div>';
-function rows(){if(ROWS)return ROWS;const d=GL_DEMO.days(62);const out=[];let up='';
-for(const [k,v] of Object.entries(d)){const c=v.colunas,ix=n=>c.indexOf(n);const I={s:ix('SELLER'),c:ix('CLIENTE'),r:ix('REGIÃO'),mo:ix('MOTORISTA OFICIAL'),st:ix('STATUS DO SELLER'),p:ix('PREVISTO'),t:ix('COLETADO TOTAL'),a:ix('AJUDANTE')};
-if(!up||v.atualizado_em>up)up=v.atualizado_em;
-for(const r of v.linhas)out.push({d:k,s:r[I.s],c:r[I.c],r:r[I.r],m:r[I.mo],st:r[I.st],p:r[I.p],t:r[I.t],a:r[I.a]})}
-const [dd,hh]=up.split(' ');UPD=dd.split('-').reverse().join('/')+' às '+hh.slice(0,5);ROWS=out.sort((a,b)=>a.d<b.d?-1:1);return ROWS}
+let REAL=false,LOADING=null;
+// Monta as linhas a partir de {dia:{colunas,linhas,atualizado_em}}. "t" = pacotes da GETLOG que chegaram na DS FM NOR.
+function build(d){const out=[];let up='';
+for(const [k,v] of Object.entries(d)){if(!v||!Array.isArray(v.colunas))continue;const c=v.colunas,ix=n=>c.indexOf(n);const I={s:ix('SELLER'),c:ix('CLIENTE'),r:ix('REGIÃO'),mo:ix('MOTORISTA OFICIAL'),ma:ix('MOTORISTA ATRIBUÍDO'),st:ix('STATUS DO SELLER'),p:ix('PREVISTO'),t:ix('COLETADO TOTAL'),fm:ix('COLETADO DS FM NOR'),a:ix('AJUDANTE'),b:ix('BAIRRO'),ci:ix('CIDADE'),cep:ix('CEP'),pri:ix('TIPO DE PRIORIDADE')};
+const g=(r,i)=>i<0?'':r[i];if(v.atualizado_em&&(!up||v.atualizado_em>up))up=v.atualizado_em;
+for(const r of v.linhas){const m=g(r,I.mo)||g(r,I.ma);out.push({d:k,s:g(r,I.s),c:g(r,I.c),r:g(r,I.r),m,ma:g(r,I.ma),st:g(r,I.st),p:+g(r,I.p)||0,t:String(m).toUpperCase().startsWith('GET')?(+(I.fm>=0?g(r,I.fm):g(r,I.t))||0):0,a:g(r,I.a),b:g(r,I.b),ci:g(r,I.ci),cep:g(r,I.cep),pri:g(r,I.pri)})}}
+if(up){const [dd,hh='']=up.split(' ');UPD=dd.split('-').reverse().join('/')+(hh?' às '+hh.slice(0,5):'')}return out.sort((a,b)=>a.d<b.d?-1:1)}
+function rows(){if(!ROWS)ROWS=build(GL_DEMO.days(62));return ROWS}
+async function openDay(o){let raw=await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct));
+if(o.z==='gzip')raw=await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();return JSON.parse(dec.decode(raw))}
+// Lê os dias publicados pela automação do Drive (portal/dados). Sem arquivos, fica nos dados de exemplo.
+function loadReal(){return LOADING||(LOADING=(async()=>{try{const idx=await getJSON('/portal/dados/index.json');const all={};
+await Promise.all(Object.keys(idx).map(async f=>{const m=f.match(/^(\d{2})\.(\d{2})\.(\d{4})\.json$/);if(!m)return;try{const r=await fetch('/portal/dados/'+encodeURIComponent(f)+'?v='+encodeURIComponent(idx[f]));if(!r.ok)return;const d=await openDay(await r.json());
+if(Array.isArray(d.colunas))all[`${m[3]}-${m[2]}-${m[1]}`]=d;else Object.assign(all,d)}catch(e){console.warn('dia ilegível',f,e)}}));
+const b=build(all);if(b.length){ROWS=b;REAL=true}}catch(e){}})())}
+const dn=()=>REAL?'':demoNote;
 const nm=m=>{m=String(m||'');const i=m.indexOf(' - ');return i>0?m.slice(i+3):m};
 const keyD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const today=()=>keyD(new Date());
@@ -88,7 +99,7 @@ const VIEWS={};
 VIEWS.dash=()=>{const R=rows();const dates=[...new Set(R.map(r=>r.d))];const t=dates.at(-1),prevD=dates.at(-2);
 const tot=k=>R.filter(r=>r.d===k).reduce((a,r)=>a+r.t,0);const hoje=tot(t),ont=tot(prevD);const var_=ont?((hoje-ont)/ont*100):0;
 const rt=R.filter(r=>r.d===t);
-M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',UPD)+demoNote+`
+M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',UPD)+dn()+`
 <div class="kpi-grid"><div class="kpi"><small>Pacotes coletados hoje</small><b>${N(hoje)}</b><span class="${var_>=0?'up':'down'}">${var_>=0?'+':''}${var_.toFixed(1).replace('.',',')}% comparado ao dia anterior</span></div>
 <div class="kpi"><small>Clientes em operação</small><b>${new Set(rt.map(r=>r.c)).size}</b><span>Com coleta hoje</span></div>
 <div class="kpi"><small>Sellers atendidos</small><b>${new Set(rt.map(r=>r.s)).size}</b><span>Capital e Grande SP</span></div>
@@ -101,7 +112,7 @@ const draw=n=>{$('#dch').innerHTML=vbars(dates.slice(-n).map(k=>[lblD(k),tot(k)]
 $$('#seg button').forEach(b=>b.onclick=()=>{$$('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw(+b.dataset.n)});
 $$('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go))};
 VIEWS.coletados=()=>{const R=rows();const own=ME.role==='ajudante';const base=own?R.filter(r=>norm(r.a)===norm(ME.ref)):R;
-M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente as coletas em que você participou':'Quantidade de pacotes coletados',UPD)+demoNote+`
+M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente as coletas em que você participou':'Pacotes da GETLOG recebidos na DS FM NOR',UPD)+dn()+`
 <div class="filters">${periodUI('per',['dia','semana','quinzena','mes'])}${own?'':`<select id="fm" aria-label="Motorista">${opts(base.map(r=>nm(r.m)),'Todos os motoristas')}</select>`}
 <select id="fr" aria-label="Região">${opts(base.map(r=>r.r),'Todas as regiões')}</select><input id="fs" type="search" placeholder="Buscar seller" aria-label="Seller"></div><div id="cout"></div>`;
 const run=()=>{const [a,b,lbl]=periodRange($('#per'));const fm=own?'':$('#fm').value,fr=$('#fr').value,fs=norm($('#fs').value);
@@ -117,11 +128,46 @@ ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coleta
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));$('#fs').addEventListener('input',run);run()};
 VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=5" title="Performance de coleta" id="pf"></iframe></div>`;
 const f=$('#pf');const fit=()=>{try{const h=f.contentDocument.documentElement.scrollHeight;if(h)f.style.height=Math.max(h,innerHeight-40)+'px'}catch(e){}};f.addEventListener('load',()=>{fit();try{new ResizeObserver(fit).observe(f.contentDocument.body)}catch(e){}})};
-VIEWS.forecast=()=>{const regs=GL_DEMO.REG;const r=i=>Math.round(800+((i*7919+104729)%2600));
-const tm=new Date();tm.setDate(tm.getDate()+1);if(tm.getDay()===0)tm.setDate(tm.getDate()+1);
-M().innerHTML=top('Forecast','Previsão de coletas por região',UPD)+`<div class="banner"><b>Em desenvolvimento.</b> Esta tela usa dados ilustrativos e será substituída pelo módulo oficial de forecast.</div>
-<div class="kpi-grid"><div class="kpi"><small>Previsto para ${lblD(keyD(tm))}</small><b>${N(regs.reduce((a,_,i)=>a+r(i),0))}</b><span>pacotes (ilustrativo)</span></div><div class="kpi"><small>Sellers previstos</small><b>312</b><span>ilustrativo</span></div><div class="kpi"><small>Motoristas necessários</small><b>14</b><span>ilustrativo</span></div><div class="kpi"><small>Janela principal</small><b>08h a 16h</b><span>ilustrativo</span></div></div>
-<div class="box mt"><div class="box-head"><div><h3>Previsto por região</h3><p>Dados ilustrativos</p></div></div>${hbars(regs.map((g,i)=>[g,r(i)]))}</div>`};
+const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
+const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
+const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
+let geoQ=Promise.resolve();
+// Coordenada aproximada do bairro (OpenStreetMap), guardada no navegador. Uma consulta por segundo, como pede o serviço.
+const geo=(b,ci)=>{const k=(b+'|'+ci).toUpperCase();if(k in GEO)return Promise.resolve(GEO[k]);
+return geoQ=geoQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent([b,ci,'SP'].filter(Boolean).join(', ')));const j=await r.json();if(j[0])v=[+j[0].lat,+j[0].lon]}catch(e){}
+GEO[k]=v;try{localStorage.setItem(GEO_KEY,JSON.stringify(GEO))}catch(e){}await new Promise(t=>setTimeout(t,1100));return v})};
+const hsh=s=>{let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))|0;return h};
+VIEWS.forecast=()=>{const R=rows();const dates=[...new Set(R.map(r=>r.d))].sort().reverse();
+M().innerHTML=top('Forecast','Sellers e pacotes previstos por motorista e região',UPD)+dn()+`
+<div class="filters"><select id="xd" aria-label="Dia">${dates.map(d=>`<option value="${d}">${d.split('-').reverse().join('/')}</option>`).join('')}</select>
+<select id="xr" aria-label="Região"></select><select id="xm" aria-label="Motorista"></select><select id="xc" aria-label="Cliente"></select><select id="xp" aria-label="Prioridade"></select><input id="xs" type="search" placeholder="Buscar seller ou bairro" aria-label="Buscar"></div>
+<div id="xk"></div><div class="grid-2"><div class="box"><div class="box-head"><div><h3>Mapa dos sellers previstos</h3><p>Cada cor é um motorista · círculo maior = mais pacotes · posição aproximada pelo bairro</p></div></div><div id="xmap" style="height:460px;border-radius:12px"></div><p class="hint" id="xgeo"></p></div>
+<div class="box"><div class="box-head"><div><h3>Motoristas</h3><p>Clique para filtrar</p></div></div><div id="xleg" style="max-height:470px;overflow:auto"></div></div></div>
+<div class="grid-2"><div class="box"><div class="box-head"><div><h3>Por região</h3><p>Sellers · pacotes previstos</p></div></div><div id="xreg"></div></div><div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes previstos</p></div></div><div id="xcli"></div></div></div>`;
+const day=()=>R.filter(r=>r.d===$('#xd').value);
+const fill=()=>{const D=day();for(const [id,f,l] of [['xr',r=>r.r,'Todas as regiões'],['xm',r=>nm(r.m),'Todos os motoristas'],['xc',r=>r.c,'Todos os clientes'],['xp',r=>r.pri,'Todas as prioridades']]){const el=$('#'+id),v=el.value;el.innerHTML=opts(D.map(f).filter(Boolean),l);el.value=[...el.options].some(o=>o.value===v)?v:''}};
+const color=new Map();const col=m=>{if(!color.has(m))color.set(m,PAL[color.size%PAL.length]);return color.get(m)};
+let map=null,layer=null,run_id=0;
+const run=async()=>{const id=++run_id;const fr=$('#xr').value,fm=$('#xm').value,fc=$('#xc').value,fp=$('#xp').value,fs=norm($('#xs').value);
+const f=day().filter(r=>(!fr||r.r===fr)&&(!fm||nm(r.m)===fm)&&(!fc||r.c===fc)&&(!fp||r.pri===fp)&&(!fs||norm(r.s+' '+r.b).includes(fs)));
+const sel=new Map();for(const r of f){const k=r.s;const o=sel.get(k)||{s:r.s,c:r.c,r:r.r,b:r.b,ci:r.ci,m:nm(r.m),p:0};o.p+=r.p;sel.set(k,o)}const S=[...sel.values()];
+const mots=group(S,x=>x.m,x=>x.p).sort((a,b)=>b[1]-a[1]);mots.forEach(([m])=>col(m));
+$('#xk').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes previstos</small><b>${N(S.reduce((a,x)=>a+x.p,0))}</b><span>${lblD($('#xd').value)}</span></div><div class="kpi"><small>Sellers previstos</small><b>${N(S.length)}</b><span>No filtro</span></div><div class="kpi"><small>Motoristas</small><b>${mots.length}</b><span>Com seller previsto</span></div><div class="kpi"><small>Regiões</small><b>${new Set(S.map(x=>x.r)).size}</b><span>Atendidas</span></div></div>`;
+$('#xleg').innerHTML='<div class="hb">'+mots.map(([m,v])=>`<div class="hbr" data-m="${esc(m)}" style="cursor:pointer"><span class="hbl" title="${esc(m)}"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(m)};margin-right:6px"></i>${esc(m)}</span><small>${S.filter(x=>x.m===m).length} sellers</small><b>${N(v)}</b></div>`).join('')+'</div>';
+$$('#xleg [data-m]').forEach(e=>e.onclick=()=>{$('#xm').value=$('#xm').value===e.dataset.m?'':e.dataset.m;run()});
+$('#xreg').innerHTML=hbars(group(S,x=>x.r+' · '+S.filter(y=>y.r===x.r).length+' sellers',x=>x.p).sort((a,b)=>b[1]-a[1]));
+$('#xcli').innerHTML=hbars(group(S,x=>x.c,x=>x.p).sort((a,b)=>b[1]-a[1]));
+try{await loadOnce('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css');await loadOnce('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js')}catch(e){$('#xmap').innerHTML='<p class="hint">Não foi possível carregar o mapa.</p>';return}
+if(id!==run_id||!$('#xmap'))return;
+if(!map||!document.body.contains(map.getContainer())){map=L.map('xmap').setView([-23.55,-46.63],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);layer=L.layerGroup().addTo(map)}
+layer.clearLayers();const pts=[];let miss=0,done=0;const tot=S.length;
+for(const x of S){const c=await geo(x.b,x.ci);if(id!==run_id)return;done++;
+if(!c){miss++}else{const h=hsh(x.s);const ll=[c[0]+((h&1023)/1023-.5)*.012,c[1]+(((h>>10)&1023)/1023-.5)*.012];pts.push(ll);
+L.circleMarker(ll,{radius:Math.min(18,4+Math.sqrt(x.p)),color:'#fff',weight:1,fillColor:col(x.m),fillOpacity:.85}).bindPopup(`<b>${esc(x.s)}</b><br>${esc(x.c)} · ${esc(x.b)} – ${esc(x.ci)}<br>Motorista: ${esc(x.m)}<br>Previsto: <b>${N(x.p)}</b> pacotes`).addTo(layer)}
+if(done%10===0||done===tot)$('#xgeo').textContent=done<tot?`Localizando bairros… ${done} de ${tot}`:(miss?`${miss} seller(s) sem bairro localizado.`:'')}
+if(pts.length)map.fitBounds(pts,{padding:[20,20],maxZoom:13})};
+$('#xd').onchange=()=>{fill();run()};['xr','xm','xc','xp'].forEach(i=>$('#'+i).onchange=run);$('#xs').oninput=()=>{clearTimeout(run.t);run.t=setTimeout(run,300)};
+fill();run()};
 function myAvisos(){const now=today();return AVISOS.filter(a=>(!a.ate||a.ate>=now)&&(a.para==='todos'||a.para==='tipo:'+ME.role||a.para==='user:'+ME.login||ME.role==='admin')).sort((a,b)=>a.em<b.em?1:-1)}
 const paraLbl=p=>p==='todos'?'Todos':p.startsWith('tipo:')?ROLE_LBL[p.slice(5)]+'s':'@'+p.slice(5);
 const avHTML=a=>`<article><div><b>${esc(a.titulo)}</b><p>${esc(a.msg)}</p><small>${new Date(a.em).toLocaleDateString('pt-BR')}${ME.role==='admin'?' · Para: '+esc(paraLbl(a.para)):''}</small></div></article>`;
