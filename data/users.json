@@ -6,66 +6,14 @@
       "login": "rafael.miyahara",
       "role": "admin",
       "active": true,
-      "salt": "mNiwu+eqibZ884jA/hGf5g==",
-      "iv": "2OEaFGHtczpxJhCT",
-      "key": "XAAxjoLpZrYFCS2WrsSNN0pcus0Yc2QOBAt4LbUHRmFd+1nyxohvyh1mzNR+/PnY",
+      "salt": "1BWBBBfkB18pcmIddrsUFw==",
+      "iv": "9uKi4gVH6wRLtDOf",
+      "key": "iRS4bmWY3A0+Z0qn6CSqBklizLQlX6UNj0+noOeKVgGPNwS2ZRlU2xiUUOrus4zN",
       "p": {
-        "iv": "P+BCNTEKp4CQwpqQ",
-        "ct": "wZ4PTLdRrsOf04PcrgKWcSUF1rvDF1hVXEzdAV1TPBZQcyyv050RH4elTw=="
+        "iv": "3r47jKUzjgPhfCZ2",
+        "ct": "JIynLbxWQcLSw/Ka4Y9OGeHzCiu/etkvetnVxRhgC98eVcH63xdp6nVrourzrHzMUYb51E0mugDDYHWOYdXVU6pB7nIbhtUc1gem4Sq9GgZ9Mgi9uXERDCZrH+sWxZPLOahKmIyMTfSIUKuhGoAPMkxfJpd1uGdgg9/BQt54S5vn52w1"
       },
-      "created": "2026-10-05T10:17:47.954459+00:00"
-    },
-    {
-      "login": "imile",
-      "role": "fornecedor",
-      "active": true,
-      "salt": "xKWZYVsCKwYGwIUiBVILrw==",
-      "iv": "bliNStWUyaOiW0ob",
-      "key": "ensK/BJMJWOS2B4Lph+cKCqXYEZ0ZXOubWO9b6lz1YGmUFCQ//mOAFzBbDeZv6Fh",
-      "p": {
-        "iv": "MtDxrc/mygN+/yn+",
-        "ct": "oFQuheZNXzhtZWEsf6fyDhYOvOLR9ydANLDDZvM8+V1Vy1Y9qpFNQJgcQYOa6Rch30xFwc0/aMxVUfc871g="
-      },
-      "created": "2026-10-05T10:17:47.954459+00:00"
-    },
-    {
-      "login": "colaborador.teste",
-      "role": "colaborador",
-      "active": true,
-      "salt": "Gfa9nhaMRlj1ob80s+g3Lw==",
-      "iv": "yEXi7iX9U0smbt38",
-      "key": "wCUEVlin4fk2I8qb+LlHd4EbX3oIzSVsnnVXPA9broY066Ysr8d9SxAmcBMwulQw",
-      "p": {
-        "iv": "k09LflXfU1GyH/Af",
-        "ct": "jw2NE6UjU6caCRQuhw9K0C2P61zNa5xISiJiO8tUGVvMyoNTI6InEpDWZ2UGPjWITbNDfhj8LK7GdA/fVrJMQ9rMbG8VxAMeFP1bDkZaMjmiuvoPRDwdawFLhVJm2H2nmXYmU+8Oza/oBqeYvNxrJJu9Cg=="
-      },
-      "created": "2026-10-05T10:17:47.954459+00:00"
-    },
-    {
-      "login": "ajudante.teste",
-      "role": "ajudante",
-      "active": true,
-      "salt": "i/+GVPQeGKawZV5VbvYdGw==",
-      "iv": "yQJ81GH/1TJLuVyJ",
-      "key": "GFQjTrTmTfgulBcuwXQa0Hf7CjdRvoGNkP6f3CMEo6PS2epnDa7V9YOtalDuiysJ",
-      "p": {
-        "iv": "gkmKoGDTanPQgyMF",
-        "ct": "7l+LxGNciY3bNO1F/2Fji1IDf8cJSumhdU1QbLwZF+rh+inN2g91GG7W3bExksSmGNIsdeVxxwthyaTjYGUp3mG+kphNozchaeAiulXFF8qiwLxMkwAzxKY4hl1FBaR7zevXfQALnvlARGAEBZYHqMiInOotVqBSJa3TCqrK8eSYTXDRLPsKmyI/3Q=="
-      },
-      "created": "2026-10-05T10:17:47.954459+00:00"
-    },
-    {
-      "login": "motorista.teste",
-      "role": "motorista",
-      "active": true,
-      "salt": "yCmHAqZnWEOx9T0gK+4sqw==",
-      "iv": "4P1RrpbEwtZj2SXu",
-      "key": "CrDQ73IWchCC309Dyso4HOKL+pEGbdpv0Q5Vi+m5b2aBr/zYHxEQqHGNuuu/68ZX",
-      "p": {
-        "iv": "Lci0RC3Y29Tca02H",
-        "ct": "eczyly7EtGpFVYppyhncUHMKB1thaP2+xTrQlQtqpUWnlWJ6dxbazUqc+D8z+Zpzr2vLdv9pQhiP+Tpjej4qbOh81TSF8vm4JrkjKCbFVRscZg+zA7H6Y3i/yAUhvPUf7TR5+UhrqalqIOuiNKq7MUbtpeN+e/Ppk5u8v7Rx8dY+sX+44gtGKANTy69D74Q/9KolzBBmlOdxvSpI60nABg7i/co="
-      },
-      "created": "2026-10-05T10:17:47.954459+00:00"
+      "created": "2026-10-05T13:36:43.609132+00:00"
     }
   ]
 }
