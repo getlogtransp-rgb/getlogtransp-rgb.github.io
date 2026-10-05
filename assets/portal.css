@@ -384,3 +384,4 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .rd-list span{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);font-size:.78rem;font-weight:600}
 .rd-list small{color:var(--muted);font-weight:500}
 [data-theme=dark] .rd-list span{background:#121B30}
+.ch-t{font-size:.8rem;font-weight:700;color:var(--muted);margin:0 0 6px}.clk-row{cursor:pointer}.clk-row.on td{background:#fff4ec}[data-theme=dark] .clk-row.on td{background:#3A2414}

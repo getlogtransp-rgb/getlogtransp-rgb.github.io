@@ -182,20 +182,31 @@ function hbars(list,max,fmt=N){max=max||Math.max(1,...list.map(x=>x[1]));return 
 function vbars(list){const max=Math.max(1,...list.map(x=>x[1]));const sm=list.length>16;return `<div class="vb${sm?' sm':''}">`+list.map(([l,v],i)=>`<div class="vbc${i===list.length-1?' hot':''}" title="${esc(l)}: ${N(v)}"><em>${sm&&v>=1000?(v/1000).toFixed(1).replace('.',',')+'k':N(v)}</em><i style="height:${Math.max(3,v/max*100)}%"></i><span>${esc(l)}</span></div>`).join('')+'</div>'}
 const group=(arr,f,val)=>{const m=new Map();for(const r of arr){const k=f(r);m.set(k,(m.get(k)||0)+val(r))}return [...m]};
 const VIEWS={};
-VIEWS.dash=()=>{const R=rows();if(!R.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora. A tela atualiza sozinha quando a próxima atualização entrar.');return}const dates=[...new Set(R.map(r=>r.d))];const t=dates.at(-1),prevD=dates.at(-2);
-const tot=k=>R.filter(r=>r.d===k).reduce((a,r)=>a+r.t,0);const hoje=tot(t),ont=tot(prevD);const var_=ont?((hoje-ont)/ont*100):0;
-const rt=R.filter(r=>r.d===t);
-M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+`
-<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados hoje</small><b>${N(hoje)}</b><span class="${var_>=0?'up':'down'}">${var_>=0?'+':''}${var_.toFixed(1).replace('.',',')}% comparado ao dia anterior</span></div>
-<div class="kpi"><small>Clientes em operação</small><b>${new Set(rt.map(r=>r.c)).size}</b><span>Com coleta hoje</span></div>
-<div class="kpi"><small>Sellers atendidos</small><b>${new Set(rt.map(r=>r.s)).size}</b><span>Capital e Grande SP</span></div>
-<div class="kpi"><small>Motoristas em rota</small><b>${new Set(rt.map(r=>r.m).filter(Boolean)).size}</b><span>Frota GETLOG</span></div></div>
-<div class="grid-2"><div class="box"><div class="box-head"><div><h3>Pacotes coletados por dia</h3><p>Quantidade total coletada</p></div><div class="seg" id="seg"><button data-n="7" aria-pressed="true">7 dias</button><button data-n="15" aria-pressed="false">15 dias</button><button data-n="30" aria-pressed="false">30 dias</button></div></div><div id="dch"></div></div>
-<div class="box"><div class="box-head"><div><h3>Por cliente hoje</h3><p>Pacotes coletados</p></div></div>${hbars(group(rt,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
-<div class="grid-2 eq"><div class="box"><div class="box-head"><div><h3>Por região hoje</h3><p>Pacotes coletados</p></div></div>${hbars(group(rt,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
+// Visão geral: um dia escolhido (padrão = mais recente) + histórico diário. Conta só o que a GETLOG coletou.
+let DASH_DIA='',DASH_N=7;
+VIEWS.dash=()=>{const R=rows();if(!R.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora. A tela atualiza sozinha quando a próxima atualização entrar.');return}
+const D=new Map();for(const r of R){if(!(r.t>0))continue;let o=D.get(r.d);if(!o)D.set(r.d,o={d:r.d,t:0,s:new Set(),c:new Set(),m:new Set(),rows:[]});o.t+=r.t;o.s.add(r.sid||r.s);o.c.add(r.c);if(r.m)o.m.add(r.m);o.rows.push(r)}
+const dates=[...D.keys()].sort();if(!dates.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Ainda não há coletas da GETLOG nos dados publicados.');return}
+if(!D.has(DASH_DIA))DASH_DIA=dates.at(-1);const t=DASH_DIA,ix=dates.indexOf(t),o=D.get(t),ant=ix>0?D.get(dates[ix-1]):null;const ult=t===dates.at(-1);
+const vr=(x,y)=>{if(!y)return '<span>Sem dia anterior para comparar</span>';const v=(x-y)/y*100;return `<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1).replace('.',',')}% vs ${esc(lblD(dates[ix-1]))}</span>`};
+const dsem=k=>['dom','seg','ter','qua','qui','sex','sáb'][new Date(k+'T12:00').getDay()];
+M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG · histórico dos dias publicados',true)+`
+<div class="filters"><select id="dd" aria-label="Dia">${[...dates].reverse().map(k=>`<option value="${k}"${k===t?' selected':''}>${lblD(k)} ${dsem(k)}${k===dates.at(-1)?' · mais recente':''}</option>`).join('')}</select></div>
+<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados ${ult?'hoje':'no dia'}</small><b>${N(o.t)}</b>${vr(o.t,ant?.t)}</div>
+<div class="kpi"><small>Sellers atendidos</small><b>${N(o.s.size)}</b>${vr(o.s.size,ant?.s.size)}</div>
+<div class="kpi"><small>Clientes em operação</small><b>${o.c.size}</b><span>Com coleta em ${esc(lblD(t))}</span></div>
+<div class="kpi"><small>Motoristas em rota</small><b>${o.m.size}</b>${vr(o.m.size,ant?.m.size)}</div></div>
+<div class="box mt"><div class="box-head"><div><h3>Histórico por dia</h3><p>Pacotes coletados e sellers atendidos · clique numa barra para ver o dia</p></div><div class="seg" id="seg">${[7,15,30].map(n=>`<button data-n="${n}" aria-pressed="${n===DASH_N}">${n} dias</button>`).join('')}</div></div>
+<div class="grid-2 eq"><div><p class="ch-t">Pacotes coletados</p><div id="dch"></div></div><div><p class="ch-t">Sellers atendidos</p><div id="dsl"></div></div></div></div>
+<div class="grid-2"><div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados em ${esc(lblD(t))}</p></div></div>${hbars(group(o.rows,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
+<div class="box"><div class="box-head"><div><h3>Por região</h3><p>Pacotes coletados em ${esc(lblD(t))}</p></div></div>${hbars(group(o.rows,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
+<div class="grid-2 eq"><div class="box"><div class="box-head"><div><h3>Resumo dos últimos dias</h3><p>Totais por dia</p></div></div><div class="table-wrap"><table><thead><tr><th>Dia</th><th class="n">Pacotes</th><th class="n">Sellers</th><th class="n">Motoristas</th><th class="n">Clientes</th></tr></thead><tbody>${[...dates].reverse().slice(0,10).map(k=>{const x=D.get(k);return `<tr class="clk-row${k===t?' on':''}" data-dd="${k}"><td><b>${esc(lblD(k))}</b> <small>${dsem(k)}</small></td><td class="n">${N(x.t)}</td><td class="n">${N(x.s.size)}</td><td class="n">${x.m.size}</td><td class="n">${x.c.size}</td></tr>`}).join('')}</tbody></table></div></div>
 <div class="box"><div class="box-head"><div><h3>Avisos recentes</h3><p>Comunicados para você</p></div><button class="btn btn-ghost btn-sm" data-go="avisos">Ver todos</button></div><div class="news">${myAvisos().slice(0,3).map(avHTML).join('')||'<p class="empty">Nenhum aviso no momento.</p>'}</div></div></div>`;
-const draw=n=>{$('#dch').innerHTML=vbars(dates.slice(-n).map(k=>[lblD(k),tot(k)]))};draw(7);
+const hot=html=>html;const draw=n=>{DASH_N=n;const ks=dates.slice(-n);
+const mk=(id,f)=>{$(id).innerHTML=vbars(ks.map(k=>[lblD(k),f(D.get(k))]));$$(id+' .vbc').forEach((el,i)=>{el.classList.toggle('hot',ks[i]===t);el.style.cursor='pointer';el.onclick=()=>{DASH_DIA=ks[i];VIEWS.dash()}})};
+mk('#dch',x=>x.t);mk('#dsl',x=>x.s.size)};draw(DASH_N);
 $$('#seg button').forEach(b=>b.onclick=()=>{$$('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw(+b.dataset.n)});
+$('#dd').onchange=e=>{DASH_DIA=e.target.value;VIEWS.dash()};$$('[data-dd]').forEach(r=>r.onclick=()=>{DASH_DIA=r.dataset.dd;VIEWS.dash()});
 $$('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go))};
 // Pacotes coletados: as mesmas linhas da Performance, só o que a GETLOG coletou (Coletado total com motorista oficial GET).
 // Ajudante recebe da camada de dados apenas as linhas em que está vinculado.
