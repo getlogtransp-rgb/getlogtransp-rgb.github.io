@@ -23,12 +23,28 @@ function pasta_() {
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
 const txt_ = v => v instanceof Date ? Utilities.formatDate(v, FUSO, 'yyyy-MM-dd') : String(v);
 
+// Senha trocada pela própria pessoa. Guarda só a chave trancada pela senha (nunca a senha).
+function abaSenhas_() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName('Senhas');
+  if (!sh) { sh = ss.insertSheet('Senhas'); sh.appendRow(['Login', 'salt', 'iv', 'key', 'Trocada em']); sh.setFrozenRows(1); }
+  return sh;
+}
+
 function doPost(e) {
   const d = JSON.parse(e.postData.contents);
   if (d.token !== TOKEN) return json_({ ok: false, erro: 'token' });
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
+    if (d.acao === 'senha') {
+      const sh = abaSenhas_();
+      const v = sh.getDataRange().getValues();
+      const linha = [d.login, d.salt, d.iv, d.key, "'" + d.em];
+      const i = v.findIndex((r, k) => k > 0 && r[0] === d.login);
+      if (i > 0) sh.getRange(i + 1, 1, 1, 5).setValues([linha]); else sh.appendRow(linha);
+      return json_({ ok: true });
+    }
     const sh = aba_();
     const n = sh.getLastRow() - 1;
     if (n > 0 && sh.getRange(2, 12, n, 1).getValues().some(r => r[0] === d.id)) return json_({ ok: true, repetido: true });
@@ -46,6 +62,10 @@ function doPost(e) {
 
 function doGet(e) {
   const p = e.parameter;
+  if (p.senha) {
+    const r = abaSenhas_().getDataRange().getValues().find((r, k) => k > 0 && r[0] === p.senha);
+    return json_({ ok: true, dados: r ? { salt: r[1], iv: r[2], key: r[3], em: String(r[4]) } : null });
+  }
   if (p.token !== TOKEN) return json_({ ok: false, erro: 'token' });
   if (p.foto) {
     const id = (p.foto.match(/[-\w]{25,}/) || [])[0];
