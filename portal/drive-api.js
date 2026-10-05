@@ -5,14 +5,19 @@ try{if(window.parent!==window&&window.parent.GL_API){window.GL_API=window.parent
 const URL_API='https://script.google.com/macros/s/AKfycbzBrdB2u8IlJJ0o9OclHWPcpA3JUi8n5D_ebIkZ6Kzagwt01zmvsaHU50PrA2C9MzCwdA/exec';
 const C=()=>window.GL_CORE;
 const sess=()=>{try{return JSON.parse(localStorage.getItem('getlog_sessao')||sessionStorage.getItem('getlog_sessao'))}catch(e){return null}};
-const get=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
+// Token do script do Drive (guardado criptografado no config do portal; só existe depois do login).
+let TOKEN='';
+const get=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
 let LISTA=null,LISTA_EM=0;
 // Lista de dias publicados ({dia:'dd.mm.aaaa',modificadoEm}). Só é consultada de novo quando pedido (verificação/atualizar).
 const lista=force=>{if(!LISTA||force){const p=get('fonte=lista',force).then(j=>{if(!j.ok)throw new Error(j.erro);LISTA_EM=Date.now();return j.dados});p.catch(()=>{if(LISTA===p)LISTA=null});LISTA=p}return LISTA.catch(e=>{console.warn('lista',e);return []})};
 const CACHE=new Map();
 // Conteúdo de um dia já recortado para o usuário (escopo aplicado antes de guardar em cache).
 const dia=async d=>{const L=await lista();const it=L.find(x=>x.dia===d);if(!it)return null;const c=CACHE.get(d);if(c&&c.sig===it.modificadoEm)return c.p;
-const p=get('fonte=performance&dia='+encodeURIComponent(d),!!c).then(j=>{if(!j.ok)return null;return {json:C().escopo(j.dados.conteudo,sess()),lm:new Date(j.dados.modificadoEm||it.modificadoEm),sig:it.modificadoEm}});
+const I=window.GL_IDB,sig=it.modificadoEm;
+// 1º o cache cifrado do aparelho (mesma versão do Drive = não baixa de novo); senão baixa, recorta para o usuário e guarda cifrado.
+const p=(async()=>{if(!c&&I){const h=await I.lerDia(d,sig);if(h)return {json:h,lm:new Date(sig),sig}}
+const j=await get('fonte=performance&dia='+encodeURIComponent(d),!!c);if(!j.ok)return null;const json=C().escopo(j.dados.conteudo,sess());if(I)I.gravaDia(d,sig,json);return {json,lm:new Date(j.dados.modificadoEm||sig),sig}})();
 p.catch(()=>{if(CACHE.get(d)?.p===p)CACHE.delete(d)});CACHE.set(d,{sig:it.modificadoEm,p});return p};
 // Executa tarefas com no máximo n requisições simultâneas.
 const pool=async(items,n,fn)=>{const out=new Array(items.length);let i=0;await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(i<items.length){const k=i++;try{out[k]=await fn(items[k])}catch(e){out[k]=null}}}));return out};
@@ -33,5 +38,5 @@ function programar(){clearTimeout(TMR);if(!SUBS.size||document.hidden)return;con
 TMR=setTimeout(verificar,falta>0?Math.min(falta+60000,6*3600000):(a.estado==='atrasada'?5:2)*60000)}
 const assinar=f=>{SUBS.add(f);if(LISTA)LISTA.then(L=>{if(!ULT){ULT=ultimaMod(L)}try{f(estado(),[])}catch(e){}});else lista().then(L=>{ULT=ultimaMod(L);avisar([])});programar();return ()=>{SUBS.delete(f);if(!SUBS.size)clearTimeout(TMR)}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(TMR);return}if(!SUBS.size)return;const a=C().agenda(ULT);if(a.estado!=='prevista'||Date.now()-LISTA_EM>15*60000)verificar();else programar()});
-window.GL_API={lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
+window.GL_API={setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
 })();

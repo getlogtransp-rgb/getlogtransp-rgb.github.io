@@ -10,7 +10,7 @@ async function db(){const r=await fetch('/data/users.json?t='+Date.now(),{cache:
 $('#f').addEventListener('submit',async e=>{e.preventDefault();const m=$('#m'),go=$('#go');m.textContent='';go.disabled=true;go.textContent='Verificando...';
 try{const D=await db();const u=D.users.find(x=>x.login===norm($('#u').value));if(!u||u.role!=='fornecedor'||u.active===false)throw 0;
 const k=await kek($('#p').value,b2u(u.salt),D.iter);const raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(u.iv)},k,b2u(u.key)));const p=await prof(raw,u);
-sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,k:u2b(raw)}));app()}
+sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente}));app()}
 catch(x){m.textContent='Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar'}});
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')app();else $('#u').focus();
 function app(){const S=JSON.parse(sessionStorage.getItem(S_KEY));const d=GL_DEMO.days(30);const keys=Object.keys(d).sort().reverse();

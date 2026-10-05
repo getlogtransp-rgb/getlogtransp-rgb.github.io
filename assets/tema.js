@@ -1,4 +1,6 @@
 // Tema claro/escuro do portal: uma escolha só para todas as telas (inclusive a Performance, no quadro), guardada no aparelho.
+// Anti-clickjacking: o portal só pode ser aberto dentro de outra página do próprio site (ex.: a Performance no quadro).
+(()=>{try{if(top!==self&&top.location.origin!==location.origin)throw 0}catch(e){document.documentElement.style.display='none';try{top.location=location.href}catch(x){}}})();
 (()=>{const K='getlog_tema';let t='light';try{t=localStorage.getItem(K)==='dark'?'dark':'light'}catch(e){}
 const H=document.documentElement;const ap=v=>{t=v==='dark'?'dark':'light';H.dataset.theme=t;H.style.colorScheme=t};ap(t);
 const st=document.createElement('style');st.textContent='[data-tema] .t-sol,[data-theme=dark] [data-tema] .t-lua{display:none}[data-theme=dark] [data-tema] .t-sol{display:inline}[data-tema] svg{width:18px;height:18px}';document.head.appendChild(st);

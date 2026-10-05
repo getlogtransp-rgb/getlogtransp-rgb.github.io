@@ -105,3 +105,24 @@ const ESTADO_TXT={prevista:"",processando:"processando",atrasada:"aguardando"};
 
 window.GL_CORE={COLS,NAO_ATRIB,EMPRESA_PROPRIA,num,str,empOf,nameOf,toRecords,parseDT,metaUpdate,normRows,coletadoGet,nk,casar,escopo,veTudo,HORARIOS,agenda,ESTADO_TXT,spDia};
 })();
+
+// ---- Armazenamento local seguro (IndexedDB) ----
+// kv: chave do aparelho (não exportável). d:<dia>: conteúdo do dia já recortado para o usuário, comprimido e CIFRADO com a chave
+// mestra da sessão — reabrir o portal não baixa de novo o que não mudou no Drive, e sem login o cache é ilegível.
+(()=>{
+if(window.parent!==window){try{if(window.parent.GL_IDB){window.GL_IDB=window.parent.GL_IDB;return}}catch(e){}}
+let DB=null;const abre=()=>DB||(DB=new Promise((ok,no)=>{try{const r=indexedDB.open("getlog",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}}).catch(e=>{DB=null;throw e}));
+const tx=(modo,f)=>abre().then(d=>new Promise((ok,no)=>{const t=d.transaction("kv",modo),q=f(t.objectStore("kv"));t.oncomplete=()=>ok(q&&q.result);t.onerror=()=>no(t.error)}));
+const te=new TextEncoder(),td=new TextDecoder();
+const comp=async u8=>{if(!window.CompressionStream)return u8;return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer())};
+const desc=async u8=>{if(!window.DecompressionStream)return u8;return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer())};
+const I={chave:null,dono:"",
+  get:k=>tx("readonly",s=>s.get(k)).catch(()=>undefined),
+  put:(k,v)=>tx("readwrite",s=>s.put(v,k)).catch(()=>{}),
+  limpar(){I.chave=null;try{DB&&DB.then(d=>d.close()).catch(()=>{})}catch(e){}DB=null;try{indexedDB.deleteDatabase("getlog")}catch(e){}},
+  async lerDia(dia,sig){const k=I.chave;if(!k)return null;const o=await I.get("d:"+I.dono+":"+dia);if(!o||o.sig!==sig)return null;
+    try{const pl=new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:o.iv},k,o.ct));return JSON.parse(td.decode(o.z&&window.DecompressionStream?await desc(pl):pl))}catch(e){return null}},
+  async gravaDia(dia,sig,json){const k=I.chave;if(!k)return;try{const z=!!window.CompressionStream;const iv=crypto.getRandomValues(new Uint8Array(12));
+    const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,await comp(te.encode(JSON.stringify(json))));await I.put("d:"+I.dono+":"+dia,{sig,iv,ct,z})}catch(e){}}};
+window.GL_IDB=I;
+})();

@@ -3,7 +3,9 @@
 <head>
 <meta name="robots" content="noindex">
 <meta charset="UTF-8">
-<script src="/assets/tema.js?v=1"></script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.github.com https://nominatim.openstreetmap.org; media-src 'self' blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<script src="/assets/tema.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Performance de coleta · GETLOG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -349,8 +351,8 @@ tr[data-setf]{cursor:pointer}
 <div class="toast" id="toast"></div>
 
 <script src="/portal/perf-guard.js?v=7"></script>
-<script src="/portal/core.js?v=4"></script>
-<script src="/portal/drive-api.js?v=9"></script>
+<script src="/portal/core.js?v=5"></script>
+<script src="/portal/drive-api.js?v=10"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:99,ALERTA:80,EMPRESA_PROPRIA:"GET"};
 const {COLS,NAO_ATRIB,num,str,empOf,nameOf,toRecords,parseDT,metaUpdate,normRows}=window.GL_CORE;
