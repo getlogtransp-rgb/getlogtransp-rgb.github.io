@@ -303,3 +303,8 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .det{grid-template-columns:1fr 1fr}
 .mbox{border-radius:16px;padding:18px}
 }
+/* Financeiro */
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end}
+.form label{display:grid;gap:5px;font-size:.84rem;font-weight:600;color:var(--ink)}
+.form input,.form select{width:100%;height:42px;padding:0 10px;border-radius:var(--radius-s);border:1px solid #cfd7e6;background:#fff;font:inherit}
+.form .btn{height:42px}
