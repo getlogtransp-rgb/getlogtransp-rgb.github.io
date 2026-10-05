@@ -82,6 +82,8 @@ function vigiar(){clearInterval(VIGT);VIGT=setInterval(()=>{if(!document.hidden)
 const ic=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const IC={dash:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),coletados:ic('<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>'),equipe:ic('<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>'),financeiro:ic('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 9.5h.01M18 15.5h.01"/>'),perf:ic('<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>'),forecast:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),ponto:ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'),pontoadm:ic('<path d="M9 5H5v14h14v-4"/><path d="M9 13l3 3 9-9"/>'),avisos:ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),usuarios:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>'),escalas:ic('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h3M8 17h8"/>'),app:ic('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:ic('<path d="M6 6l12 12M18 6 6 18"/>'),cam:ic('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
 const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast']]],['Pessoas',[['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas']]],['Comunicação',[['avisos','Avisos']]],['Gestão',[['usuarios','Usuários e acessos'],['financeiro','Financeiro']]],['Aplicativo',[['app','App GETLOG']]]];
+const SLUG={coletados:'pacotes-coletados',perf:'performance',equipe:'tempo-de-operacao'};const deSlug=h=>Object.keys(SLUG).find(k=>SLUG[k]===h)||h;
+const TITULO={coletados:'Pacotes coletados',perf:'Performance',forecast:'Forecast',equipe:'Tempo de operação'};
 const SHORT={dash:'Início',coletados:'Coletados',equipe:'Tempo de operação',financeiro:'Financeiro',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
 const can=v=>ACC[ME.role].includes(v);
 function shell(){
@@ -96,14 +98,14 @@ $('#sair').onclick=()=>encerrar('');
 $('#tsenha').onclick=()=>{fechaMenu();trocarSenha(false).then(ok=>ok&&toast('Senha alterada.'))};
 $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.add('on');document.body.classList.add('lock')};
 $('#scrim').onclick=fechaMenu;
-const h=location.hash.slice(1);show(can(h)?h:ACC[ME.role][0]);
+const h=deSlug(location.hash.slice(1));show(can(h)?h:ACC[ME.role][0]);
 }
 const fechaMenu=()=>{$('.side')?.classList.remove('open');$('#scrim')?.classList.remove('on');document.body.classList.remove('lock')};
-addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(ME&&!BLOQ&&can(h)&&h!==CUR)show(h)});
+addEventListener('hashchange',()=>{const h=deSlug(location.hash.slice(1));if(ME&&!BLOQ&&can(h)&&h!==CUR)show(h)});
 // Ciclo de vida das telas: ao trocar de tela, tudo que a anterior ligou (mapa, relógio, assinaturas) é desligado.
 let CUR='',GEN=0,LEAVE=[];const onLeave=f=>LEAVE.push(f);const vivo=g=>g===GEN;
 function show(v){if(!ME||BLOQ||!can(v))return;const fs=LEAVE;LEAVE=[];for(const f of fs)try{f()}catch(e){console.warn(e)}
-GEN++;CUR=v;if(location.hash.slice(1)!==v)location.hash=v;document.title=(SHORT[v]||'Portal')+' | GETLOG';
+GEN++;CUR=v;if(location.hash.slice(1)!==(SLUG[v]||v))location.hash=SLUG[v]||v;document.title=(TITULO[v]||SHORT[v]||'Portal')+' | GETLOG';
 $$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));fechaMenu();
 M().classList.toggle('full',v==='perf');scrollTo(0,0);conferirAcesso();
 if(v==='forecast'){const g=GEN;if(ROWSF){VIEWS[v]();if(Date.now()-LOADF_EM>15*60000){const s0=SIGF;loadF(true).then(()=>{if(vivo(g)&&SIGF!==s0)VIEWS[v]()})}}else{M().innerHTML=SKEL;loadF().then(()=>{if(vivo(g))VIEWS[v]()})}return}
@@ -152,10 +154,24 @@ const keyD=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Str
 const today=()=>keyD(new Date());
 const lblD=k=>k.split('-').reverse().slice(0,2).join('/');
 function periodUI(id,modes,def){const t=def||today(),mo=t.slice(0,7),q=+t.slice(8)<=15?1:2;
-return `<div class="per" id="${id}"><select class="pm" aria-label="Período">${modes.map(m=>`<option value="${m}">${({dia:'Dia',semana:'Semana',quinzena:'Quinzena',mes:'Mês'})[m]}</option>`).join('')}</select>
-<input type="date" class="pd" value="${t}" aria-label="Data"><input type="month" class="pmo" value="${mo}" hidden aria-label="Mês"><select class="pq" hidden aria-label="Quinzena"><option value="1"${q===1?' selected':''}>1ª quinzena (1 a 15)</option><option value="2"${q===2?' selected':''}>2ª quinzena (16 ao fim)</option></select></div>`}
+return `<div class="per" id="${id}"><select class="pm" aria-label="Período">${modes.map(m=>`<option value="${m}">${({dia:'Dia',semana:'Semana',quinzena:'Quinzena',mes:'Mês',periodo:'Período (de/até)'})[m]}</option>`).join('')}</select>
+<input type="date" class="pd" value="${t}" aria-label="Data"><input type="month" class="pmo" value="${mo}" hidden aria-label="Mês"><select class="pq" hidden aria-label="Quinzena"><option value="1"${q===1?' selected':''}>1ª quinzena (1 a 15)</option><option value="2"${q===2?' selected':''}>2ª quinzena (16 ao fim)</option></select>${modes.includes('periodo')?`<input type="hidden" class="pa" value="${t}"><input type="hidden" class="pb" value="${t}"><button type="button" class="prb" hidden>${lblD(t)} – ${lblD(t)}</button>`:''}</div>`}
+// Calendário de período: 1º clique = início, 2º clique = fim; ao fechar o intervalo, aplica o filtro.
+document.addEventListener('click',e=>{const b=e.target.closest('.prb');const pop=$('.cal-pop');
+if(pop&&!e.target.closest('.cal-pop')&&!b){pop.remove();return}if(!b)return;if(pop){pop.remove();return}
+const per=b.closest('.per'),pa=$('.pa',per),pb=$('.pb',per);let ini=null,view=pa.value.slice(0,7);
+const c=document.createElement('div');c.className='cal-pop';per.appendChild(c);
+const draw=()=>{const [Y,M]=view.split('-').map(Number);const f=new Date(Y,M-1,1),n=new Date(Y,M,0).getDate(),off=(f.getDay()+6)%7;
+const a=ini||pa.value,z=ini||pb.value;let h=`<div class="cal-h"><button type="button" data-cm="-1" aria-label="Mês anterior">‹</button><b>${(s=>s[0].toUpperCase()+s.slice(1))(f.toLocaleDateString('pt-BR',{month:'long',year:'numeric'}))}</b><button type="button" data-cm="1" aria-label="Próximo mês">›</button></div><div class="cal-g">${['S','T','Q','Q','S','S','D'].map(x=>`<i>${x}</i>`).join('')}${'<span></span>'.repeat(off)}`;
+for(let d=1;d<=n;d++){const k=view+'-'+String(d).padStart(2,'0');h+=`<button type="button" data-cd="${k}" class="${k===a||k===z?'sel':k>a&&k<z?'in':''}">${d}</button>`}
+c.innerHTML=h+`</div><p class="cal-t">${ini?'Agora clique no dia final':'Clique no dia inicial'}</p>`};draw();
+c.onclick=ev=>{ev.stopPropagation();const m=ev.target.closest('[data-cm]'),d=ev.target.closest('[data-cd]');
+if(m){const [Y,M]=view.split('-').map(Number);const x=new Date(Y,M-1+ +m.dataset.cm,1);view=keyD(x).slice(0,7);draw();return}
+if(!d)return;const k=d.dataset.cd;if(!ini){ini=k;draw();return}
+const [x,y]=k<ini?[k,ini]:[ini,k];pa.value=x;pb.value=y;c.remove();$('.pm',per).dispatchEvent(new Event('change'))}});
 function periodRange(el){const m=$('.pm',el).value;const d=$('.pd',el),mo=$('.pmo',el),q=$('.pq',el);
-d.hidden=!(m==='dia'||m==='semana');mo.hidden=!(m==='mes'||m==='quinzena');q.hidden=m!=='quinzena';
+d.hidden=!(m==='dia'||m==='semana');const pr=$('.prb',el);if(pr)pr.hidden=m!=='periodo';
+if(m==='periodo'){const a=$('.pa',el).value,b=$('.pb',el).value;pr.textContent=lblD(a)+' – '+lblD(b)+' ▾';return [a,b,a===b?'Dia '+lblD(a):'De '+lblD(a)+' a '+lblD(b)]}mo.hidden=!(m==='mes'||m==='quinzena');q.hidden=m!=='quinzena';
 if(m==='dia')return [d.value,d.value,'Dia '+lblD(d.value)];
 if(m==='semana'){const x=new Date(d.value+'T12:00');const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);const a=keyD(x);x.setDate(x.getDate()+6);const b=keyD(x);return [a,b,'Semana de '+lblD(a)+' a '+lblD(b)]}
 const [Y,Mn]=mo.value.split('-').map(Number);const last=new Date(Y,Mn,0).getDate();const ML=new Date(Y,Mn-1,1).toLocaleDateString('pt-BR',{month:'long'});
@@ -187,11 +203,11 @@ const CF={};
 const sellerTxt=(s,id)=>id?s+' | '+id:s;
 VIEWS.coletados=()=>{const R=rows();const own=!C.veTudo(ME.role);const ult=[...R].reverse().find(r=>r.t>0)?.d;
 M().innerHTML=top(own?'Meus pacotes coletados':'Pacotes coletados',own?'Somente as coletas em que você participou':'Pacotes coletados pela GETLOG · mesma base da Performance',true)+(!R.length?vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora. A tela atualiza sozinha quando a próxima atualização entrar.'):`${C.veTudo(ME.role)?`<p class="top-link"><a class="btn btn-ghost btn-sm" href="${GL_API.PASTA_COLETADOS}" target="_blank" rel="noopener">Pasta dos arquivos coletados</a></p>`:''}
-<div class="filters">${periodUI('per',['dia','semana','quinzena','mes'],ult)}${own?'':`<select id="fm" aria-label="Motorista">${opts(R.filter(r=>r.t>0).map(r=>nm(r.m)),'Todos os motoristas')}</select>`}
+<div class="filters">${periodUI('per',['dia','periodo','semana','quinzena','mes'],ult)}${own?'':`<select id="fm" aria-label="Motorista">${opts(R.filter(r=>r.t>0).map(r=>nm(r.m)),'Todos os motoristas')}</select>`}
 <select id="fr" aria-label="Região">${opts(R.filter(r=>r.t>0).map(r=>r.r),'Todas as regiões')}</select><input id="fs" type="search" placeholder="Buscar seller (nome ou ID)" aria-label="Buscar seller por nome ou ID" autocomplete="off"></div><div id="cout"></div>`);
 if(!R.length)return;
 // Filtros guardados para sobreviver a atualizações automáticas dos dados.
-const CFK=['#per .pm','#per .pd','#per .pmo','#per .pq','#fm','#fr','#fs'];
+const CFK=['#per .pm','#per .pd','#per .pmo','#per .pq','#per .pa','#per .pb','#fm','#fr','#fs'];
 for(const id of CFK){const el=$(id),v=CF[id];if(el&&v!=null&&(!el.options||[...el.options].some(o=>o.value===v)))el.value=v}
 const run=()=>{const [a,b,lbl]=periodRange($('#per'));const fm=own?'':$('#fm').value,fr=$('#fr').value,fs=C.nk($('#fs').value);
 for(const id of CFK){const el=$(id);if(el)CF[id]=el.value}
@@ -214,9 +230,9 @@ for(const x of P.values()){const D=[...x.dias.values()].filter(d=>d.i!=null);x.i
 return [...P.values()]}
 const EF={};
 VIEWS.equipe=()=>{const R=rows().filter(r=>r.t>0&&r.m);const ult=R[R.length-1]?.d;
-M().innerHTML=top('Tempo de operação','Motoristas GETLOG em operação: do primeiro ao último bip · mesma base da Performance',true)+(!R.length?vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora.'):`<div class="filters">${periodUI('eper',['dia','semana','quinzena','mes'],ult)}<select id="er" aria-label="Região">${opts(R.map(r=>r.r),'Todas as regiões')}</select><input id="es" type="search" placeholder="Buscar motorista ou ajudante" aria-label="Buscar motorista ou ajudante" autocomplete="off"></div><div id="eout"></div>`);
+M().innerHTML=top('Tempo de operação','Motoristas GETLOG em operação: do primeiro ao último bip · mesma base da Performance',true)+(!R.length?vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora.'):`<div class="filters">${periodUI('eper',['dia','periodo','semana','quinzena','mes'],ult)}<select id="er" aria-label="Região">${opts(R.map(r=>r.r),'Todas as regiões')}</select><input id="es" type="search" placeholder="Buscar motorista ou ajudante" aria-label="Buscar motorista ou ajudante" autocomplete="off"></div><div id="eout"></div>`);
 if(!R.length)return;
-const K=['#eper .pm','#eper .pd','#eper .pmo','#eper .pq','#er','#es'];
+const K=['#eper .pm','#eper .pd','#eper .pmo','#eper .pq','#eper .pa','#eper .pb','#er','#es'];
 for(const id of K){const el=$(id),v=EF[id];if(el&&v!=null&&(!el.options||[...el.options].some(o=>o.value===v)))el.value=v}
 const run=()=>{const [a,b,lbl]=periodRange($('#eper'));const fr=$('#er').value,fs=C.nk($('#es').value);for(const id of K){const el=$(id);if(el)EF[id]=el.value}
 const L=jornadas(a,b,fr).filter(x=>!fs||C.nk(x.m+' '+[...x.aj].join(' ')).includes(fs)).sort((p,q)=>q.t-p.t);
@@ -224,8 +240,9 @@ const tot=L.reduce((s,x)=>s+x.t,0);const aj=new Set(L.flatMap(x=>[...x.aj]));con
 const ini=avg(H.map(x=>x.i)),fim=avg(H.map(x=>x.f)),jor=avg(H.map(x=>x.j)),ph=(()=>{const Q=H.filter(x=>x.ph);const m=Q.reduce((s,x)=>s+x.jt,0);return m?Q.reduce((s,x)=>s+x.t,0)/(m/60):null})();
 const tot2=H.reduce((s,x)=>s+x.jt,0);
 const dias=[...new Set(L.flatMap(x=>[...x.dias.keys()]))].sort();
-const resumo=(()=>{const m=new Map();for(const r of rows()){if(r.d<a||r.d>b||(fr&&r.r!==fr))continue;let o=m.get(r.d);if(!o)m.set(r.d,o={d:r.d,p:0,c:0,t:0,mot:0,ii:[],jj:[]});o.p+=r.p||0;o.c+=r.cp||0;o.t+=r.t}
-for(const x of L)for(const [d,v] of x.dias){const o=m.get(d);if(!o)continue;o.mot++;if(v.i!=null){o.ii.push(v.i);o.jj.push(v.f-v.i)}}
+$('#eout').onclick=e=>{const r=e.target.closest('[data-rd]');if(!r)return;const d=$(`[data-rdd="${r.dataset.rd}"]`);d.hidden=!d.hidden;r.setAttribute('aria-expanded',!d.hidden)};
+const resumo=(()=>{const m=new Map();for(const r of rows()){if(r.d<a||r.d>b||(fr&&r.r!==fr))continue;let o=m.get(r.d);if(!o)m.set(r.d,o={d:r.d,p:0,c:0,t:0,mot:0,ii:[],jj:[],nomes:[]});o.p+=r.p||0;o.c+=r.cp||0;o.t+=r.t}
+for(const x of L)for(const [d,v] of x.dias){const o=m.get(d);if(!o)continue;o.mot++;o.nomes.push([x.m,v]);if(v.i!=null){o.ii.push(v.i);o.jj.push(v.f-v.i)}}
 return [...m.values()].filter(o=>o.p>0||o.t>0||o.mot>0).map(o=>({...o,i:avg(o.ii),j:avg(o.jj)})).sort((p,q)=>p.d<q.d?1:-1)})();
 // Escala da linha do tempo: da hora cheia antes do 1º bip até a hora cheia depois do último.
 const h0=H.length?Math.floor(Math.min(...H.map(x=>x.i))/60)*60:360,h1=H.length?Math.ceil(Math.max(...H.map(x=>x.f))/60)*60:1320,span=Math.max(60,h1-h0);
@@ -234,7 +251,7 @@ const flag=x=>x.j==null?'':x.j>=600?'<span class="tg tg-r">Jornada longa</span>'
 const reg=[...H.reduce((m,x)=>{for(const r of x.rg){const o=m.get(r)||{n:0,j:0,i:0,t:0};o.n++;o.j+=x.j;o.i+=x.i;o.t+=x.t;m.set(r,o)}return m},new Map())].sort((p,q)=>q[1].n-p[1].n);
 $('#eout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Motoristas em operação</small><b>${L.length}</b><span>${esc(lbl)}${aj.size?` · ${aj.size} ajudante${aj.size>1?'s':''}`:''}</span></div><div class="kpi"><small>Tempo médio de operação</small><b>${dur(jor)}</b><span>Do 1º ao último bip · ${dur(tot2||null)} no total</span></div><div class="kpi"><small>Início médio (1º bip)</small><b>${hhmm(ini)}</b><span>Último bip em média: ${hhmm(fim)}</span></div><div class="kpi"><small>Pacotes por hora</small><b>${ph?N(Math.round(ph)):'—'}</b><span>${N(tot)} pacotes no período</span></div></div>
 ${L.length&&!H.length?`<p class="msg">Este período não trouxe o horário dos bips (coluna HORA). Os horários aparecem assim que a planilha vier com eles.</p>`:''}
-${resumo.length?`<div class="box mt"><div class="box-head"><div><h3>Resumo por dia</h3><p>Previsto, coletado e quantas pessoas trabalharam em cada dia</p></div></div><div class="table-wrap"><table><thead><tr><th>Dia</th><th class="n">Motoristas</th><th class="n">Previsto</th><th class="n">Coletado do previsto</th><th class="n">%</th><th class="n">Coletado GETLOG</th><th class="n">Início médio</th><th class="n">Tempo médio</th></tr></thead><tbody>${resumo.map(o=>`<tr><td><b>${esc(lblD(o.d))}</b> <small>${['dom','seg','ter','qua','qui','sex','sáb'][new Date(o.d+'T12:00').getDay()]}</small></td><td class="n"><b>${o.mot}</b></td><td class="n">${N(o.p)}</td><td class="n">${N(o.c)}</td><td class="n">${o.p?(o.c/o.p*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="n">${N(o.t)}</td><td class="n">${hhmm(o.i)}</td><td class="n">${dur(o.j)}</td></tr>`).join('')}</tbody></table></div></div>`:''}
+${resumo.length?`<div class="box mt"><div class="box-head"><div><h3>Resumo por dia</h3><p>Previsto, coletado e quantas pessoas trabalharam · clique no dia para ver os motoristas</p></div></div><div class="table-wrap"><table><thead><tr><th>Dia</th><th class="n">Motoristas</th><th class="n">Previsto</th><th class="n">Coletado do previsto</th><th class="n">%</th><th class="n">Coletado GETLOG</th><th class="n">Início médio</th><th class="n">Tempo médio</th></tr></thead><tbody>${resumo.map(o=>`<tr class="rd-row" data-rd="${o.d}" tabindex="0" aria-expanded="false"><td><span class="rd-car" aria-hidden="true"></span><b>${esc(lblD(o.d))}</b> <small>${['dom','seg','ter','qua','qui','sex','sáb'][new Date(o.d+'T12:00').getDay()]}</small></td><td class="n"><b>${o.mot}</b></td><td class="n">${N(o.p)}</td><td class="n">${N(o.c)}</td><td class="n">${o.p?(o.c/o.p*100).toFixed(1).replace('.',',')+'%':'—'}</td><td class="n">${N(o.t)}</td><td class="n">${hhmm(o.i)}</td><td class="n">${dur(o.j)}</td></tr><tr class="rd-det" data-rdd="${o.d}" hidden><td colspan="8"><div class="rd-list">${o.nomes.sort((p,q)=>p[0].localeCompare(q[0])).map(([n,v])=>`<span>${esc(n)}${v.i!=null?`<small>${hhmm(v.i)}–${hhmm(v.f)}</small>`:''}</span>`).join('')}</div></td></tr>`).join('')}</tbody></table></div></div>`:''}
 ${H.length?`<div class="box mt"><div class="box-head"><div><h3>Linha do tempo da operação</h3><p>Cada barra vai do 1º ao último bip do motorista${multi?' (média por dia)':''} · ordenado por quem começou primeiro</p></div></div>
 <div class="gantt"><div class="g-axis"><span></span><div>${marks.map(h=>`<i style="left:${pos(h)}%">${hhmm(h)}</i>`).join('')}</div></div>${[...H].sort((p,q)=>p.i-q.i).map(x=>`<div class="g-row"><span title="${esc(x.m)}">${esc(x.m)}</span><div><b class="${x.j>=600?'lg':x.j<240?'ct':''}" style="left:${pos(x.i)}%;width:${Math.max(.8,x.j/span*100).toFixed(2)}%" title="${hhmm(x.i)} – ${hhmm(x.f)} · ${dur(x.j)}"></b><em style="left:calc(${pos(x.f)}% + 6px)">${dur(x.j)}</em></div></div>`).join('')}</div>
 <p class="g-leg"><i class="ok"></i>Normal <i class="ct"></i>Menos de 4h <i class="lg"></i>10h ou mais</p></div>`:''}
