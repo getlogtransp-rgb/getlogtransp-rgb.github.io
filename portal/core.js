@@ -31,9 +31,10 @@ function normRows(recs,fk){
     let dk=fk;const m=str(r[COLS.DATA]).match(/^(\d{2})\/(\d{2})\/(\d{4})/);if(m)dk=`${m[3]}-${m[2]}-${m[1]}`;
     const cdp=num(r[COLS.CDP]),nc=num(r[COLS.NC]);const ma=str(r[COLS.MA])||NAO_ATRIB,mo=str(r[COLS.MO]);
     const tot=num(r[COLS.TOT]),ndes=num(r[COLS.NDES]);let pen=num(r[COLS.NJ]),jus=num(r[COLS.JUS]);
+    // DROP Recebeu: quem coletou foi o DROP (terceiro), não o motorista GET da linha.
     // Baixa indevida não é justificativa: o que vier como justificado nessa linha conta como não justificado (pendente).
     if(nk(r[COLS.ST])==="BAIXA INDEVIDA"){pen+=jus;jus=0}
-    out.push({dk,aju:str(r["AJUDANTE"]),sid:str(r[COLS.SID]),seller:seller||str(r[COLS.SID]),cli:str(r[COLS.CLI])||"SEM CLIENTE",ma,mo,emp:empOf(mo),wb:str(r[COLS.WB]),end:str(r[COLS.END]),bai:str(r[COLS.BAI]),cid:str(r[COLS.CID]),cep:str(r[COLS.CEP]),reg:str(r[COLS.REG])||"Sem região",pri:str(r[COLS.PRI])||"—",st:str(r[COLS.ST])||"—",sit:pen>0?"Pendente":"Finalizado",des:tot>0?(ndes>0?"Não":"Sim"):"—",outro:tot>0&&mo&&ma!==mo?"Sim":"Não",hora:str(r[COLS.HORA]),prev:cdp+nc,col:cdp,nc,adi:num(r[COLS.ADI]),tot,nor:num(r[COLS.NOR]),ndes,jus,pen,jtxt:str(r[COLS.JTXT])});
+    out.push({dk,aju:str(r["AJUDANTE"]),sid:str(r[COLS.SID]),seller:seller||str(r[COLS.SID]),cli:str(r[COLS.CLI])||"SEM CLIENTE",ma,mo,emp:nk(r[COLS.ST])==="DROP RECEBEU"&&tot>0?"DROP":empOf(mo),wb:str(r[COLS.WB]),end:str(r[COLS.END]),bai:str(r[COLS.BAI]),cid:str(r[COLS.CID]),cep:str(r[COLS.CEP]),reg:str(r[COLS.REG])||"Sem região",pri:str(r[COLS.PRI])||"—",st:str(r[COLS.ST])||"—",sit:pen>0?"Pendente":"Finalizado",des:tot>0?(ndes>0?"Não":"Sim"):"—",outro:tot>0&&mo&&ma!==mo?"Sim":"Não",hora:str(r[COLS.HORA]),prev:cdp+nc,col:cdp,nc,adi:num(r[COLS.ADI]),tot,nor:num(r[COLS.NOR]),ndes,jus,pen,jtxt:str(r[COLS.JTXT])});
   }
   return out;
 }
