@@ -20,15 +20,16 @@
       "login": "d21049861101",
       "role": "colaborador",
       "active": true,
-      "salt": "VGR+d10hOxfHCGUK+rCSog==",
-      "iv": "e6QCRtN2tPUtVhK+",
-      "key": "lKf6dPj0H52sdufja7/87a7MMuwZRFGQVoonA+Ttyo4ZQGL0hR8xUt/rHkUKxuQj",
-      "pwEm": "2026-10-05T17:16:00.455Z",
+      "salt": "zX2GC7Rd5v89tx56LDBFCg==",
+      "iv": "TlEmAqFjKckUhXg9",
+      "key": "7FcWL4BAvnef5ZxoTBRKQBd/fojsXWU/DucZHNzS6CbFE31Vqed6ytE9C3hfSTbO",
+      "pwEm": "2026-10-05T23:45:08.453Z",
       "p": {
         "iv": "RkXDkUVIbQbdcsY1",
         "ct": "41vJrIZIzoujHpXB+jzBSk02m/aAdLVUGkGd0jE4NZGyKpVqUBXOW64gdC3GQ1rAgVwh4YQvhOXE+pGBHhRrasmkf6tiNseiGFgxTokQorSNgO4sOfLWPyAH7OIerYPUaByM2UQ9t+B6aZ/mnkpDLSCBssv75cLxqLcM59nSg8C8rVwoKpYZeQ=="
       },
-      "created": "2026-10-05T17:03:18.667Z"
+      "created": "2026-10-05T17:03:18.667Z",
+      "ah": "3f056df04617d0f2990b212bf6d03d781877b9c6f88e2f34929ac781ead7e75b"
     },
     {
       "login": "claudio.marques",
