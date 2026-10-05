@@ -385,3 +385,9 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .rd-list small{color:var(--muted);font-weight:500}
 [data-theme=dark] .rd-list span{background:#121B30}
 .ch-t{font-size:.8rem;font-weight:700;color:var(--muted);margin:0 0 6px}.clk-row{cursor:pointer}.clk-row.on td{background:#fff4ec}[data-theme=dark] .clk-row.on td{background:#3A2414}
+/* Resumo por dia: motoristas em colunas, ordem alfabética de cima para baixo */
+.rd-list{display:block;columns:4 260px;column-gap:24px;padding:4px 2px}
+.rd-list div{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 4px;border-bottom:1px solid var(--line);break-inside:avoid;font-size:.8rem}
+.rd-list div em{font-style:normal;color:var(--muted);font-size:.72rem;text-align:right}
+.rd-list div span{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:0;border-radius:0}
+.rd-list div small{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
