@@ -57,6 +57,20 @@
         "ct": "qeihDqyIP0Uhl38+U7sARHYKhDsAp5jJZJw3jxYbcGEWFMqhdBpPwvoZyXkPDqz5qLmqx/NZIGxnQdd7rEf/17WkLDL/zCZlsgRYmXCwl7VebmpFjRXBJsb7kcGKsIUXrLaCToQR6Tr+WlXNQGHBY453K+5qqIYR"
       },
       "created": "2026-10-05T17:14:41.494Z"
+    },
+    {
+      "login": "guilherme.masques",
+      "role": "admin",
+      "active": true,
+      "salt": "BX63GtCbS7yqyWbIV1Nbnw==",
+      "iv": "SwAd/VDK9bBUqGYu",
+      "key": "l6PME/J8+IjtyDECZsTUmNbiRkKWwNDB0yiqSgrlLpQeYzr1VqgSALe04QpZ/Slm",
+      "pwEm": "2026-10-05T17:51:33.834Z",
+      "p": {
+        "iv": "pe5xJZezmi2SNHHg",
+        "ct": "0toCk69BTEHmCm9CF1as40Rybhh3DPp+JeB43AR4bZQXL4lOD2o0Sz0mVpK/CufO5h4K0mtFITefbUZPa2gLNjeLIn/+KchVEv6yM0XdLUwT88iT346tRJIZjf+gXfw5yS1E2v77o3Os5iZeMGfYcQAF93rSGsoSUwtoMA=="
+      },
+      "created": "2026-10-05T17:51:33.834Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
