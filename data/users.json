@@ -44,6 +44,20 @@
         "ct": "41vJrIZIzoujHpXB+jzBSk02m/aAdLVUGkGd0jE4NZGyKpVqUBXOW64gdC3GQ1rAgVwh4YQvhOXE+pGBHhRrasmkf6tiNseiGFgxTokQorSNgO4sOfLWPyAH7OIerYPUaByM2UQ9t+B6aZ/mnkpDLSCBssv75cLxqLcM59nSg8C8rVwoKpYZeQ=="
       },
       "created": "2026-10-05T17:03:18.667Z"
+    },
+    {
+      "login": "claudio.marques",
+      "role": "admin",
+      "active": true,
+      "salt": "FR1eXJV7OGqyGwyWBY1xEA==",
+      "iv": "pkmFR5BVWyDp8Q4R",
+      "key": "vkJqs4Jh/1aNsDBQ6QhCg65NHjXI4+/06flw8V8K8q1MDCMPWo6xRfYs2NATnsZt",
+      "pwEm": "2026-10-05T17:13:44.372Z",
+      "p": {
+        "iv": "y7zEpopiOlVFn9Ux",
+        "ct": "CwmWykPRQ1il5pVSYhtq2KC2b4w0+O40/5EDe2LbdZFJV/MZM/cWAfZppCUcTekZoClDE6Umn6er5MS9m/VIc6Okd9vxo1YHgpe4M3678QoV6vzLn/KXVBBzbYylcjMCPpYQYx7SRkYCyUWn9FBh7J3uHmYNf7stU+vNGg=="
+      },
+      "created": "2026-10-05T17:13:44.372Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
