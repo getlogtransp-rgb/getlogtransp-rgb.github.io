@@ -48,10 +48,10 @@
       "login": "murilo.moura",
       "role": "admin",
       "active": true,
-      "salt": "hYYEALU/A5nxw8sPwZzZCA==",
-      "iv": "MaDAVegMikThqDx0",
-      "key": "qMmWPvH0zpg0eVw8RBvv9P9z9Xe0dAaD4k399b0z/v0eXCPLRUB8F1p/ZBsMaN+P",
-      "pwEm": "2026-10-05T17:14:41.494Z",
+      "salt": "wPZPomUA6tfFbF2/XKg8HA==",
+      "iv": "2E0TE3XWLznWEEr2",
+      "key": "NyaE97LR4j8lJmE6OlnGwAXKziWgOmPFJIg/uVacNMdc+TBx7FK8VxXnN+D+8d1y",
+      "pwEm": "2026-10-05T17:16:04.828Z",
       "p": {
         "iv": "nwfsOe5KfDGOBjEE",
         "ct": "qeihDqyIP0Uhl38+U7sARHYKhDsAp5jJZJw3jxYbcGEWFMqhdBpPwvoZyXkPDqz5qLmqx/NZIGxnQdd7rEf/17WkLDL/zCZlsgRYmXCwl7VebmpFjRXBJsb7kcGKsIUXrLaCToQR6Tr+WlXNQGHBY453K+5qqIYR"
