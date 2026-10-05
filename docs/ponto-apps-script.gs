@@ -11,6 +11,8 @@
  *  - Só o administrador lista tudo, corrige marcações e decide ajustes; tudo vai para a aba Auditoria.
  */
 const TOKEN = 'TROQUE-ESTE-TOKEN';
+// Se o projeto não foi aberto pela planilha (Extensões → Apps Script), coloque aqui o ID da planilha (parte do endereço entre /d/ e /edit).
+const PLANILHA_ID = '';
 const SITE = 'https://getlogbr.com.br';
 const VERSAO = 2;
 const PASTA_FOTOS = 'GETLOG - Fotos do ponto';
@@ -22,7 +24,7 @@ const CAB_AUD = ['Quando', 'Quem', 'Alteração', 'ID', 'Pessoa', 'Antes', 'Depo
 const INATIVAS = ['Excluída', 'Substituída'];
 
 function aba_(nome, cab) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = (PLANILHA_ID ? SpreadsheetApp.openById(PLANILHA_ID) : SpreadsheetApp.getActive());
   let sh = ss.getSheetByName(nome);
   if (!sh) { sh = ss.insertSheet(nome); sh.appendRow(cab); sh.setFrozenRows(1); sh.getRange(1, 1, 1, cab.length).setFontWeight('bold'); }
   else if (sh.getLastColumn() < cab.length) sh.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold');
@@ -207,6 +209,9 @@ function decidir_(d, eu) {
   audita_(eu, d.aprovar ? 'Aprovou ajuste' : 'Rejeitou ajuste', a.id, a.login, { situacao: 'Pendente' }, { situacao: d.aprovar ? 'Aprovado' : 'Rejeitado', dia: a.dia, tipo: MARC[a.tipo], hora: a.hora }, d.obs || a.motivo);
   return { ok: true, id: idMarc };
 }
+
+// Rode esta função uma vez no editor (▷ Executar) para o Google pedir as permissões.
+function autorizar() { usuarios_(); marcacoes_(); pasta_(); console.log('Tudo autorizado.'); }
 
 // ---------- Entrada ----------
 function doPost(e) {
