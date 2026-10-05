@@ -41,7 +41,7 @@ const txt_ = v => v instanceof Date ? Utilities.formatDate(v, FUSO, 'yyyy-MM-dd'
 const agora_ = () => new Date().toISOString();
 const hoje_ = () => Utilities.formatDate(new Date(), FUSO, 'yyyy-MM-dd');
 // Texto vindo do portal entra sempre como texto puro (nunca vira fórmula da planilha).
-const T_ = v => "'" + String(v ?? '');
+const T_ = v => "'" + String(v == null ? '' : v);
 const falha_ = c => { const e = new Error(c); e.codigo = c; return e; };
 const hash_ = s => Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8).map(b => ((b + 256) % 256).toString(16).padStart(2, '0')).join('');
 function salvaFoto_(dataUrl, nome) {
