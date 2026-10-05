@@ -43,6 +43,20 @@
         "ct": "N5/af3aTJhRtZgF+BtOU2ZGoOtTtdrkuEAyjbbjDTADNRGZBR1BTstQdPoNkMAGShUCmEpF8UYvBrrDU/AmEiofDZOI4UH8hz4Oz+LNpKWqR3BwzRAAfuNUIvDDroHsY+Di1eyizRyrHni8tVPPhyEYtSal8QWIFznTS7MKkCedPdBFrUTNL"
       },
       "created": "2026-10-05T17:13:44.372Z"
+    },
+    {
+      "login": "murilo.moura",
+      "role": "admin",
+      "active": true,
+      "salt": "hYYEALU/A5nxw8sPwZzZCA==",
+      "iv": "MaDAVegMikThqDx0",
+      "key": "qMmWPvH0zpg0eVw8RBvv9P9z9Xe0dAaD4k399b0z/v0eXCPLRUB8F1p/ZBsMaN+P",
+      "pwEm": "2026-10-05T17:14:41.494Z",
+      "p": {
+        "iv": "nwfsOe5KfDGOBjEE",
+        "ct": "qeihDqyIP0Uhl38+U7sARHYKhDsAp5jJZJw3jxYbcGEWFMqhdBpPwvoZyXkPDqz5qLmqx/NZIGxnQdd7rEf/17WkLDL/zCZlsgRYmXCwl7VebmpFjRXBJsb7kcGKsIUXrLaCToQR6Tr+WlXNQGHBY453K+5qqIYR"
+      },
+      "created": "2026-10-05T17:14:41.494Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbzE1rn-gCwxT3ZVYgvIlKhNIsRnwYWUNrYW-npj6mSn6F32Fu-Gxcf-ru2zrGoYJoad9Q/exec"
