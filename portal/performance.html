@@ -3,6 +3,7 @@
 <head>
 <meta name="robots" content="noindex">
 <meta charset="UTF-8">
+<script src="/assets/tema.js?v=1"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Performance de coleta · GETLOG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +19,7 @@
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1222;--card:#121B30;--ink:#E7ECF6;--ink-2:#AEB8CE;--ink-3:#7783A0;--line:#24304B;--line-2:#1A2440;--or-s:#3A2414;--ok-s:#0F2E1C;--warn-s:#3A2F0B;--bad-s:#3B1515;--ok:#45E0C0;--aqua:#45E0C0;--aqua-s:#103A34;--warn:#FACC15;--bad:#F87171}}
+:root[data-theme="dark"]{--bg:#0B1222;--card:#121B30;--ink:#E7ECF6;--ink-2:#AEB8CE;--ink-3:#7783A0;--line:#24304B;--line-2:#1A2440;--or-s:#3A2414;--ok-s:#0F2E1C;--warn-s:#3A2F0B;--bad-s:#3B1515;--ok:#45E0C0;--aqua:#45E0C0;--aqua-s:#103A34;--warn:#FACC15;--bad:#F87171}
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px);-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.4}
@@ -59,10 +61,12 @@ svg{flex:none}
 .ddb span{overflow:hidden;text-overflow:ellipsis}
 .ddb.on{border-color:var(--navy);background:#E8EDF9;color:var(--navy);font-weight:600}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ddb.on{background:#1B2A55;color:#C9D5FF;border-color:#3B5BB8}}
+:root[data-theme="dark"] .ddb.on{background:#1B2A55;color:#C9D5FF;border-color:#3B5BB8}
 .ddb .c{background:var(--navy);color:#fff;border-radius:999px;padding:0 6px;font-size:11px;font-weight:700}
 .ddb svg{width:14px;height:14px;opacity:.7}.ddb .chev-down{width:13px;height:13px;margin-left:1px;opacity:.55;transition:transform .18s ease,opacity .18s ease}.ddb:hover .chev-down{opacity:.9}.ddb[aria-expanded="true"] .chev-down{transform:rotate(180deg);opacity:.9}
 .ddb.date{border-color:var(--navy);color:var(--navy);font-weight:600}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ddb.date{color:#C9D5FF;border-color:#3B5BB8}}
+:root[data-theme="dark"] .ddb.date{color:#C9D5FF;border-color:#3B5BB8}
 .pop{position:absolute;top:calc(100% + 6px);left:0;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 36px rgba(6,22,66,.18);min-width:270px}
 .pop.r{left:auto;right:0}
 .ms-s{padding:8px;border-bottom:1px solid var(--line-2)}
@@ -70,6 +74,7 @@ svg{flex:none}
 .ms-a{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--line-2)}
 .lnk{border:0;background:none;color:var(--navy-2);font-size:12.5px;font-weight:600;padding:2px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lnk{color:#9DB4FF}}
+:root[data-theme="dark"] .lnk{color:#9DB4FF}
 .ms-l{max-height:270px;overflow:auto;padding:4px}
 .ms-l label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;font-size:13px;cursor:pointer}
 .ms-l label:hover{background:var(--bg)}
@@ -100,6 +105,7 @@ svg{flex:none}
 .cal-g button.hd::after{content:"";position:absolute;left:50%;bottom:4px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--or)}
 .cal-g button.s::after,.cal-g button.e::after{background:#fff}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cal-g button.in{background:#1B2A55}}
+:root[data-theme="dark"] .cal-g button.in{background:#1B2A55}
 .cal-f{font-size:12px;color:var(--ink-3);text-align:center;margin-top:8px}
 
 .hero{display:grid;grid-template-columns:285px minmax(0,1fr);gap:10px;margin-bottom:10px}
@@ -184,6 +190,7 @@ button.hr:hover{background:var(--bg)}
 .donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
 .donut .c b{font-family:var(--fc);font-weight:700;font-size:24px;color:var(--navy);line-height:1}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .donut .c b{color:#C9D5FF}}
+:root[data-theme="dark"] .donut .c b{color:#C9D5FF}
 .donut .c small{display:block;font-size:11px;color:var(--ink-3)}
 .dl{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
 .dl div{display:flex;align-items:center;gap:8px;font-size:13px}
@@ -234,6 +241,7 @@ tr[data-setf]{cursor:pointer}
 .ph{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .ph h2{margin:0;font-size:22px;font-weight:700;color:var(--navy)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ph h2{color:#C9D5FF}}
+:root[data-theme="dark"] .ph h2{color:#C9D5FF}
 .ph p{margin:2px 0 0;color:var(--ink-2);font-size:13px}
 .psum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:12px}
 .psum .kpi:nth-child(3){border-right:0}
@@ -317,6 +325,7 @@ tr[data-setf]{cursor:pointer}
 }
 @media (max-width:520px){.kpis{grid-template-columns:1fr}.kpi{border-right:0!important;border-bottom:1px solid var(--line-2)!important}.kpi:last-child{border-bottom:0!important}.pcard{grid-template-columns:92px minmax(0,1fr)}.gauge{align-self:start}.pv b{font-size:29px}.pmeta.top-metrics{grid-template-columns:1fr 1fr}.status-item{flex-basis:190px}.card{padding:10px}.ch{margin-bottom:8px}.ch h3{font-size:14px}.gap-row{padding:7px}.top-in .upd b{font-size:13px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:root[data-theme="dark"] :is(.cal-p button:hover,.cal-p button[aria-pressed="true"],.al.n .ic,.seg button[aria-pressed="true"],.state h2,.ms-toggle:hover,.gap-seller strong){color:#C9D5FF}
 </style>
 </head>
 <body>
@@ -325,7 +334,8 @@ tr[data-setf]{cursor:pointer}
   <div class="ttl">Performance de coleta<small id="hdrSub">Carregando dados</small></div>
   <div class="sp"></div>
   <div class="upd"><div><small>Última atualização</small><b id="hLast">—</b></div><div><small>Próxima atualização</small><b id="hNext">—</b></div></div>
-  <span class="live" id="hLive"><span class="dot"></span>Ao vivo</span>   <button class="tbtn ghost" id="btnRef" type="button" title="Atualizar agora" onclick="this.disabled=true;Promise.resolve(checkUpdates(true)).finally(()=>this.disabled=false)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lb">Atualizar</span></button>
+  <span class="live" id="hLive"><span class="dot"></span>Ao vivo</span>   <script>document.write(GL_TEMA.btn("tbtn ghost"))</script>
+  <button class="tbtn ghost" id="btnRef" type="button" title="Atualizar agora" onclick="this.disabled=true;Promise.resolve(checkUpdates(true)).finally(()=>this.disabled=false)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg><span class="lb">Atualizar</span></button>
   <button class="tbtn ghost" id="btnHome" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg><span class="lb">Painel</span></button>
   <button class="tbtn" id="btnPend"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span class="lb">Ver pendentes</span><span class="bd" id="pendBadge">0</span></button>
 </div></header>
