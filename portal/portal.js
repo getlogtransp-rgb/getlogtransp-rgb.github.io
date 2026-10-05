@@ -127,6 +127,8 @@ const bipMin=v=>{v=String(v??'').trim();if(!v)return null;const m=v.match(/(\d{1
 const hhmm=x=>x==null?'—':String(Math.floor(x/60)).padStart(2,'0')+':'+String(Math.round(x%60)).padStart(2,'0');
 const dur=x=>x==null?'—':Math.floor(x/60)+'h'+String(Math.round(x%60)).padStart(2,'0');
 const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
+// Chave do seller (mesma da Performance): nome do seller + cliente.
+const sk=r=>String(r.s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim()+'|'+r.c;
 const toRow=r=>({d:r.dk,s:r.seller,sid:r.sid,c:r.cli,r:r.reg,m:r.mo||(r.ma!==C.NAO_ATRIB?r.ma:''),t:C.coletadoGet(r),p:r.prev,cp:r.col,h:bipMin(r.hora),a:r.aju,b:r.bai,ci:r.cid});
 const ingestDia=(s,x)=>{const [d,m,y]=s.split('.');DIAS.set(s,C.normRows(C.toRecords(x.json),`${y}-${m}-${d}`).map(toRow));ROWS=null};
 function rows(){if(!ROWS)ROWS=[...DIAS.values()].flat().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);return ROWS}
@@ -185,7 +187,7 @@ const VIEWS={};
 // Visão geral: um dia escolhido (padrão = mais recente) + histórico diário. Conta só o que a GETLOG coletou.
 let DASH_DIA='',DASH_N=7;
 VIEWS.dash=()=>{const R=rows();if(!R.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora. A tela atualiza sozinha quando a próxima atualização entrar.');return}
-const D=new Map();for(const r of R){if(!(r.t>0))continue;let o=D.get(r.d);if(!o)D.set(r.d,o={d:r.d,t:0,s:new Set(),c:new Set(),m:new Set(),rows:[]});o.t+=r.t;o.s.add(r.sid||r.s);o.c.add(r.c);if(r.m)o.m.add(r.m);o.rows.push(r)}
+const D=new Map();for(const r of R){if(!(r.t>0))continue;let o=D.get(r.d);if(!o)D.set(r.d,o={d:r.d,t:0,s:new Set(),c:new Set(),m:new Set(),rows:[]});o.t+=r.t;o.s.add(sk(r));o.c.add(r.c);if(r.m)o.m.add(r.m);o.rows.push(r)}
 const dates=[...D.keys()].sort();if(!dates.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Ainda não há coletas da GETLOG nos dados publicados.');return}
 if(!D.has(DASH_DIA))DASH_DIA=dates.at(-1);const t=DASH_DIA,ix=dates.indexOf(t),o=D.get(t),ant=ix>0?D.get(dates[ix-1]):null;const ult=t===dates.at(-1);
 const vr=(x,y)=>{if(!y)return '<span>Sem dia anterior para comparar</span>';const v=(x-y)/y*100;return `<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1).replace('.',',')}% vs ${esc(lblD(dates[ix-1]))}</span>`};
@@ -225,7 +227,7 @@ for(const id of CFK){const el=$(id);if(el)CF[id]=el.value}
 const f=R.filter(r=>r.t>0&&r.d>=a&&r.d<=b&&(!fm||nm(r.m)===fm)&&(!fr||r.r===fr)&&(!fs||C.nk(r.s+' '+r.sid).includes(fs)));
 const tot=f.reduce((x,r)=>x+r.t,0);const days=[...new Set(f.map(r=>r.d))];
 const sel=group(f,r=>[r.s,r.sid,r.c,r.r,nm(r.m)].join('|'),r=>r.t).sort((a,b)=>b[1]-a[1]);
-$('#cout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Dias com coleta</small><b>${days.length}</b><span>No período</span></div><div class="kpi"><small>Média por dia</small><b>${N(Math.round(tot/Math.max(1,days.length)))}</b><span>Pacotes</span></div><div class="kpi"><small>Sellers atendidos</small><b>${N(new Set(f.map(r=>r.sid||r.s)).size)}</b><span>No período</span></div></div>
+$('#cout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Dias com coleta</small><b>${days.length}</b><span>No período</span></div><div class="kpi"><small>Média por dia</small><b>${N(Math.round(tot/Math.max(1,days.length)))}</b><span>Pacotes</span></div><div class="kpi"><small>Sellers atendidos</small><b>${N(new Set(f.map(sk)).size)}</b><span>No período</span></div></div>
 ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coletados por dia</h3><p>${esc(lbl)}</p></div></div>${vbars(group(f,r=>lblD(r.d),r=>r.t))}</div>
 <div class="grid-2 eq">${own?'':`<div class="box"><div class="box-head"><div><h3>Ranking de motoristas</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>`}
 <div class="box"><div class="box-head"><div><h3>Top sellers</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>sellerTxt(r.s,r.sid),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>
@@ -236,7 +238,7 @@ $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',r
 // Quem trabalhou: motoristas GETLOG (GET - ...) que bipararam no período, com 1º e último bip (coluna HORA) e tempo de trabalho.
 // Jornada do dia = último bip − primeiro bip. Base para o Financeiro.
 function jornadas(a,b,fr){const P=new Map();for(const r of rows()){if(!(r.t>0)||!r.m||r.d<a||r.d>b||(fr&&r.r!==fr))continue;const k=nm(r.m);let x=P.get(k);if(!x)P.set(k,x={m:k,ajd:new Map(),aj:new Set(),dias:new Map(),s:new Set(),rg:new Set(),t:0});
-if(r.a&&!/^(n[aã]o|sim|-|0)$/i.test(r.a)){x.aj.add(r.a);let q=x.ajd.get(r.a);if(!q)x.ajd.set(r.a,q=new Set());q.add(r.d)}let d=x.dias.get(r.d);if(!d)x.dias.set(r.d,d={i:null,f:null,t:0});d.t+=r.t;if(r.h!=null){if(d.i==null||r.h<d.i)d.i=r.h;if(d.f==null||r.h>d.f)d.f=r.h}x.s.add(r.sid||r.s);x.rg.add(r.r);x.t+=r.t}
+if(r.a&&!/^(n[aã]o|sim|-|0)$/i.test(r.a)){x.aj.add(r.a);let q=x.ajd.get(r.a);if(!q)x.ajd.set(r.a,q=new Set());q.add(r.d)}let d=x.dias.get(r.d);if(!d)x.dias.set(r.d,d={i:null,f:null,t:0});d.t+=r.t;if(r.h!=null){if(d.i==null||r.h<d.i)d.i=r.h;if(d.f==null||r.h>d.f)d.f=r.h}x.s.add(sk(r));x.rg.add(r.r);x.t+=r.t}
 for(const x of P.values()){const D=[...x.dias.values()].filter(d=>d.i!=null);x.i=avg(D.map(d=>d.i));x.f=avg(D.map(d=>d.f));x.j=avg(D.map(d=>d.f-d.i));x.jt=D.reduce((s,d)=>s+d.f-d.i,0);x.ph=x.jt>=30?x.t/(x.jt/60):null}
 return [...P.values()]}
 const EF={};
@@ -308,7 +310,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=21" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=22" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
@@ -333,7 +335,7 @@ let map=null,layer=null,run_id=0;
 onLeave(()=>{run_id++;if(map){map.remove();map=null;layer=null}});
 const run=async()=>{const id=++run_id;const fr=$('#xr').value,fm=$('#xm').value,fc=$('#xc').value,fp=$('#xp').value,fs=C.nk($('#xs').value);
 const f=day().filter(r=>(!fr||r.r===fr)&&(!fm||nm(r.m)===fm)&&(!fc||r.c===fc)&&(!fp||r.pri===fp)&&(!fs||C.nk(r.s+' '+r.sid+' '+r.b).includes(fs)));
-const sel=new Map();for(const r of f){const k=r.sid||r.s;const o=sel.get(k)||{s:r.s,sid:r.sid,c:r.c,r:r.r,b:r.b,ci:r.ci,m:nm(r.m),p:0};o.p+=r.p;sel.set(k,o)}const S=[...sel.values()];
+const sel=new Map();for(const r of f){const k=sk(r);const o=sel.get(k)||{s:r.s,sid:r.sid,c:r.c,r:r.r,b:r.b,ci:r.ci,m:nm(r.m),p:0};o.p+=r.p;sel.set(k,o)}const S=[...sel.values()];
 const mots=group(S,x=>x.m,x=>x.p).sort((a,b)=>b[1]-a[1]);mots.forEach(([m])=>col(m));
 $('#xk').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes previstos</small><b>${N(S.reduce((a,x)=>a+x.p,0))}</b><span>${lblD($('#xd').value)}</span></div><div class="kpi"><small>Sellers previstos</small><b>${N(S.length)}</b><span>No filtro</span></div><div class="kpi"><small>Motoristas</small><b>${mots.length}</b><span>Com seller previsto</span></div><div class="kpi"><small>Regiões</small><b>${new Set(S.map(x=>x.r)).size}</b><span>Atendidas</span></div></div>`;
 $('#xleg').innerHTML='<div class="hb">'+mots.map(([m,v])=>`<div class="hbr" data-m="${esc(m)}" style="cursor:pointer"><span class="hbl" title="${esc(m)}"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col(m)};margin-right:6px"></i>${esc(m)}</span><small>${S.filter(x=>x.m===m).length} sellers</small><b>${N(v)}</b></div>`).join('')+'</div>';
