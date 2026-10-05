@@ -360,3 +360,8 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .tg-g{background:#e6f7ee;color:#11834e}.tg-y{background:#fff7e0;color:#8a6100}.tg-r{background:#fff1e6;color:#b44b00}
 [data-theme=dark] .tg-g{background:#0F2E1C;color:#5BE39A}[data-theme=dark] .tg-y{background:#2A1F0B;color:#FBBF24}[data-theme=dark] .tg-r{background:#3A2414;color:#FFB27A}
 [data-theme=dark] .g-row b{background:#4F7BE0}
+/* Linha do tempo mais compacta + matriz de dias */
+.gantt{gap:3px}.g-row>div{height:16px}.g-row b{top:2px;bottom:2px;border-radius:4px}.g-row em{top:0;font-size:.68rem}.g-row>span{font-size:.76rem}
+.mx th,.mx td{padding:6px 8px;font-size:.8rem;white-space:nowrap}.mx-0{color:var(--muted)}.mx-1{font-weight:700;color:#11834e}
+[data-theme=dark] .mx-1{color:#5BE39A}
+.gantt{max-height:460px;overflow:auto}.g-axis{position:sticky;top:0;background:var(--white,#fff);z-index:1}[data-theme=dark] .g-axis{background:#121B30}
