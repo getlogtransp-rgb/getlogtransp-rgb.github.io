@@ -391,3 +391,16 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .rd-list div em{font-style:normal;color:var(--muted);font-size:.72rem;text-align:right}
 .rd-list div span{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;border:0;padding:0;border-radius:0}
 .rd-list div small{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* Barras agrupadas (pacotes + sellers) */
+.gb-leg{display:flex;gap:16px;font-size:.78rem;color:var(--muted);font-weight:600;margin-bottom:6px}.gb-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.gb{display:flex;align-items:flex-end;gap:10px;height:230px;padding-top:6px;overflow-x:auto}
+.gbc{flex:1;min-width:46px;display:flex;flex-direction:column;align-items:center;height:100%;cursor:pointer;border-radius:8px}
+.gbc.hot{background:var(--soft)}
+.gbp{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:14px}
+.gbp>div{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;width:42%;max-width:28px}
+.gbp em{font-style:normal;font-size:.64rem;font-weight:700;color:var(--slate);margin-bottom:3px;white-space:nowrap}
+.gbp i{display:block;width:100%;border-radius:5px 5px 2px 2px}
+.ga{background:linear-gradient(180deg,#1c4fb0,var(--navy))}.gbb{background:linear-gradient(180deg,#ff8a2b,var(--orange))}
+.gbc>span{font-size:.72rem;color:var(--muted);margin-top:6px;white-space:nowrap}
+.gb.sm .gbp em{font-size:.6rem}
+[data-theme=dark] .ga{background:linear-gradient(180deg,#6A90EA,#2F5BC4)}[data-theme=dark] .gbp em{color:#C9D5FF}

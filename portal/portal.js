@@ -206,32 +206,40 @@ const VIEWS={};
 // Visão geral: um dia escolhido (padrão = mais recente) + histórico diário. Conta só o que a GETLOG coletou.
 let DASH_DIA='',DASH_N=7;
 // Coletado por hora do dia: base de coletados (bip a bip) quando existe; senão, horário de cada linha da Performance.
-const porHora=(dia,R)=>{let hs=HORAS.get(dia);if(!hs){hs=new Array(24).fill(0);for(const r of R){if(r.h!=null&&r.t>0)hs[Math.min(23,Math.floor(r.h/60))]+=r.t}}
-const ix=hs.map((v,i)=>v?i:-1).filter(i=>i>=0);if(!ix.length)return '<p class="empty">Sem horário registrado para este dia.</p>';
+const porHoraHtml=hs=>{const ix=hs.map((v,i)=>v?i:-1).filter(i=>i>=0);if(!ix.length)return '<p class="empty">Sem horário registrado.</p>';
 const a=ix[0],b=ix.at(-1);const L=[];for(let i=a;i<=b;i++)L.push([String(i).padStart(2,'0')+'h',hs[i]]);const pico=L.reduce((m,x)=>x[1]>m[1]?x:m);
 return vbars(L)+`<p class="ch-t" style="margin-top:8px">Pico: <b>${pico[0]}</b> com ${N(pico[1])} pacotes · total ${N(hs.reduce((x,y)=>x+y,0))}</p>`};
+// Barras agrupadas: pacotes e sellers no mesmo gráfico (cada série na sua própria escala, com o número em cima).
+function gbars(list,na,nb){const ma=Math.max(1,...list.map(x=>x[1])),mb=Math.max(1,...list.map(x=>x[2]));const sm=list.length>12;const k=v=>v>=10000||(sm&&v>=1000)?(v/1000).toFixed(1).replace('.',',')+' mil':N(v);
+return `<div class="gb-leg"><span><i class="ga"></i>${na}</span><span><i class="gbb"></i>${nb}</span></div><div class="gb${sm?' sm':''}">`+list.map(([l,a,b])=>`<div class="gbc" title="${esc(l)}: ${N(a)} ${na.toLowerCase()} · ${N(b)} ${nb.toLowerCase()}"><div class="gbp"><div><em>${k(a)}</em><i class="ga" style="height:${Math.max(2,a/ma*100)}%"></i></div><div><em>${k(b)}</em><i class="gbb" style="height:${Math.max(2,b/mb*100)}%"></i></div></div><span>${esc(l)}</span></div>`).join('')+'</div>'}
+// Visão geral: um dia, um período (últimos 7/15/30 dias) ou geral (todos os dias), sempre comparando com o período anterior de mesmo tamanho.
 VIEWS.dash=()=>{const R=rows();if(!R.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Os dados ainda não foram publicados ou não foi possível carregá-los agora. A tela atualiza sozinha quando a próxima atualização entrar.');return}
 const D=new Map();for(const r of R){if(!(r.t>0))continue;let o=D.get(r.d);if(!o)D.set(r.d,o={d:r.d,t:0,s:new Set(),c:new Set(),m:new Set(),rows:[]});o.t+=r.t;o.s.add(sk(r));o.c.add(r.c);if(r.m)o.m.add(r.m);o.rows.push(r)}
 const dates=[...D.keys()].sort();if(!dates.length){M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG',true)+vazio('Ainda não há coletas da GETLOG nos dados publicados.');return}
-if(!D.has(DASH_DIA))DASH_DIA=dates.at(-1);const t=DASH_DIA,ix=dates.indexOf(t),o=D.get(t),ant=ix>0?D.get(dates[ix-1]):null;const ult=t===dates.at(-1);
-const vr=(x,y)=>{if(!y)return '<span>Sem dia anterior para comparar</span>';const v=(x-y)/y*100;return `<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1).replace('.',',')}% vs ${esc(lblD(dates[ix-1]))}</span>`};
+const PER={p7:7,p15:15,p30:30,geral:dates.length};if(!(DASH_DIA in PER)&&!D.has(DASH_DIA))DASH_DIA=dates.at(-1);
+const per=DASH_DIA in PER,n=per?Math.min(PER[DASH_DIA],dates.length):1,fim=per?dates.length:dates.indexOf(DASH_DIA)+1;
+const sel=dates.slice(fim-n,fim),antes=dates.slice(Math.max(0,fim-2*n),fim-n);
+const junta=ks=>{const o={t:0,s:new Set(),c:new Set(),m:new Set(),rows:[],n:ks.length};for(const k of ks){const x=D.get(k);o.t+=x.t;x.s.forEach(v=>o.s.add(k+'|'+v));x.c.forEach(v=>o.c.add(v));x.m.forEach(v=>o.m.add(v));o.rows.push(...x.rows)}o.su=new Set([...o.s].map(v=>v.slice(11))).size;o.sd=o.s.size;return o};
+const o=junta(sel),ant=antes.length===n?junta(antes):null;const t=sel.at(-1);
+const nomeSel=per?(DASH_DIA==='geral'?`Geral · ${lblD(sel[0])} a ${lblD(t)} (${n} dias)`:`${lblD(sel[0])} a ${lblD(t)} (${n} dias)`):lblD(t);
+const nomeAnt=ant?(per?`${lblD(antes[0])} a ${lblD(antes.at(-1))}`:lblD(antes[0])):'';
+const vr=(x,y)=>{if(y==null)return `<span>${per&&DASH_DIA==='geral'?'Todos os dias publicados':'Sem período anterior para comparar'}</span>`;if(!y)return '<span>—</span>';const v=(x-y)/y*100;return `<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1).replace('.',',')}% vs ${esc(nomeAnt)}</span>`};
 const dsem=k=>['dom','seg','ter','qua','qui','sex','sáb'][new Date(k+'T12:00').getDay()];
-M().innerHTML=top('Visão geral da operação','Acompanhamento diário da GETLOG · histórico dos dias publicados',true)+`
-<div class="filters"><select id="dd" aria-label="Dia">${[...dates].reverse().map(k=>`<option value="${k}"${k===t?' selected':''}>${lblD(k)} ${dsem(k)}${k===dates.at(-1)?' · mais recente':''}</option>`).join('')}</select></div>
-<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados ${ult?'hoje':'no dia'}</small><b>${N(o.t)}</b>${vr(o.t,ant?.t)}</div>
-<div class="kpi"><small>Sellers atendidos</small><b>${N(o.s.size)}</b>${vr(o.s.size,ant?.s.size)}</div>
-<div class="kpi"><small>Clientes em operação</small><b>${o.c.size}</b><span>Com coleta em ${esc(lblD(t))}</span></div>
-<div class="kpi"><small>Motoristas em rota</small><b>${o.m.size}</b>${vr(o.m.size,ant?.m.size)}</div></div>
-<div class="box mt"><div class="box-head"><div><h3>Coletado por hora</h3><p>Pacotes bipados em cada hora de ${esc(lblD(t))}${HORAS.has(t)?' · base de coletados':' · pelo horário registrado na Performance'}</p></div></div>${porHora(t,o.rows)}</div>
-<div class="box mt"><div class="box-head"><div><h3>Histórico por dia</h3><p>Pacotes coletados e sellers atendidos · clique numa barra para ver o dia</p></div><div class="seg" id="seg">${[7,15,30].map(n=>`<button data-n="${n}" aria-pressed="${n===DASH_N}">${n} dias</button>`).join('')}</div></div>
-<div class="grid-2 eq"><div><p class="ch-t">Pacotes coletados</p><div id="dch"></div></div><div><p class="ch-t">Sellers atendidos</p><div id="dsl"></div></div></div></div>
-<div class="grid-2"><div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados em ${esc(lblD(t))}</p></div></div>${hbars(group(o.rows,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
-<div class="box"><div class="box-head"><div><h3>Por região</h3><p>Pacotes coletados em ${esc(lblD(t))}</p></div></div>${hbars(group(o.rows,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
-<div class="grid-2 eq"><div class="box"><div class="box-head"><div><h3>Resumo dos últimos dias</h3><p>Totais por dia</p></div></div><div class="table-wrap"><table><thead><tr><th>Dia</th><th class="n">Pacotes</th><th class="n">Sellers</th><th class="n">Motoristas</th><th class="n">Clientes</th></tr></thead><tbody>${[...dates].reverse().slice(0,10).map(k=>{const x=D.get(k);return `<tr class="clk-row${k===t?' on':''}" data-dd="${k}"><td><b>${esc(lblD(k))}</b> <small>${dsem(k)}</small></td><td class="n">${N(x.t)}</td><td class="n">${N(x.s.size)}</td><td class="n">${x.m.size}</td><td class="n">${x.c.size}</td></tr>`}).join('')}</tbody></table></div></div>
+const hs=new Array(24).fill(0);let base=true;for(const k of sel){const h=HORAS.get(k);if(h)h.forEach((v,i)=>hs[i]+=v);else{base=false;for(const r of D.get(k).rows)if(r.h!=null)hs[Math.min(23,Math.floor(r.h/60))]+=r.t}}
+M().innerHTML=top('Visão geral da operação','Acompanhamento da GETLOG · escolha um dia, um período ou o geral',true)+`
+<div class="filters"><select id="dd" aria-label="Período"><optgroup label="Períodos"><option value="geral"${DASH_DIA==='geral'?' selected':''}>Geral (todos os dias)</option>${[['p7','Últimos 7 dias'],['p15','Últimos 15 dias'],['p30','Últimos 30 dias']].map(([v,l])=>`<option value="${v}"${DASH_DIA===v?' selected':''}>${l}</option>`).join('')}</optgroup><optgroup label="Um dia">${[...dates].reverse().map(k=>`<option value="${k}"${!per&&k===t?' selected':''}>${lblD(k)} ${dsem(k)}${k===dates.at(-1)?' · mais recente':''}</option>`).join('')}</optgroup></select></div>
+<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados${per?'':t===dates.at(-1)?' hoje':' no dia'}</small><b>${N(o.t)}</b>${vr(o.t,ant?.t)}</div>
+<div class="kpi"><small>Sellers atendidos${per?' (soma dos dias)':''}</small><b>${N(o.sd)}</b>${per?`<span>${N(o.su)} sellers diferentes · média ${N(Math.round(o.sd/n))}/dia</span>`:vr(o.sd,ant?.sd)}</div>
+<div class="kpi"><small>${per?'Média por dia':'Clientes em operação'}</small><b>${per?N(Math.round(o.t/n)):o.c.size}</b>${per?vr(o.t/n,ant?ant.t/n:null):`<span>Com coleta em ${esc(lblD(t))}</span>`}</div>
+<div class="kpi"><small>Motoristas${per?' no período':' em rota'}</small><b>${o.m.size}</b>${vr(o.m.size,ant?.m.size)}</div></div>
+<div class="box mt"><div class="box-head"><div><h3>Coletado por hora</h3><p>${per?'Soma de todos os dias do período':'Pacotes bipados em cada hora'} · ${esc(nomeSel)}${base?' · base de coletados':' · pelo horário registrado na Performance'}</p></div></div>${porHoraHtml(hs)}</div>
+<div class="box mt"><div class="box-head"><div><h3>Histórico por dia</h3><p>Pacotes coletados e sellers atendidos · clique numa barra para ver o dia</p></div><div class="seg" id="seg">${[7,15,30].map(n=>`<button data-n="${n}" aria-pressed="${n===DASH_N}">${n} dias</button>`).join('')}</div></div><div id="dch"></div></div>
+<div class="grid-2"><div class="box"><div class="box-head"><div><h3>Por cliente</h3><p>Pacotes coletados · ${esc(nomeSel)}</p></div></div>${hbars(group(o.rows,r=>r.c,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
+<div class="box"><div class="box-head"><div><h3>Por região</h3><p>Pacotes coletados · ${esc(nomeSel)}</p></div></div>${hbars(group(o.rows,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div></div>
+<div class="grid-2 eq"><div class="box"><div class="box-head"><div><h3>Resumo dos últimos dias</h3><p>Totais por dia · clique para ver o dia</p></div></div><div class="table-wrap"><table><thead><tr><th>Dia</th><th class="n">Pacotes</th><th class="n">Sellers</th><th class="n">Motoristas</th><th class="n">Clientes</th></tr></thead><tbody>${[...dates].reverse().slice(0,10).map(k=>{const x=D.get(k);return `<tr class="clk-row${sel.includes(k)?' on':''}" data-dd="${k}"><td><b>${esc(lblD(k))}</b> <small>${dsem(k)}</small></td><td class="n">${N(x.t)}</td><td class="n">${N(x.s.size)}</td><td class="n">${x.m.size}</td><td class="n">${x.c.size}</td></tr>`}).join('')}</tbody></table></div></div>
 <div class="box"><div class="box-head"><div><h3>Avisos recentes</h3><p>Comunicados para você</p></div><button class="btn btn-ghost btn-sm" data-go="avisos">Ver todos</button></div><div class="news">${myAvisos().slice(0,3).map(avHTML).join('')||'<p class="empty">Nenhum aviso no momento.</p>'}</div></div></div>`;
-const hot=html=>html;const draw=n=>{DASH_N=n;const ks=dates.slice(-n);
-const mk=(id,f)=>{$(id).innerHTML=vbars(ks.map(k=>[lblD(k),f(D.get(k))]));$$(id+' .vbc').forEach((el,i)=>{el.classList.toggle('hot',ks[i]===t);el.style.cursor='pointer';el.onclick=()=>{DASH_DIA=ks[i];VIEWS.dash()}})};
-mk('#dch',x=>x.t);mk('#dsl',x=>x.s.size)};draw(DASH_N);
+const draw=n=>{DASH_N=n;const ks=dates.slice(-n);$('#dch').innerHTML=gbars(ks.map(k=>[lblD(k),D.get(k).t,D.get(k).s.size]),'Pacotes coletados','Sellers atendidos');
+$$('#dch .gbc').forEach((el,i)=>{el.classList.toggle('hot',sel.includes(ks[i]));el.onclick=()=>{DASH_DIA=ks[i];VIEWS.dash()}})};draw(DASH_N);
 $$('#seg button').forEach(b=>b.onclick=()=>{$$('#seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));draw(+b.dataset.n)});
 $('#dd').onchange=e=>{DASH_DIA=e.target.value;VIEWS.dash()};$$('[data-dd]').forEach(r=>r.onclick=()=>{DASH_DIA=r.dataset.dd;VIEWS.dash()});
 $$('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go))};
@@ -253,7 +261,7 @@ const f=R.filter(r=>r.t>0&&r.d>=a&&r.d<=b&&(!fm||nm(r.m)===fm)&&(!fr||r.r===fr)&
 const tot=f.reduce((x,r)=>x+r.t,0);const days=[...new Set(f.map(r=>r.d))];
 const sel=group(f,r=>[r.s,r.sid,r.c,r.r,nm(r.m)].join('|'),r=>r.t).sort((a,b)=>b[1]-a[1]);
 $('#cout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Dias com coleta</small><b>${days.length}</b><span>No período</span></div><div class="kpi"><small>Média por dia</small><b>${N(Math.round(tot/Math.max(1,days.length)))}</b><span>Pacotes</span></div><div class="kpi"><small>Sellers atendidos</small><b>${N(new Set(f.map(sk)).size)}</b><span>No período</span></div></div>
-${days.length?`<div class="box mt"><div class="box-head"><div><h3>Por dia</h3><p>${esc(lbl)}</p></div></div><div class="grid-2 eq"><div><p class="ch-t">Pacotes coletados</p>${vbars(group(f,r=>lblD(r.d),r=>r.t))}</div><div><p class="ch-t">Sellers coletados</p>${vbars([...f.reduce((m,r)=>{const k=lblD(r.d);if(!m.has(k))m.set(k,new Set());m.get(k).add(sk(r));return m},new Map())].map(([k,v])=>[k,v.size]))}</div></div></div>
+${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes e sellers coletados por dia</h3><p>${esc(lbl)}</p></div></div>${gbars([...f.reduce((m,r)=>{const k=lblD(r.d);let o=m.get(k);if(!o)m.set(k,o={t:0,s:new Set()});o.t+=r.t;o.s.add(sk(r));return m},new Map())].map(([k,o])=>[k,o.t,o.s.size]),'Pacotes coletados','Sellers coletados')}</div>
 <div class="grid-2 eq">${own?'':`<div class="box"><div class="box-head"><div><h3>Ranking de motoristas</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>`}
 <div class="box"><div class="box-head"><div><h3>Top sellers</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>sellerTxt(r.s,r.sid),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>
 <div class="box"><div class="box-head"><div><h3>Por região</h3><p>Pacotes coletados</p></div></div>${hbars(group(f,r=>r.r,r=>r.t).sort((a,b)=>b[1]-a[1]))}</div>
