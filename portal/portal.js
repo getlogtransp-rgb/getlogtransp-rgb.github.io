@@ -144,7 +144,7 @@ const ingestDia=(s,x)=>{const [d,m,y]=s.split('.');DIAS.set(s,C.normRows(C.toRec
 const COLD=new Map();
 const ingestCol=(s,x)=>{if(!x||!Array.isArray(x.linhas))return;const [d,m,y]=s.split('.');const k=`${y}-${m}-${d}`;
 const reg=new Map(),aj=new Map();for(const r of DIAS.get(s)||[]){if(r.sid&&r.r&&!reg.has(r.sid))reg.set(r.sid,r.r);if(r.m&&r.a&&!aj.has(r.m))aj.set(r.m,r.a)}
-COLD.set(s,x.linhas.map(a=>({d:k,c:String(a[0]||'SEM CLIENTE'),sid:String(a[1]||''),s:String(a[2]||a[1]||''),m:String(a[3]||''),b:String(a[4]||''),t:+a[5]||0,ds:+a[6]||0,h:bipMin(a[7]),hf:bipMin(a[8]),r:reg.get(String(a[1]||''))||'Sem região',p:0,cp:0,a:aj.get(String(a[3]||''))||'',col:1})));ROWS=null};
+COLD.set(s,x.linhas.map(a=>({d:k,c:String(a[0]||'SEM CLIENTE'),sid:String(a[1]||''),s:String(a[2]||a[1]||''),m:String(a[3]||(/hub nuvem envio/i.test(String(a[0]))?'GET - HUB NUVEM ENVIO':'')),b:String(a[4]||''),t:+a[5]||0,ds:+a[6]||0,h:bipMin(a[7]),hf:bipMin(a[8]),r:reg.get(String(a[1]||''))||'Sem região',p:0,cp:0,a:aj.get(String(a[3]||''))||'',col:1})));ROWS=null};
 function rows(){if(!ROWS){const out=[];for(const [s,R] of DIAS){if(COLD.has(s)){for(const r of R)out.push(r.t?{...r,t:0}:r);out.push(...COLD.get(s))}else out.push(...R)}
 for(const [s,R] of COLD)if(!DIAS.has(s))out.push(...R);ROWS=out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)}return ROWS}
 const usaCol=()=>C.veTudo(ME.role);
@@ -255,7 +255,7 @@ ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes coleta
 $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fs').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Quem trabalhou: motoristas GETLOG (GET - ...) que bipararam no período, com 1º e último bip (coluna HORA) e tempo de trabalho.
 // Jornada do dia = último bip − primeiro bip. Base para o Financeiro.
-function jornadas(a,b,fr){const P=new Map();for(const r of rows()){if(!(r.t>0)||!r.m||r.d<a||r.d>b||(fr&&r.r!==fr))continue;const k=nm(r.m);let x=P.get(k);if(!x)P.set(k,x={m:k,ajd:new Map(),aj:new Set(),dias:new Map(),s:new Set(),rg:new Set(),t:0});
+function jornadas(a,b,fr){const P=new Map();for(const r of rows()){if(!(r.t>0)||!r.m||/HUB NUVEM ENVIO/i.test(r.m)||r.d<a||r.d>b||(fr&&r.r!==fr))continue;const k=nm(r.m);let x=P.get(k);if(!x)P.set(k,x={m:k,ajd:new Map(),aj:new Set(),dias:new Map(),s:new Set(),rg:new Set(),t:0});
 if(r.a&&!/^(n[aã]o|sim|-|0)$/i.test(r.a)){x.aj.add(r.a);let q=x.ajd.get(r.a);if(!q)x.ajd.set(r.a,q=new Set());q.add(r.d)}let d=x.dias.get(r.d);if(!d)x.dias.set(r.d,d={i:null,f:null,t:0});d.t+=r.t;if(r.h!=null){const f=r.hf??r.h;if(d.i==null||r.h<d.i)d.i=r.h;if(d.f==null||f>d.f)d.f=f}x.s.add(sk(r));x.rg.add(r.r);x.t+=r.t}
 for(const x of P.values()){const D=[...x.dias.values()].filter(d=>d.i!=null);x.i=avg(D.map(d=>d.i));x.f=avg(D.map(d=>d.f));x.j=avg(D.map(d=>d.f-d.i));x.jt=D.reduce((s,d)=>s+d.f-d.i,0);x.ph=x.jt>=30?x.t/(x.jt/60):null}
 return [...P.values()]}
@@ -328,7 +328,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=25" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=26" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}

@@ -6,7 +6,9 @@ const NAO_ATRIB="NÃO ATRIBUÍDO NA GERAL";
 const EMPRESA_PROPRIA="GET";
 const num=v=>{if(typeof v==="number")return v;if(v==null||v==="")return 0;const n=Number(String(v).replace(/\./g,"").replace(",","."));return isFinite(n)?n:0};
 const str=v=>v==null?"":String(v).trim();
-const empOf=m=>{m=str(m);if(!m)return "SEM MOTORISTA";const i=m.indexOf(" - ");return i>0?m.slice(0,i).trim():m};
+// HUB Nuvem Envio entra conectado com a GETLOG: conta como coleta GETLOG, não como terceiro (regra do dono).
+const HUB_GET=/^HUB NUVEM ENVIO$/i;
+const empOf=m=>{m=str(m);if(!m)return "SEM MOTORISTA";if(HUB_GET.test(m))return EMPRESA_PROPRIA;const i=m.indexOf(" - ");const e=i>0?m.slice(0,i).trim():m;return HUB_GET.test(e)?EMPRESA_PROPRIA:e};
 const nameOf=m=>{m=str(m);const i=m.indexOf(" - ");return i>0?m.slice(i+3).trim():m};
 function toRecords(j){
   if(Array.isArray(j)){if(!j.length)return [];if(Array.isArray(j[0])){const h=j[0].map(str);return j.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]])))}return j}
