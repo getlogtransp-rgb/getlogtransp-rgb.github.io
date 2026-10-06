@@ -43,7 +43,8 @@ function normRows(recs,fk){
 function parseDT(v){if(v==null)return null;if(typeof v==="number"){const d=new Date(v>1e12?v:v*1000);return isNaN(d)?null:d}const s=String(v).trim();const m=s.match(/^(\d{2})[\/.](\d{2})[\/.](\d{4})[ T]?(\d{2}):(\d{2})(?::(\d{2}))?/);if(m)return new Date(+m[3],+m[2]-1,+m[1],+m[4],+m[5],+(m[6]||0));const d=new Date(s);return isNaN(d)?null:d}
 function metaUpdate(j){if(!j||Array.isArray(j)||typeof j!=="object")return null;for(const k of Object.keys(j)){if(/atualiza|gerad|updated|modified|timestamp/i.test(k)&&typeof j[k]!=="object"){const d=parseDT(j[k]);if(d)return d}}return null}
 // Pacotes coletados = a mesma linha da Performance, contando só o que a GETLOG coletou (métrica "Coletado GETLOG").
-const coletadoGet=r=>r.tot>0&&r.emp===EMPRESA_PROPRIA?r.tot:0;
+// Coletado GETLOG (regra do dono) = soma da coluna "COLETADO DS FM NOR" (inclui HUB Nuvem Envio). A base de coletados, quando existe, substitui.
+const coletadoGet=r=>r.nor>0?r.nor:0;
 
 // ---- Vínculo pessoa ↔ dados (autorização: na dúvida, não libera) ----
 const nk=s=>str(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g," ").trim();
