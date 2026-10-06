@@ -139,15 +139,25 @@ const sk=r=>String(r.s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUp
 const imgSeg=u=>/^(data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+|https:\/\/[^"'<>\s]+)$/.test(String(u||''))?esc(u):'';
 const toRow=r=>({d:r.dk,s:r.seller,sid:r.sid,c:r.cli,r:r.reg,m:r.mo||(r.ma!==C.NAO_ATRIB?r.ma:''),t:C.coletadoGet(r),p:r.prev,cp:r.col,h:bipMin(r.hora),a:r.aju,b:r.bai,ci:r.cid});
 const ingestDia=(s,x)=>{const [d,m,y]=s.split('.');DIAS.set(s,C.normRows(C.toRecords(x.json),`${y}-${m}-${d}`).map(toRow));ROWS=null};
-function rows(){if(!ROWS)ROWS=[...DIAS.values()].flat().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);return ROWS}
+// Base de coletados (todos os pacotes bipados, com horário real). Quando existe para o dia, ela é a fonte do "coletado":
+// as linhas da Performance ficam só com previsto/coletado do previsto (t=0) e os pacotes vêm da base de coletados.
+const COLD=new Map();
+const ingestCol=(s,x)=>{if(!x||!Array.isArray(x.linhas))return;const [d,m,y]=s.split('.');const k=`${y}-${m}-${d}`;
+const reg=new Map(),aj=new Map();for(const r of DIAS.get(s)||[]){if(r.sid&&r.r&&!reg.has(r.sid))reg.set(r.sid,r.r);if(r.m&&r.a&&!aj.has(r.m))aj.set(r.m,r.a)}
+COLD.set(s,x.linhas.map(a=>({d:k,c:String(a[0]||'SEM CLIENTE'),sid:String(a[1]||''),s:String(a[2]||a[1]||''),m:String(a[3]||''),b:String(a[4]||''),t:+a[5]||0,ds:+a[6]||0,h:bipMin(a[7]),hf:bipMin(a[8]),r:reg.get(String(a[1]||''))||'Sem região',p:0,cp:0,a:aj.get(String(a[3]||''))||'',col:1})));ROWS=null};
+function rows(){if(!ROWS){const out=[];for(const [s,R] of DIAS){if(COLD.has(s)){for(const r of R)out.push(r.t?{...r,t:0}:r);out.push(...COLD.get(s))}else out.push(...R)}
+for(const [s,R] of COLD)if(!DIAS.has(s))out.push(...R);ROWS=out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)}return ROWS}
+const usaCol=()=>C.veTudo(ME.role);
+const loadCol=async ds=>{if(!usaCol())return;const L=await GL_API.listaCol();const tem=new Set(L.map(x=>x.dia));await GL_API.pool(ds.filter(x=>tem.has(x.dia)),3,async x=>{const r=await GL_API.col(x.dia);if(r)ingestCol(x.dia,r)})};
 const diaKey=s=>s.split('.').reverse().join('-');
 // Abre a semana mais recente e mostra; o restante do histórico entra em segundo plano e atualiza só a tela aberta.
 function loadReal(){return LOADING||(LOADING=(async()=>{const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
 const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
-await take(ds.slice(0,7));if(ds.length>7)take(ds.slice(7)).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
+await take(ds.slice(0,7));await loadCol(ds.slice(0,7)).catch(()=>{});if(ds.length>7)take(ds.slice(7)).then(()=>loadCol(ds.slice(7)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
 if(!L.length)LOADING=null})())}
 function assinarDados(){const un=GL_API.assinar(async(est,mud)=>{AGENDA=est;let ch=false;
 const min=[...DIAS.keys()].map(diaKey).sort()[0]||'';for(const s of mud){if(!DIAS.has(s)&&diaKey(s)<min)continue;try{const r=await GL_API.dia(s);if(r){ingestDia(s,r);ch=true}}catch(e){console.warn('atualização',s,e)}}
+if(usaCol()){try{const antes=new Map(((await GL_API.listaCol())||[]).map(x=>[x.dia,x.modificadoEm]));const L=await GL_API.listaCol(true);for(const x of L){if(antes.get(x.dia)===x.modificadoEm&&COLD.has(x.dia))continue;if(!DIAS.has(x.dia)&&!COLD.has(x.dia)&&diaKey(x.dia)<min)continue;const r=await GL_API.col(x.dia);if(r){ingestCol(x.dia,r);ch=true}}}catch(e){console.warn('coletados',e)}}
 if(!LIVE.includes(CUR))return;if(ch){VIEWS[CUR]();toast('Dados atualizados')}else{const u=$('#upd');if(u)u.outerHTML=updHTML();if(REFRESH){toast(est.erro?'Sem conexão com os dados. Tente de novo em instantes.':'Os dados já estão atualizados')}}REFRESH=false});onLeave(un)}
 let REFRESH=false;
 // Forecast (aba GERAL): arquivo único, recarregado ao abrir a tela se tiver mais de 15 min ou pelo botão Atualizar.
@@ -246,7 +256,7 @@ $$('#per select,#per input,#fm,#fr').forEach(e=>e&&e.addEventListener('change',r
 // Quem trabalhou: motoristas GETLOG (GET - ...) que bipararam no período, com 1º e último bip (coluna HORA) e tempo de trabalho.
 // Jornada do dia = último bip − primeiro bip. Base para o Financeiro.
 function jornadas(a,b,fr){const P=new Map();for(const r of rows()){if(!(r.t>0)||!r.m||r.d<a||r.d>b||(fr&&r.r!==fr))continue;const k=nm(r.m);let x=P.get(k);if(!x)P.set(k,x={m:k,ajd:new Map(),aj:new Set(),dias:new Map(),s:new Set(),rg:new Set(),t:0});
-if(r.a&&!/^(n[aã]o|sim|-|0)$/i.test(r.a)){x.aj.add(r.a);let q=x.ajd.get(r.a);if(!q)x.ajd.set(r.a,q=new Set());q.add(r.d)}let d=x.dias.get(r.d);if(!d)x.dias.set(r.d,d={i:null,f:null,t:0});d.t+=r.t;if(r.h!=null){if(d.i==null||r.h<d.i)d.i=r.h;if(d.f==null||r.h>d.f)d.f=r.h}x.s.add(sk(r));x.rg.add(r.r);x.t+=r.t}
+if(r.a&&!/^(n[aã]o|sim|-|0)$/i.test(r.a)){x.aj.add(r.a);let q=x.ajd.get(r.a);if(!q)x.ajd.set(r.a,q=new Set());q.add(r.d)}let d=x.dias.get(r.d);if(!d)x.dias.set(r.d,d={i:null,f:null,t:0});d.t+=r.t;if(r.h!=null){const f=r.hf??r.h;if(d.i==null||r.h<d.i)d.i=r.h;if(d.f==null||f>d.f)d.f=f}x.s.add(sk(r));x.rg.add(r.r);x.t+=r.t}
 for(const x of P.values()){const D=[...x.dias.values()].filter(d=>d.i!=null);x.i=avg(D.map(d=>d.i));x.f=avg(D.map(d=>d.f));x.j=avg(D.map(d=>d.f-d.i));x.jt=D.reduce((s,d)=>s+d.f-d.i,0);x.ph=x.jt>=30?x.t/(x.jt/60):null}
 return [...P.values()]}
 const EF={};

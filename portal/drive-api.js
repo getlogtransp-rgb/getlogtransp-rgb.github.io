@@ -22,6 +22,15 @@ p.catch(()=>{if(CACHE.get(d)?.p===p)CACHE.delete(d)});CACHE.set(d,{sig:it.modifi
 // Executa tarefas com no máximo n requisições simultâneas.
 const pool=async(items,n,fn)=>{const out=new Array(items.length);let i=0;await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(i<items.length){const k=i++;try{out[k]=await fn(items[k])}catch(e){out[k]=null}}}));return out};
 const ordem=L=>[...L].filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).sort((a,b)=>a.dia.split('.').reverse().join('')<b.dia.split('.').reverse().join('')?1:-1);
+// ---- Base de coletados (pasta "Coleta - dd.mm.aaaa.xlsx", resumida pelo script do Drive) ----
+// Se o script ainda não tiver a rota de coletados, a lista volta vazia e o portal segue usando a Performance.
+let LISTAC=null;
+const listaCol=force=>{if(!LISTAC||force){const p=get('fonte=lista_coletados',force).then(j=>{if(!j||!j.ok||!Array.isArray(j.dados))return [];return j.dados}).catch(()=>[]);LISTAC=p}return LISTAC};
+const CACHEC=new Map();
+const col=async d=>{const L=await listaCol();const it=L.find(x=>x.dia===d);if(!it)return null;const sig=it.modificadoEm,c=CACHEC.get(d);if(c&&c.sig===sig)return c.p;
+const p=(async()=>{const I=window.GL_IDB;if(!c&&I){const h=await I.lerDia('col:'+d,sig);if(h)return h}
+const j=await get('fonte=coletados&dia='+encodeURIComponent(d),!!c);if(!j.ok||!j.dados)return null;if(I)I.gravaDia('col:'+d,sig,j.dados);return j.dados})();
+p.catch(()=>{if(CACHEC.get(d)?.p===p)CACHEC.delete(d)});CACHEC.set(d,{sig,p});return p};
 let GERAL=null;
 const geral=async(force,novo)=>{if(!GERAL||force||novo){const p=get('fonte=geral',force).then(j=>{if(!j.ok)throw new Error(j.erro);return {...j,dados:C().escopo(j.dados,sess())}});p.catch(()=>{if(GERAL===p)GERAL=null});GERAL=p}return GERAL};
 // ---- Verificação de novas atualizações guiada pela agenda (sem F5) ----
@@ -38,5 +47,5 @@ function programar(){clearTimeout(TMR);if(!SUBS.size||document.hidden)return;con
 TMR=setTimeout(verificar,falta>0?Math.min(falta+60000,6*3600000):(a.estado==='atrasada'?5:2)*60000)}
 const assinar=f=>{SUBS.add(f);if(LISTA)LISTA.then(L=>{if(!ULT){ULT=ultimaMod(L)}try{f(estado(),[])}catch(e){}});else lista().then(L=>{ULT=ultimaMod(L);avisar([])});programar();return ()=>{SUBS.delete(f);if(!SUBS.size)clearTimeout(TMR)}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(TMR);return}if(!SUBS.size)return;const a=C().agenda(ULT);if(a.estado!=='prevista'||Date.now()-LISTA_EM>15*60000)verificar();else programar()});
-window.GL_API={setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
+window.GL_API={listaCol,col,setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
 })();
