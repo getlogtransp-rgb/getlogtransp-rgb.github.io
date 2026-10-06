@@ -90,7 +90,8 @@ function resumirColeta_(f) {
       if (i < 0) throw new Error('Coluna não encontrada: ' + COLETA_COLS[k]);
       col[k] = sh.getRange(2, i + 1, n, 1).getValues();
     }
-    var g = {}, total = 0;
+    var g = {}, total = 0, horas = [];
+    for (var hh = 0; hh < 24; hh++) horas.push(0);
     for (var r = 0; r < n; r++) {
       var h = col.hora[r][0];
       var hm = h instanceof Date ? Utilities.formatDate(h, COLETA_TZ, 'HH:mm:ss') : String(h || '').slice(11, 19);
@@ -98,12 +99,13 @@ function resumirColeta_(f) {
       var id = chave.join('\u0001'), o = g[id];
       if (!o) o = g[id] = chave.concat([0, 0, hm, hm]);
       o[5]++; total++;
+      if (hm) horas[+hm.slice(0, 2)]++;
       if (/^j[aá] descarregado/i.test(String(col.desc[r][0] || ''))) o[6]++;
       if (hm && (!o[7] || hm < o[7])) o[7] = hm;
       if (hm && hm > o[8]) o[8] = hm;
     }
     var linhas = []; for (var x in g) linhas.push(g[x]);
-    return { colunas: ['cliente', 'sid', 'seller', 'motorista', 'bairro', 'qtd', 'descarregados', 'ini', 'fim'], linhas: linhas, total: total };
+    return { colunas: ['cliente', 'sid', 'seller', 'motorista', 'bairro', 'qtd', 'descarregados', 'ini', 'fim'], linhas: linhas, total: total, horas: horas };
   } finally {
     DriveApp.getFileById(tmp.id).setTrashed(true);
   }
