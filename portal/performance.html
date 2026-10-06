@@ -292,7 +292,7 @@ tr[data-setf]{cursor:pointer}
 .status-item{border:1px solid var(--line);border-left:3px solid var(--line);background:var(--card);border-radius:9px;padding:8px 10px;text-align:left;min-width:0}.status-item .pend-tag{display:inline-block;margin-top:5px;padding:1px 7px;border-radius:99px;background:var(--or-s);color:var(--or);font-style:normal;font-size:11px;font-weight:600}
 .status-item:hover{background:var(--bg)}
 .sd-mot{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}.sd-mot div{border:1px solid var(--line);border-left:3px solid var(--navy);border-radius:9px;padding:7px 11px;background:var(--card)}.sd-mot b{display:block;font-size:13px}.sd-mot span{font-size:12px;color:var(--ink-3)}
-.evo.hr .col .b,.evo.hr .col{opacity:1!important;filter:none!important}
+.evo.hr .col .b,.evo.hr .col{opacity:1!important;filter:none!important}.evo.hr.f .col:not(.in){opacity:.3!important}.evo.hr .col{cursor:pointer}
 .tot-row td{border-top:2px solid var(--line);background:var(--bg)}.muted{color:var(--ink-3);font-size:12px}
 .sv-box{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-2)}.sv-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}.sv-h b{font-size:13px}.sv-h span{font-family:var(--fc);font-weight:700;font-size:20px;color:var(--ink)}.stack.sm{height:12px}.sv-box .leg button{background:none;border-top:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .status-item.pending{border-color:rgba(247,101,10,.55);border-left-color:var(--or);background:var(--or-s);box-shadow:0 0 0 1px rgba(247,101,10,.06)}
@@ -360,7 +360,7 @@ tr[data-setf]{cursor:pointer}
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:99,ALERTA:80,EMPRESA_PROPRIA:"GET"};
 const {COLS,NAO_ATRIB,num,str,empOf,nameOf,toRecords,parseDT,metaUpdate,normRows}=window.GL_CORE;
 const FILTROS=[["sel","Seller","seller"],["cli","Cliente","cli"],["reg","Região","reg"],["end","Endereço","end"],["bai","Bairro","bai"],["cid","Cidade","cid"],["ma","Motorista","ma"],["emp","Quem coletou","emp"],["des","Descarregado","des"],["sit","Situação","sit"],["pri","Prioridade","pri"]];
-const EXTRA_FILTROS=[["st","Status","st"]];
+const EXTRA_FILTROS=[["st","Status","st"],["hr","Hora","hh"]];
 const TODOS_FILTROS=[...FILTROS,...EXTRA_FILTROS];
 
 const S={byDate:new Map(),meta:new Map(),dates:[],from:null,to:null,f:Object.fromEntries(TODOS_FILTROS.map(x=>[x[0],new Set()])),metric:null,rankMode:"pen",tSort:{k:"pen",d:-1},tPage:0,tQ:"",pQ:"",pOpen:new Set(),gapOpen:new Set(),unloadOpen:false,view:"home",lastCheck:null,src:"http",pop:null,popQ:"",cal:null,calPick:null,msStart:0,grp:{sit:new Set(),pri:new Set()}};
@@ -390,7 +390,7 @@ const initials=n=>{const p=nameOf(n).split(/\s+/).filter(Boolean);return ((p[0]|
 function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2400)}
 
 function ingest(dk,json,lastMod){
-  const rows=normRows(toRecords(json),dk);for(const r of rows)if(r.sid){let x=SIDS.get(r.seller);if(!x)SIDS.set(r.seller,x=new Set());x.add(r.sid)}const g=new Map();for(const r of rows){if(!g.has(r.dk))g.set(r.dk,[]);g.get(r.dk).push(r)}
+  const rows=normRows(toRecords(json),dk);for(const r of rows){const h=horaDe(r.hora);r.hh=h?h.slice(0,2)+"h":"Sem hora"}for(const r of rows)if(r.sid){let x=SIDS.get(r.seller);if(!x)SIDS.set(r.seller,x=new Set());x.add(r.sid)}const g=new Map();for(const r of rows){if(!g.has(r.dk))g.set(r.dk,[]);g.get(r.dk).push(r)}
   if(!g.size&&dk)g.set(dk,[]);
   for(const [k,v] of g){
     S.byDate.set(k,v);let upd=metaUpdate(json)||lastMod||null;
@@ -668,8 +668,8 @@ function homeHTML(rows,t){
   return `<div class="card c12"><div class="ch"><div><h3>Detalhe do seller</h3><p>${esc([...S.f.sel].join(", "))} · cada linha da planilha, em ordem de horário</p></div></div>
   ${mot.length?`<div class="sd-mot">${mot.map(m=>`<div><b>${esc(m.k===NAO_ATRIB?"Sem motorista":nameOf(m.k))}</b><span>${N(m.tot)} pacotes${m.ini?` · ${m.ini}${m.fim&&m.fim!==m.ini?"–"+m.fim:""}`:""}</span></div>`).join("")}</div>`:""}
   <div class="tw mc compact-table"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Motorista atribuído</th><th>Coletado por</th><th class="r">Previsto</th><th class="r">Coletado</th><th class="r">Justificado</th><th class="r">Em rota</th><th>Status</th><th>Observação</th></tr></thead><tbody>${L.map(r=>`<tr><td><b>${r.h||"—"}</b></td><td>${esc(r.cli)}</td><td>${esc(r.ma===NAO_ATRIB?"Sem motorista":nameOf(r.ma))}</td><td>${r.tot>0&&r.mo?esc(nameOf(r.mo)):"—"}</td><td class="r">${N(r.prev)}</td><td class="r">${N(r.tot)}</td><td class="r">${N(r.jus)}</td><td class="r">${N(r.pen)}</td><td>${stPill(r.st,r.pen>0)}</td><td>${esc(r.jtxt)||"—"}</td></tr>`).join("")}</tbody></table></div></div>`})():""}
-  ${(()=>{const hs=new Array(24).fill(0);for(const r of rows){const h=horaDe(r.hora);if(h&&r.tot>0)hs[+h.slice(0,2)]+=r.tot}const ix=hs.map((v,i)=>v?i:-1).filter(i=>i>=0);if(!ix.length)return "";const L=[];for(let i=ix[0];i<=ix.at(-1);i++)L.push([i,hs[i]]);const mx=Math.max(...L.map(x=>x[1])),pico=L.find(x=>x[1]===mx);
-  return `<div class="card c12"><div class="ch"><div><h3>Coletado por hora</h3><p>Pacotes coletados em cada hora, com os filtros aplicados · pico às ${String(pico[0]).padStart(2,"0")}h (${N(mx)} pacotes)</p></div></div><div class="evo hr">${L.map(([h,v])=>`<div class="col" title="${String(h).padStart(2,"0")}h: ${N(v)}"><b>${v>=10000?(v/1000).toFixed(1).replace(".",",")+" mil":N(v)}</b><div class="b" style="height:${Math.max(3,v/mx*110)}px;background:${v===mx?"var(--or)":"var(--navy)"}"></div><span>${String(h).padStart(2,"0")}h</span></div>`).join("")}</div></div>`})()}
+  ${(()=>{const hs=new Array(24).fill(0);for(const r of (S.f.hr.size?applyF(baseRows(),"hr"):rows)){const h=horaDe(r.hora);if(h&&r.tot>0)hs[+h.slice(0,2)]+=r.tot}const ix=hs.map((v,i)=>v?i:-1).filter(i=>i>=0);if(!ix.length)return "";const L=[];for(let i=ix[0];i<=ix.at(-1);i++)L.push([i,hs[i]]);const mx=Math.max(...L.map(x=>x[1])),pico=L.find(x=>x[1]===mx);
+  return `<div class="card c12"><div class="ch"><div><h3>Coletado por hora</h3><p>Pacotes coletados em cada hora, com os filtros aplicados · clique numa barra para filtrar a hora · pico às ${String(pico[0]).padStart(2,"0")}h (${N(mx)} pacotes)</p></div></div><div class="evo hr${S.f.hr.size?" f":""}">${L.map(([h,v])=>`<button type="button" class="col clickcell${S.f.hr.has(String(h).padStart(2,"0")+"h")?" in":""}" data-setf="hr" data-v="${String(h).padStart(2,"0")}h" title="${String(h).padStart(2,"0")}h: ${N(v)} · clique para filtrar"><b>${v>=10000?(v/1000).toFixed(1).replace(".",",")+" mil":N(v)}</b><div class="b" style="height:${Math.max(3,v/mx*110)}px;background:${v===mx?"var(--or)":"var(--navy)"}"></div><span>${String(h).padStart(2,"0")}h</span></button>`).join("")}</div></div>`})()}
   <div class="card c12" id="sellersCard"><div class="ch"><div><h3>Detalhado por seller</h3><p>Seller, endereço, localização, motorista e performance completa. Clique no título para ordenar</p></div><button class="btn" id="expAll">${IC.dl}Baixar lista</button></div><div class="tools"><label class="search">${IC.search}<input id="tQ" type="search" placeholder="Buscar seller, motorista, endereço, cidade, bairro ou CEP" value="${esc(S.tQ)}"></label></div><div id="sTable">${sellerTable(sellers)}</div></div></section>`;
 }
 function sellerTable(sellers){
