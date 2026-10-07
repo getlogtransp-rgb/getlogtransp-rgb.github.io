@@ -97,13 +97,16 @@ const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.l
 const mob=ACC[ME.role].filter(v=>SHORT[v]&&!['equipe','financeiro'].includes(v)).slice(0,4);
 $('#app').innerHTML=`<div class="app"><aside class="side" aria-label="Menu do portal"><a class="logo-chip" href="/"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="88" height="36"></a><nav class="side-nav">${groups}</nav>
 <div class="who"><b>${esc(ME.name)}</b><span>${ROLE_LBL[ME.role]}</span><div class="row"><button type="button" id="tsenha">Trocar senha</button><button class="out" id="sair" type="button">Sair</button></div></div></aside>
-<div class="scrim" id="scrim"></div><main class="main" id="main"></main>
+<button type="button" class="side-tg" id="sidetg" aria-label="Ocultar/mostrar menu">‹</button><div class="scrim" id="scrim"></div><main class="main" id="main"></main>
 <nav class="bnav" aria-label="Navegação rápida">${mob.map(v=>`<button data-view="${v}">${IC[v]}<span>${SHORT[v]}</span></button>`).join('')}<button id="more" aria-label="Abrir menu">${IC.menu}<span>Menu</span></button></nav></div>`;
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
 $('#sair').onclick=()=>encerrar('');
 $('#tsenha').onclick=()=>{fechaMenu();trocarSenha(false).then(ok=>ok&&toast('Senha alterada.'))};
 $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.add('on');document.body.classList.add('lock')};
 $('#scrim').onclick=fechaMenu;
+const tg=$('#sidetg'),setHid=h=>{document.body.classList.toggle('side-hid',h);tg.textContent=h?'›':'‹'};
+tg.onclick=e=>{e.stopPropagation();setHid(!document.body.classList.contains('side-hid'))};
+$('#main').addEventListener('click',()=>{if(innerWidth>860)setHid(true)});
 const h=deSlug(location.hash.slice(1));show(can(h)?h:ACC[ME.role][0]);
 }
 const fechaMenu=()=>{$('.side')?.classList.remove('open');$('#scrim')?.classList.remove('on');document.body.classList.remove('lock')};

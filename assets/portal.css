@@ -404,3 +404,15 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .gbc>span{font-size:.72rem;color:var(--muted);margin-top:6px;white-space:nowrap}
 .gb.sm .gbp em{font-size:.6rem}
 [data-theme=dark] .ga{background:linear-gradient(180deg,#6A90EA,#2F5BC4)}[data-theme=dark] .gbp em{color:#C9D5FF}
+
+.side-tg{position:fixed;top:14px;left:248px;z-index:70;width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:18px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:left .2s}
+.app{transition:grid-template-columns .2s}
+body.side-hid .app{grid-template-columns:0 1fr}
+body.side-hid .side{visibility:hidden;padding:0;overflow:hidden}
+body.side-hid .side-tg{left:8px}
+.main{width:100%;max-width:100%}
+.main img,.main canvas,.main iframe{max-width:100%}
+.main table{max-width:100%}
+@media (min-width:1600px){.main{padding:32px 48px 56px}}
+@media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
+@media (max-width:860px){.side-tg{display:none}}
