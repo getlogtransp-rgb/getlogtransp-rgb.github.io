@@ -110,7 +110,7 @@ tg.onclick=e=>{e.stopPropagation();setHid(!document.body.classList.contains('sid
 const ocultar=()=>{if(innerWidth>860)setHid(true)};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.side,#sidetg'))ocultar()},true);
 addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement?.tagName==='IFRAME')ocultar()},0));
-window.GL_SIDE_SHOW=()=>setHid(false);
+window.GL_SIDE_SHOW=()=>setHid(false);window.GL_SIDE_HIDE=ocultar;
 const h=deSlug(location.hash.slice(1));show(can(h)?h:ACC[ME.role][0]);
 }
 const fechaMenu=()=>{$('.side')?.classList.remove('open');$('#scrim')?.classList.remove('on');document.body.classList.remove('lock')};
@@ -350,7 +350,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=34" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=35" title="Performance de coleta" id="pf"></iframe></div>`;const f=$('#pf');f.addEventListener('load',()=>{try{f.contentDocument.addEventListener('pointerdown',()=>window.GL_SIDE_HIDE?.(),true)}catch(e){}})};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
