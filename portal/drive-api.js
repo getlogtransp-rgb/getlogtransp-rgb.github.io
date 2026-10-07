@@ -14,10 +14,12 @@ const lista=force=>{if(!LISTA||force){const p=get('fonte=lista',force).then(j=>{
 const CACHE=new Map();
 // Conteúdo de um dia já recortado para o usuário (escopo aplicado antes de guardar em cache).
 const dia=async d=>{const L=await lista();const it=L.find(x=>x.dia===d);if(!it)return null;const c=CACHE.get(d);if(c&&c.sig===it.modificadoEm)return c.p;
-const I=window.GL_IDB,sig=it.modificadoEm;
+const I=window.GL_IDB,sig=it.modificadoEm,ck=sig+'#f';
+// Download sempre com force=1 (igual ao report): o cache do Apps Script podia devolver a versão anterior do arquivo
+// e ela ficava guardada como se fosse a nova. Só baixa quando a versão do Drive muda, então não pesa.
 // 1º o cache cifrado do aparelho (mesma versão do Drive = não baixa de novo); senão baixa, recorta para o usuário e guarda cifrado.
-const p=(async()=>{if(!c&&I){const h=await I.lerDia(d,sig);if(h)return {json:h,lm:new Date(sig),sig}}
-const j=await get('fonte=performance&dia='+encodeURIComponent(d),!!c);if(!j.ok)return null;const json=C().escopo(j.dados.conteudo,sess());if(I)I.gravaDia(d,sig,json);return {json,lm:new Date(j.dados.modificadoEm||sig),sig}})();
+const p=(async()=>{if(!c&&I){const h=await I.lerDia(d,ck);if(h)return {json:h,lm:new Date(sig),sig}}
+const j=await get('fonte=performance&dia='+encodeURIComponent(d),true);if(!j.ok)return null;const json=C().escopo(j.dados.conteudo,sess());if(I)I.gravaDia(d,ck,json);return {json,lm:new Date(j.dados.modificadoEm||sig),sig}})();
 p.catch(()=>{if(CACHE.get(d)?.p===p)CACHE.delete(d)});CACHE.set(d,{sig:it.modificadoEm,p});return p};
 // Executa tarefas com no máximo n requisições simultâneas.
 const pool=async(items,n,fn)=>{const out=new Array(items.length);let i=0;await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(i<items.length){const k=i++;try{out[k]=await fn(items[k])}catch(e){out[k]=null}}}));return out};
@@ -28,8 +30,8 @@ let LISTAC=null;
 const listaCol=force=>{if(!LISTAC||force){const p=get('fonte=lista_coletados',force).then(j=>{if(!j||!j.ok||!Array.isArray(j.dados))return [];return j.dados}).catch(()=>[]);LISTAC=p}return LISTAC};
 const CACHEC=new Map();
 const col=async d=>{const L=await listaCol();const it=L.find(x=>x.dia===d);if(!it)return null;const sig=it.modificadoEm,c=CACHEC.get(d);if(c&&c.sig===sig)return c.p;
-const p=(async()=>{const I=window.GL_IDB;if(!c&&I){const h=await I.lerDia('col:'+d,sig);if(h)return h}
-const j=await get('fonte=coletados&dia='+encodeURIComponent(d),!!c);if(!j.ok||!j.dados)return null;if(I)I.gravaDia('col:'+d,sig,j.dados);return j.dados})();
+const p=(async()=>{const I=window.GL_IDB;if(!c&&I){const h=await I.lerDia('col:'+d,sig+'#f');if(h)return h}
+const j=await get('fonte=coletados&dia='+encodeURIComponent(d),true);if(!j.ok||!j.dados)return null;if(I)I.gravaDia('col:'+d,sig+'#f',j.dados);return j.dados})();
 p.catch(()=>{if(CACHEC.get(d)?.p===p)CACHEC.delete(d)});CACHEC.set(d,{sig,p});return p};
 let GERAL=null;
 const geral=async(force,novo)=>{if(!GERAL||force||novo){const p=get('fonte=geral',force).then(j=>{if(!j.ok)throw new Error(j.erro);return {...j,dados:C().escopo(j.dados,sess())}});p.catch(()=>{if(GERAL===p)GERAL=null});GERAL=p}return GERAL};
