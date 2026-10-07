@@ -106,14 +106,18 @@ $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.a
 $('#scrim').onclick=fechaMenu;
 const tg=$('#sidetg'),setHid=h=>{document.body.classList.toggle('side-hid',h);tg.textContent=h?'›':'‹'};
 tg.onclick=e=>{e.stopPropagation();setHid(!document.body.classList.contains('side-hid'))};
-$('#main').addEventListener('click',()=>{if(innerWidth>860)setHid(true)});
+// Clique em qualquer lugar fora do menu (inclusive dentro da Performance, que é iframe) oculta o menu.
+const ocultar=()=>{if(innerWidth>860)setHid(true)};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.side,#sidetg'))ocultar()},true);
+addEventListener('blur',()=>setTimeout(()=>{if(document.activeElement?.tagName==='IFRAME')ocultar()},0));
+window.GL_SIDE_SHOW=()=>setHid(false);
 const h=deSlug(location.hash.slice(1));show(can(h)?h:ACC[ME.role][0]);
 }
 const fechaMenu=()=>{$('.side')?.classList.remove('open');$('#scrim')?.classList.remove('on');document.body.classList.remove('lock')};
 addEventListener('hashchange',()=>{const h=deSlug(location.hash.slice(1));if(ME&&!BLOQ&&can(h)&&h!==CUR)show(h)});
 // Ciclo de vida das telas: ao trocar de tela, tudo que a anterior ligou (mapa, relógio, assinaturas) é desligado.
 let CUR='',GEN=0,LEAVE=[];const onLeave=f=>LEAVE.push(f);const vivo=g=>g===GEN;
-function show(v){if(!ME||BLOQ||!can(v))return;const fs=LEAVE;LEAVE=[];for(const f of fs)try{f()}catch(e){console.warn(e)}
+function show(v){if(!ME||BLOQ||!can(v))return;window.GL_SIDE_SHOW?.();const fs=LEAVE;LEAVE=[];for(const f of fs)try{f()}catch(e){console.warn(e)}
 GEN++;CUR=v;if(location.hash.slice(1)!==(SLUG[v]||v))location.hash=SLUG[v]||v;document.title=(TITULO[v]||SHORT[v]||'Portal')+' | GETLOG';
 $$('[data-view]').forEach(b=>b.dataset.view===v?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));fechaMenu();
 M().classList.toggle('full',v==='perf');scrollTo(0,0);conferirAcesso();
