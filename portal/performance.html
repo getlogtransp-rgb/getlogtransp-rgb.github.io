@@ -485,11 +485,14 @@ const temInfo=g=>g.prev>0||g.col>0||g.jus>0||g.pen>0||g.tot>0;
 const JUSTIFIED_STATUS=new Set(["LOJA FECHADA","FECHADA","PRODUTO INDISPONIVEL","CODIGO DE COLETA NAO INFORMADO","ENDERECO DIVERGENTE","NAO LOCALIZEI O ENDERECO","ERRO DO SISTEMA","PACOTE CANCELADO","KWAI - ERRO NA OCORRENCIA","DROP RECEBEU","DROP CANCELADO OU FORA DA DS FM NOR","PACOTE CANCELADO OU FORA DA DS FM NOR"]);
 const normStatus=s=>str(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().replace(/\s+/g," ").trim();
 const isJustifiedStatus=s=>{const v=normStatus(s);return JUSTIFIED_STATUS.has(v)||v==="MISS SCAN"||v.startsWith("MISS SCAN /")};
+// Motivo da justificativa tirado da Observação ("Produto Indisponível (31) / Em rota (2)"): o de maior quantidade, fora "Em rota".
+function motivoObs(rows){let best="",n=-1;for(const r of rows)for(const p of String(r.jtxt||"").split(" / ")){const m=p.trim().match(/^(.*?)\s*\((\d+)\)$/);const k=m?m[1]:p.trim();if(!k||/^EM ROTA$|^ACEITA$/.test(normStatus(k)))continue;const q=m?+m[2]:0;if(q>n){n=q;best=k}}return best}
 function sellerState(rows){
   const m=new Map();
   for(const g of groupBy(rows,sKey)){
     const collected=g.rows.some(r=>r.col>0||r.tot>0);
-    const justified=g.rows.some(r=>isJustifiedStatus(r.st)||(r.jus>0&&normStatus(r.st)!=="BAIXA INDEVIDA"));
+    // Seller só é justificado quando TODOS os pacotes não coletados foram justificados (sem nenhum em rota).
+    const justified=g.pen<=0&&g.rows.some(r=>isJustifiedStatus(r.st)||(r.jus>0&&normStatus(r.st)!=="BAIXA INDEVIDA"));
     const visited=collected||justified;
     // Baixa indevida é pendência não justificada; mas se alguém coletou ou justificou esse seller, ele conta como visitado.
     const bx=g.rows.filter(r=>normStatus(r.st)==="BAIXA INDEVIDA");
@@ -497,7 +500,7 @@ function sellerState(rows){
     let st="—";
     // Coletado e entregue no DROP: mostra "DROP Recebeu" em vez de "Coletado" para não esconder esse status.
     if(collected){const d=g.rows.find(r=>normStatus(r.st)==="DROP RECEBEU");st=d?d.st:"Coletado"}
-    else if(justified){const x=g.rows.find(r=>isJustifiedStatus(r.st));st=x?.st||"Justificado"}
+    else if(justified){const x=g.rows.find(r=>isJustifiedStatus(r.st));st=x?.st||motivoObs(g.rows)||"Justificado"}
     else if(g.pen>0){const x=g.rows.filter(r=>r.pen>0).sort((a,b)=>b.pen-a.pen)[0];st=normStatus(x?.st)==="ACEITA"?"Aceita":"Em rota"}
     else{const v=normStatus(g.rows[0]?.st);st=!v||v==="EM ROTA"||v==="ACEITA"||v==="COLETADO"?"Sem pendência":g.rows[0].st}
     m.set(g.k,{sit:visited||g.pen<=0?"Finalizado":"Pendente",st,pen:visited?0:g.pen,visited,collected,justified,prev:g.prev,col:g.col});
