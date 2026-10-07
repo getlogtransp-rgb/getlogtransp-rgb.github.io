@@ -408,10 +408,12 @@ details.box summary{cursor:pointer;font-weight:700;color:var(--navy)}
 .side-tg{position:fixed;top:30px;left:212px;z-index:70;width:32px;height:32px;border-radius:9px;border:0;background:rgba(255,255,255,.08);color:#cdd8f0;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
 .side-tg:hover{background:rgba(255,255,255,.16);color:#fff}
 .app{transition:grid-template-columns .2s}
-body.side-hid .app{grid-template-columns:52px 1fr}
-body.side-hid .side>*{display:none}
-body.side-hid .side{padding:0}
-body.side-hid .side-tg{left:10px;top:18px}
+body.side-hid .app{grid-template-columns:64px 1fr}
+body.side-hid .side{padding:64px 8px 16px}
+body.side-hid .side .logo-chip,body.side-hid .side .who,body.side-hid .side h5,body.side-hid .side button span{display:none}
+body.side-hid .side-nav{display:flex;flex-direction:column;gap:4px}
+body.side-hid .side button{justify-content:center;padding:12px 0}
+body.side-hid .side-tg{left:16px;top:18px}
 .main{width:100%;max-width:100%}
 .main img,.main canvas,.main iframe{max-width:100%}
 .main table{max-width:100%}

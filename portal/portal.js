@@ -93,7 +93,7 @@ const TITULO={coletados:'Pacotes coletados',perf:'Performance',forecast:'Forecas
 const SHORT={dash:'Início',coletados:'Coletados',equipe:'Tempo de operação',financeiro:'Financeiro',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
 const can=v=>ACC[ME.role].includes(v);
 function shell(){
-const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}">${IC[v]}<span>${l}</span>${v==='app'?'<span class="badge">Em breve</span>':v==='financeiro'?'<span class="badge">Em desenv.</span>':''}</button>`).join('')}).join('');
+const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}" title="${l}">${IC[v]}<span>${l}</span>${v==='app'?'<span class="badge">Em breve</span>':v==='financeiro'?'<span class="badge">Em desenv.</span>':''}</button>`).join('')}).join('');
 const mob=ACC[ME.role].filter(v=>SHORT[v]&&!['equipe','financeiro'].includes(v)).slice(0,4);
 $('#app').innerHTML=`<div class="app"><aside class="side" aria-label="Menu do portal"><a class="logo-chip" href="/"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="88" height="36"></a><nav class="side-nav">${groups}</nav>
 <div class="who"><b>${esc(ME.name)}</b><span>${ROLE_LBL[ME.role]}</span><div class="row"><button type="button" id="tsenha">Trocar senha</button><button class="out" id="sair" type="button">Sair</button></div></div></aside>
