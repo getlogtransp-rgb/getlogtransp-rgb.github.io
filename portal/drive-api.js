@@ -7,7 +7,9 @@ const C=()=>window.GL_CORE;
 const sess=()=>{try{return JSON.parse(localStorage.getItem('getlog_sessao')||sessionStorage.getItem('getlog_sessao'))}catch(e){return null}};
 // Token do script do Drive (guardado criptografado no config do portal; só existe depois do login).
 let TOKEN='';
-const get=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
+// Nenhuma chamada fica pendurada: 90 s sem resposta = erro (a tela mostra a falha em vez de carregar para sempre).
+const velha=(m,sig)=>!!m&&!!sig&&new Date(m).getTime()<new Date(sig).getTime();
+const get=async(q,force)=>{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),90000);const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store',signal:ac.signal}).finally(()=>clearTimeout(tm));if(!r.ok)throw new Error('http '+r.status);return r.json()};
 let LISTA=null,LISTA_EM=0;
 // Lista de dias publicados ({dia:'dd.mm.aaaa',modificadoEm}). Só é consultada de novo quando pedido (verificação/atualizar).
 const lista=force=>{if(!LISTA||force){const p=get('fonte=lista',force).then(j=>{if(!j.ok)throw new Error(j.erro);LISTA_EM=Date.now();return j.dados});p.catch(()=>{if(LISTA===p)LISTA=null});LISTA=p}return LISTA.catch(e=>{console.warn('lista',e);return []})};
@@ -15,11 +17,11 @@ const CACHE=new Map();
 // Conteúdo de um dia já recortado para o usuário (escopo aplicado antes de guardar em cache).
 const dia=async d=>{const L=await lista();const it=L.find(x=>x.dia===d);if(!it)return null;const c=CACHE.get(d);if(c&&c.sig===it.modificadoEm)return c.p;
 const I=window.GL_IDB,sig=it.modificadoEm,ck=sig+'#f';
-// Download sempre com force=1 (igual ao report): o cache do Apps Script podia devolver a versão anterior do arquivo
-// e ela ficava guardada como se fosse a nova. Só baixa quando a versão do Drive muda, então não pesa.
+// Baixa rápido (cache do Apps Script); se a cópia vier mais velha que a versão da lista, baixa de novo com force=1.
+// Assim nunca guarda versão antiga e não força o Drive em todo dia (isso travava o carregamento).
 // 1º o cache cifrado do aparelho (mesma versão do Drive = não baixa de novo); senão baixa, recorta para o usuário e guarda cifrado.
 const p=(async()=>{if(!c&&I){const h=await I.lerDia(d,ck);if(h)return {json:h,lm:new Date(sig),sig}}
-const j=await get('fonte=performance&dia='+encodeURIComponent(d),true);if(!j.ok)return null;const json=C().escopo(j.dados.conteudo,sess());if(I)I.gravaDia(d,ck,json);return {json,lm:new Date(j.dados.modificadoEm||sig),sig}})();
+let j=await get('fonte=performance&dia='+encodeURIComponent(d),!!c);if(j.ok&&velha(j.dados.modificadoEm,sig))j=await get('fonte=performance&dia='+encodeURIComponent(d),true);if(!j.ok)return null;const json=C().escopo(j.dados.conteudo,sess());if(I)I.gravaDia(d,ck,json);return {json,lm:new Date(j.dados.modificadoEm||sig),sig}})();
 p.catch(()=>{if(CACHE.get(d)?.p===p)CACHE.delete(d)});CACHE.set(d,{sig:it.modificadoEm,p});return p};
 // Executa tarefas com no máximo n requisições simultâneas.
 const pool=async(items,n,fn)=>{const out=new Array(items.length);let i=0;await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{while(i<items.length){const k=i++;try{out[k]=await fn(items[k])}catch(e){out[k]=null}}}));return out};
@@ -31,7 +33,7 @@ const listaCol=force=>{if(!LISTAC||force){const p=get('fonte=lista_coletados',fo
 const CACHEC=new Map();
 const col=async d=>{const L=await listaCol();const it=L.find(x=>x.dia===d);if(!it)return null;const sig=it.modificadoEm,c=CACHEC.get(d);if(c&&c.sig===sig)return c.p;
 const p=(async()=>{const I=window.GL_IDB;if(!c&&I){const h=await I.lerDia('col:'+d,sig+'#f');if(h)return h}
-const j=await get('fonte=coletados&dia='+encodeURIComponent(d),true);if(!j.ok||!j.dados)return null;if(I)I.gravaDia('col:'+d,sig+'#f',j.dados);return j.dados})();
+let j=await get('fonte=coletados&dia='+encodeURIComponent(d),!!c);if(j.ok&&j.dados&&velha(j.dados.modificadoEm,sig))j=await get('fonte=coletados&dia='+encodeURIComponent(d),true);if(!j.ok||!j.dados)return null;if(I)I.gravaDia('col:'+d,sig+'#f',j.dados);return j.dados})();
 p.catch(()=>{if(CACHEC.get(d)?.p===p)CACHEC.delete(d)});CACHEC.set(d,{sig,p});return p};
 let GERAL=null;
 const geral=async(force,novo)=>{if(!GERAL||force||novo){const p=get('fonte=geral',force).then(j=>{if(!j.ok)throw new Error(j.erro);return {...j,dados:C().escopo(j.dados,sess())}});p.catch(()=>{if(GERAL===p)GERAL=null});GERAL=p}return GERAL};
