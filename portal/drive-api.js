@@ -7,9 +7,8 @@ const C=()=>window.GL_CORE;
 const sess=()=>{try{return JSON.parse(localStorage.getItem('getlog_sessao')||sessionStorage.getItem('getlog_sessao'))}catch(e){return null}};
 // Token do script do Drive (guardado criptografado no config do portal; só existe depois do login).
 let TOKEN='';
-// Nenhuma chamada fica pendurada: 90 s sem resposta = erro (a tela mostra a falha em vez de carregar para sempre).
 const velha=(m,sig)=>!!m&&!!sig&&new Date(m).getTime()<new Date(sig).getTime();
-const get=async(q,force)=>{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),90000);const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store',signal:ac.signal}).finally(()=>clearTimeout(tm));if(!r.ok)throw new Error('http '+r.status);return r.json()};
+const get=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
 let LISTA=null,LISTA_EM=0;
 // Lista de dias publicados ({dia:'dd.mm.aaaa',modificadoEm}). Só é consultada de novo quando pedido (verificação/atualizar).
 const lista=force=>{if(!LISTA||force){const p=get('fonte=lista',force).then(j=>{if(!j.ok)throw new Error(j.erro);LISTA_EM=Date.now();return j.dados});p.catch(()=>{if(LISTA===p)LISTA=null});LISTA=p}return LISTA.catch(e=>{console.warn('lista',e);return []})};

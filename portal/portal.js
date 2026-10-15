@@ -171,7 +171,8 @@ const diaKey=s=>s.split('.').reverse().join('-');
 // Abre a semana mais recente e mostra; o restante do histórico entra em segundo plano e atualiza só a tela aberta.
 function loadReal(){return LOADING||(LOADING=(async()=>{const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
 const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
-await take(ds.slice(0,7));await loadCol(ds.slice(0,7)).catch(()=>{});if(ds.length>7)take(ds.slice(7)).then(()=>loadCol(ds.slice(7)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
+// Abre com hoje e ontem (comparação); o resto da semana e do histórico chega em segundo plano.
+await take(ds.slice(0,2));await loadCol(ds.slice(0,2)).catch(()=>{});if(ds.length>2)take(ds.slice(2)).then(()=>loadCol(ds.slice(2)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
 if(!L.length)LOADING=null})())}
 function assinarDados(){const un=GL_API.assinar(async(est,mud)=>{AGENDA=est;let ch=false;
 const min=[...DIAS.keys()].map(diaKey).sort()[0]||'';for(const s of mud){if(!DIAS.has(s)&&diaKey(s)<min)continue;try{const r=await GL_API.dia(s);if(r){ingestDia(s,r);ch=true}}catch(e){console.warn('atualização',s,e)}}
@@ -360,7 +361,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=41" title="Performance de coleta" id="pf"></iframe></div>`;const f=$('#pf');f.addEventListener('load',()=>{try{f.contentDocument.addEventListener('pointerdown',()=>window.GL_SIDE_HIDE?.(),true)}catch(e){}})};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=42" title="Performance de coleta" id="pf"></iframe></div>`;const f=$('#pf');f.addEventListener('load',()=>{try{f.contentDocument.addEventListener('pointerdown',()=>window.GL_SIDE_HIDE?.(),true)}catch(e){}})};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
