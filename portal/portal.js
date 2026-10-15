@@ -20,8 +20,13 @@ async function wrapFor(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,sa
 const getJSON=async p=>{const r=await fetch(p+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('db');return r.json()};
 async function loadDB(){DB=await getJSON('/data/users.json')}
 async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=await open_(u.p)}catch(e){u._p={}}}}
-async function loadShared(){try{AVISOS=await open_(await getJSON('/data/avisos.json'))}catch(e){AVISOS=[]}try{ESCALAS=await open_(await getJSON('/data/escalas.json'))}catch(e){ESCALAS=[]}try{CFG=await open_(await getJSON('/data/config.json'))}catch(e){CFG={}}if(ME?.role==='admin')try{FIN=await open_(await getJSON('/data/financeiro.json'))}catch(e){FIN=null}}
-async function senhaPlan(login){if(!DB.senhaUrl)return null;try{const c=new AbortController();setTimeout(()=>c.abort(),7000);const j=await (await fetch(DB.senhaUrl+'?senha='+encodeURIComponent(login),{signal:c.signal})).json();return j.ok&&j.dados&&j.dados.key?j.dados:null}catch(e){return null}}
+// Arquivos compartilhados em paralelo (antes era um depois do outro).
+async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),ld('/data/config.json',{}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
+// Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
+// erro/tempo esgotado devolve {erro:true} (não é "sem senha nova") para o login tentar de novo com mais tempo.
+const SP=new Map();
+function senhaPlan(login,ms=10000,novo){if(!DB||!DB.senhaUrl)return Promise.resolve(null);const k=login+'|'+ms;if(!novo&&SP.has(k))return SP.get(k);
+const p=(async()=>{try{const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);const r=await fetch(DB.senhaUrl+'?senha='+encodeURIComponent(login),{signal:c.signal,cache:'no-store'});clearTimeout(t);const j=await r.json();return j.ok&&j.dados&&j.dados.key?j.dados:null}catch(e){SP.delete(k);return {erro:true}}})();SP.set(k,p);return p}
 // ---- Sessão do dia: vale até 23:59 neste aparelho, mas cai na hora se o acesso for revogado ----
 const fimDoDia=()=>{const d=new Date();d.setHours(23,59,59,999);return d.getTime()};
 const sessGet=()=>{try{const o=JSON.parse(localStorage.getItem(S_KEY)||sessionStorage.getItem(S_KEY));return o&&o.k&&o.exp>Date.now()?o:null}catch(e){return null}};
@@ -38,8 +43,11 @@ let SESS=null,BLOQ=false;
 async function credencial(login,pw){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);return u2b(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode('getlog-auth|'+login),iterations:100000,hash:'SHA-256'},b,256))}
 const hashHex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
 async function login(u,pw){await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr)throw new Error('cred');let raw;
-const sp=await senhaPlan(usr.login);const novo=sp&&(!usr.pwEm||sp.em>usr.pwEm);const tries=novo?[sp]:[usr];
-for(const w of tries){try{const k=await kek(pw,b2u(w.salt),DB.iter);raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)));break}catch(e){}}
+const abre=async w=>{try{const k=await kek(pw,b2u(w.salt),DB.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
+const novoDe=sp=>sp&&!sp.erro&&(!usr.pwEm||sp.em>usr.pwEm);
+let sp=await senhaPlan(usr.login);raw=await abre(novoDe(sp)?sp:usr);
+// Servidor do ponto não respondeu e a senha não abriu a do site: espera mais pelo servidor antes de dizer "senha errada".
+if(!raw&&sp&&sp.erro){aviso('Conferindo a senha no servidor…');sp=await senhaPlan(usr.login,30000,true);if(novoDe(sp))raw=await abre(sp);else if(sp&&sp.erro)throw new Error('rede')}
 if(!raw)throw new Error('cred');if(usr.active===false)throw new Error('off');
 return {usr,raw,x:{troca:pw===PW_PADRAO,av:await credencial(usr.login,pw)}}}
 async function start(usr,raw,x){
@@ -54,12 +62,14 @@ document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pont
 }
 // Encerra a sessão (saída, revogação ou senha redefinida) recarregando a página: nada do estado anterior sobrevive.
 function encerrar(motivo){sessDel();try{if(motivo)sessionStorage.setItem('getlog_msg',motivo)}catch(e){}location.replace('/portal/')}
-const form=$('#loginForm'),msg=$('#msg'),go=$('#go');
+const form=$('#loginForm'),msg=$('#msg'),go=$('#go');const aviso=t=>{msg.className='msg';msg.textContent=t};
+// Ao sair do campo usuário já busca os acessos e acorda o servidor da senha: o "Entrar" fica bem mais rápido.
+$('#u').addEventListener('change',()=>{const u=norm($('#u').value);if(u)loadDB().then(()=>senhaPlan(u)).catch(()=>{})});
 $('#eye').addEventListener('click',()=>{const p=$('#p');const s=p.type==='password';p.type=s?'text':'password';$('#eye').setAttribute('aria-label',s?'Ocultar senha':'Mostrar senha')});
 form.addEventListener('submit',async e=>{e.preventDefault();if(go.disabled)return;const u=$('#u').value,p=$('#p').value;
 if(!u.trim()||!p){msg.className='msg err';msg.textContent='Preencha usuário e senha.';return}
 go.disabled=true;go.textContent='Verificando...';msg.textContent='';
-try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console.warn('login',err);msg.className='msg err';msg.textContent=err.message==='off'?'Este acesso está desativado. Fale com o administrador.':err.message==='db'?'Não foi possível carregar os acessos. Verifique a conexão e tente de novo.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar'}});
+try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console.warn('login',err);msg.className='msg err';msg.textContent=err.message==='off'?'Este acesso está desativado. Fale com o administrador.':err.message==='db'||err.message==='rede'?'Não foi possível conferir a senha agora (servidor sem resposta). Tente de novo em instantes.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar'}});
 // Volta para a sessão do dia sem pedir senha, conferindo antes se o acesso continua valendo.
 (async()=>{let m='';try{m=sessionStorage.getItem('getlog_msg')||'';sessionStorage.removeItem('getlog_msg')}catch(e){}if(m){msg.className='msg err';msg.textContent=m}
 const fim=()=>{document.documentElement.classList.remove('sess');sessDel();$('#u').focus()};
@@ -350,7 +360,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=39" title="Performance de coleta" id="pf"></iframe></div>`;const f=$('#pf');f.addEventListener('load',()=>{try{f.contentDocument.addEventListener('pointerdown',()=>window.GL_SIDE_HIDE?.(),true)}catch(e){}})};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=40" title="Performance de coleta" id="pf"></iframe></div>`;const f=$('#pf');f.addEventListener('load',()=>{try{f.contentDocument.addEventListener('pointerdown',()=>window.GL_SIDE_HIDE?.(),true)}catch(e){}})};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
