@@ -147,9 +147,18 @@ var hora_ = function (r) { return Utilities.formatDate(new Date(String(r[12])), 
 var tsDe_ = function (dia, hora) { return new Date(dia + 'T' + hora + ':00-03:00').toISOString(); };
 var valida_ = function (d) { if (!MARC[d.tipo] || !/^\d{4}-\d{2}-\d{2}$/.test(d.dia || '') || (d.hora !== undefined && !/^\d{2}:\d{2}$/.test(d.hora)))
     throw falha_('dados'); };
+// Só as últimas linhas (as marcações entram em ordem): ler a aba inteira fica mais lento a cada mês.
+// Mantém a linha 0 como cabeçalho para os filtros "k > 0".
+function recentes_(sh, n) {
+    var last = sh.getLastRow(), cols = sh.getLastColumn();
+    if (last <= n + 1)
+        return sh.getDataRange().getValues();
+    return [sh.getRange(1, 1, 1, cols).getValues()[0]].concat(sh.getRange(last - n + 1, 1, n, cols).getValues());
+}
+var RECENTES = 6000; // ~12 dias de 120 pessoas × 4 marcações
 function marcar_(d, eu) {
     valida_(d);
-    var sh = marcacoes_(), v = sh.getDataRange().getValues();
+    var sh = marcacoes_(), v = recentes_(sh, RECENTES);
     // Idempotência: o mesmo envio (id) ou a mesma marcação do dia nunca entra duas vezes.
     var ja = v.findIndex(function (r, k) { return k > 0 && r[11] === d.id; });
     if (ja > 0)
@@ -163,7 +172,9 @@ function marcar_(d, eu) {
 }
 function listar_(d, eu) {
     var desde = d.desde || '';
-    var itens = marcacoes_().getDataRange().getValues().slice(1).filter(function (r) { return ativa_(r) && txt_(r[0]) >= desde && (eu.role === 'admin' || r[3] === eu.login); }).map(item_);
+    var dias = desde ? (Date.now() - new Date(desde + 'T00:00:00').getTime()) / 864e5 : 999;
+    var sh = marcacoes_(), v = dias <= 7 ? recentes_(sh, RECENTES) : sh.getDataRange().getValues();
+    var itens = v.slice(1).filter(function (r) { return ativa_(r) && txt_(r[0]) >= desde && (eu.role === 'admin' || r[3] === eu.login); }).map(item_);
     return { ok: true, itens: itens };
 }
 function foto_(d, eu) {
