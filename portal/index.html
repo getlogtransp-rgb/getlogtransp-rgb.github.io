@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#002060">
 <script>try{var o=JSON.parse(localStorage.getItem('getlog_sessao')||sessionStorage.getItem('getlog_sessao'));if(o&&o.k&&o.exp>Date.now())document.documentElement.className+=' sess'}catch(e){}</script>
-<style>html.sess #login{display:none}</style>
+<style>html.sess #login{display:none}#boot{display:none}html.sess #boot{display:flex;min-height:100vh;align-items:center;justify-content:center;font:600 15px system-ui,sans-serif;color:#002060}</style>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,10 +43,11 @@
 </div>
 </div>
 </section>
+<div id="boot">Carregando…</div>
 <div id="app" hidden></div>
 <script src="/assets/demo.js?v=5" defer></script>
 <script src="/portal/core.js?v=7" defer></script>
 <script src="/portal/drive-api.js?v=14" defer></script>
-<script src="/portal/portal.js?v=60" defer></script>
+<script src="/portal/portal.js?v=61" defer></script>
 </body>
 </html>

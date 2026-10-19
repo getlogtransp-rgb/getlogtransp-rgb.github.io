@@ -14,7 +14,7 @@ var TOKEN = 'TROQUE-ESTE-TOKEN';
 // Se o projeto não foi aberto pela planilha (Extensões → Apps Script), coloque aqui o ID da planilha (parte do endereço entre /d/ e /edit).
 var PLANILHA_ID = '';
 var SITE = 'https://getlogbr.com.br';
-var VERSAO = 2;
+var VERSAO = 3; // 3: telefone pelo próprio usuário + leituras sem trava
 var PASTA_FOTOS = 'GETLOG - Fotos do ponto';
 var FUSO = 'America/Sao_Paulo';
 var MARC = { entrada: 'Início da jornada', almoco: 'Saída para almoço', retorno: 'Retorno do almoço', saida: 'Fim da jornada' };
@@ -22,8 +22,12 @@ var CAB = ['Data', 'Hora', 'Nome', 'Login', 'Tipo de usuário', 'Marcação', 'E
 var CAB_AJ = ['ID', 'Solicitado em', 'Login', 'Nome', 'Tipo de usuário', 'Data', 'Hora', 'Marcação', 'Motivo', 'Foto', 'Latitude', 'Longitude', 'Precisão (m)', 'Endereço', 'Situação', 'Decidido por', 'Decidido em', 'Observação', 'ID da marcação'];
 var CAB_AUD = ['Quando', 'Quem', 'Alteração', 'ID', 'Pessoa', 'Antes', 'Depois', 'Motivo'];
 var INATIVAS = ['Excluída', 'Substituída'];
+// Planilha e abas abertas uma vez por chamada (antes abria a planilha de novo a cada aba lida).
+var SS_ = null, ABAS_ = {};
 function aba_(nome, cab) {
-    var ss = (PLANILHA_ID ? SpreadsheetApp.openById(PLANILHA_ID) : SpreadsheetApp.getActive());
+    if (ABAS_[nome])
+        return ABAS_[nome];
+    var ss = SS_ || (SS_ = (PLANILHA_ID ? SpreadsheetApp.openById(PLANILHA_ID) : SpreadsheetApp.getActive()));
     var sh = ss.getSheetByName(nome);
     if (!sh) {
         sh = ss.insertSheet(nome);
@@ -33,11 +37,12 @@ function aba_(nome, cab) {
     }
     else if (sh.getLastColumn() < cab.length)
         sh.getRange(1, 1, 1, cab.length).setValues([cab]).setFontWeight('bold');
-    return sh;
+    return (ABAS_[nome] = sh);
 }
 var marcacoes_ = function () { return aba_('Marcações', CAB); };
 var senhas_ = function () { return aba_('Senhas', ['Login', 'salt', 'iv', 'key', 'Trocada em', 'Credencial (hash)']); };
 var acessos_ = function () { return aba_('Acessos', ['Login', 'Ativo', 'Alterado por', 'Em']); };
+var telefones_ = function () { return aba_('Telefones', ['Login', 'Telefone', 'Alterado em']); };
 var ajustes_ = function () { return aba_('Ajustes', CAB_AJ); };
 var auditoria_ = function () { return aba_('Auditoria', CAB_AUD); };
 function pasta_() { var it = DriveApp.getFoldersByName(PASTA_FOTOS); return it.hasNext() ? it.next() : DriveApp.createFolder(PASTA_FOTOS); }
@@ -251,8 +256,13 @@ function doPost(e) {
     }
     if (d.token !== TOKEN)
         return json_({ ok: false, erro: 'token' });
-    var lock = LockService.getScriptLock();
-    lock.waitLock(20000);
+    // Trava só quem grava: leituras (eu, listar, ajustes, foto...) não ficam na fila atrás das outras pessoas.
+    var GRAVA = { senha: 1, marcar: 1, acesso: 1, adm: 1, ajuste: 1, decidir: 1, telefone: 1 };
+    var lock = null;
+    if (GRAVA[d.acao] || !d.acao) {
+        lock = LockService.getScriptLock();
+        lock.waitLock(20000);
+    }
     try {
         var eu = quem_(d);
         switch (d.acao) {
@@ -282,6 +292,22 @@ function doPost(e) {
                 audita_(eu, d.ativo ? 'Liberou acesso' : 'Bloqueou acesso', '', d.alvo, null, null, '');
                 return json_({ ok: true });
             }
+            case 'telefone': {
+                var tel = String(d.tel || '').replace(/[^0-9+() -]/g, '').slice(0, 20);
+                var st = telefones_(), vt = st.getDataRange().getValues(), it = vt.findIndex(function (r, k) { return k > 0 && r[0] === eu.login; });
+                var lt = [eu.login, "'" + tel, "'" + agora_()];
+                if (it > 0)
+                    st.getRange(it + 1, 1, 1, 3).setValues([lt]);
+                else
+                    st.appendRow(lt);
+                return json_({ ok: true });
+            }
+            case 'telefones': {
+                var vv = telefones_().getDataRange().getValues().slice(1);
+                var mm = {};
+                vv.forEach(function (r) { if (eu.role === 'admin' || r[0] === eu.login) mm[r[0]] = String(r[1]); });
+                return json_({ ok: true, itens: mm });
+            }
             case 'adm': return json_(adm_(d, eu));
             case 'ajuste': return json_(pedirAjuste_(d, eu));
             case 'ajustes': return json_(listarAjustes_(d, eu));
@@ -301,7 +327,8 @@ function doPost(e) {
         return json_({ ok: false, erro: x.codigo || 'interno' });
     }
     finally {
-        lock.releaseLock();
+        if (lock)
+            lock.releaseLock();
     }
 }
 function doGet(e) {

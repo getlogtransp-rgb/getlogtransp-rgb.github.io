@@ -13,7 +13,7 @@ let CFG={},DB=null,MASTER=null,MASTER_RAW=null,ME=null,AVISOS=[],ESCALAS=[],FIN=
 const ROLE_LBL={admin:'Administrador',colaborador:'Colaborador',ajudante:'Ajudante',motorista:'Motorista',fornecedor:'Fornecedor'};
 const VEIC=['Fiorino','Van','VUC','HR','3/4','Carreta','Carro','Moto'];
 const LIVE=['dash','coletados','equipe','financeiro'];
-const ACC={admin:['dash','coletados','equipe','perf','forecast','ponto','pontoadm','avisos','usuarios','escalas','financeiro','app'],colaborador:['dash','coletados','equipe','perf','forecast','ponto','avisos','app'],ajudante:['coletados','ponto','avisos','app'],motorista:['perf','avisos','app']};
+const ACC={admin:['dash','coletados','equipe','perf','forecast','ponto','pontoadm','avisos','usuarios','escalas','financeiro','app'],colaborador:['dash','coletados','equipe','perf','forecast','ponto','avisos','app'],ajudante:['ponto','coletados','avisos','app'],motorista:['ponto','perf','avisos','app']};
 async function kek(pw,salt,iter){const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function seal(obj){const iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},MASTER,enc.encode(JSON.stringify(obj))))}}
 async function open_(o){return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct))))}
@@ -46,7 +46,7 @@ const hashHex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',e
 async function login(u,pw){await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr)throw new Error('cred');let raw;
 const abre=async w=>{try{const k=await kek(pw,b2u(w.salt),DB.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
 const novoDe=sp=>sp&&!sp.erro&&(!usr.pwEm||sp.em>usr.pwEm);
-let sp=await senhaPlan(usr.login);raw=await abre(novoDe(sp)?sp:usr);
+const pu=abre(usr);let sp=await senhaPlan(usr.login);raw=novoDe(sp)?await abre(sp):await pu;
 // Servidor do ponto não respondeu e a senha não abriu a do site: espera mais pelo servidor antes de dizer "senha errada".
 if(!raw&&sp&&sp.erro){aviso('Conferindo a senha no servidor…');sp=await senhaPlan(usr.login,30000,true);if(novoDe(sp))raw=await abre(sp);else if(sp&&sp.erro)throw new Error('rede')}
 if(!raw)throw new Error('cred');if(usr.active===false)throw new Error('off');
@@ -57,7 +57,7 @@ await profiles();const p=usr._p||{};
 ME={login:usr.login,role:usr.role,name:p.name||usr.login,ref:p.ref||'',cliente:p.cliente||''};
 SESS={...ME,k:await wrapSess(raw),exp:x.exp||fimDoDia(),pwEm:usr.pwEm||'',av:x.av||'',troca:!!x.troca};sessSet(SESS);
 if(ME.role==='fornecedor'){location.replace('/cliente/');return}
-await loadShared();GL_API.setToken(CFG.driveToken||'');$('#login').hidden=true;$('#app').hidden=false;
+await loadShared();GL_API.setToken(CFG.driveToken||'');$('#login').hidden=true;$('#app').hidden=false;$('#boot')?.remove();
 if(SESS.troca){BLOQ=true;$('#app').innerHTML='';await trocarSenha(true);BLOQ=false;SESS.troca=false;sessSet(SESS)}
 document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pontoSave(pontoAll());
 }
@@ -65,7 +65,8 @@ document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pont
 function encerrar(motivo){sessDel();try{if(motivo)sessionStorage.setItem('getlog_msg',motivo)}catch(e){}location.replace('/portal/')}
 const form=$('#loginForm'),msg=$('#msg'),go=$('#go');const aviso=t=>{msg.className='msg';msg.textContent=t};
 // Ao sair do campo usuário já busca os acessos e acorda o servidor da senha: o "Entrar" fica bem mais rápido.
-$('#u').addEventListener('change',()=>{const u=norm($('#u').value);if(u)loadDB().then(()=>senhaPlan(u)).catch(()=>{})});
+let PFT=0;const pre=()=>{const u=norm($('#u').value);if(u.length>=4)loadDB().then(()=>DB.users.some(x=>x.login===u)&&senhaPlan(u)).catch(()=>{})};
+$('#u').addEventListener('input',()=>{clearTimeout(PFT);PFT=setTimeout(pre,350)});$('#u').addEventListener('change',pre);$('#p').addEventListener('focus',pre);
 $('#eye').addEventListener('click',()=>{const p=$('#p');const s=p.type==='password';p.type=s?'text':'password';$('#eye').setAttribute('aria-label',s?'Ocultar senha':'Mostrar senha')});
 form.addEventListener('submit',async e=>{e.preventDefault();if(go.disabled)return;const u=$('#u').value,p=$('#p').value;
 if(!u.trim()||!p){msg.className='msg err';msg.textContent='Preencha usuário e senha.';return}
@@ -73,7 +74,7 @@ go.disabled=true;go.textContent='Verificando...';msg.textContent='';
 try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console.warn('login',err);msg.className='msg err';msg.textContent=err.message==='off'?'Este acesso está desativado. Fale com o administrador.':err.message==='db'||err.message==='rede'?'Não foi possível conferir a senha agora (servidor sem resposta). Tente de novo em instantes.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar'}});
 // Volta para a sessão do dia sem pedir senha, conferindo antes se o acesso continua valendo.
 (async()=>{let m='';try{m=sessionStorage.getItem('getlog_msg')||'';sessionStorage.removeItem('getlog_msg')}catch(e){}if(m){msg.className='msg err';msg.textContent=m}
-const fim=()=>{document.documentElement.classList.remove('sess');sessDel();$('#u').focus()};
+const fim=()=>{document.documentElement.classList.remove('sess');$('#boot')?.remove();sessDel();$('#u').focus()};
 const x=sessGet();if(!x){fim();return}
 try{await loadDB();const usr=DB.users.find(u=>u.login===x.login);
 if(!usr||usr.active===false||usr.role!==x.role||(usr.pwEm||'')!==(x.pwEm||''))throw new Error('revogado');
@@ -81,13 +82,15 @@ await start(usr,typeof x.k==='string'?b2u(x.k):await unwrapSess(x.k),x)}catch(e)
 // ---- Autorização no servidor do ponto (Apps Script) ----
 const PLAN=()=>CFG.pontoUrl&&CFG.pontoToken;
 let PV=null;const versao=()=>PV||(PV=fetch(CFG.pontoUrl+'?versao=1',{cache:'no-store'}).then(r=>r.json()).then(j=>j.versao||1).catch(()=>{PV=null;return 0}));
-const v2=async()=>PLAN()&&await versao()>=2;
+const v2=async()=>PLAN()&&await versao()>=2;const v3=async()=>PLAN()&&await versao()>=3;
+// Telefone: a própria pessoa atualiza (vai para o servidor do ponto, aba Telefones); o admin vê na lista de usuários.
+async function meuTelefone(){const atual=(DB.users.find(u=>u.login===ME.login)?._p?.tel)||'';const v=await pedir('Meu telefone',`<div class="field"><label for="tl">Telefone com DDD</label><input id="tl" type="tel" inputmode="tel" required value="${esc(atual)}" placeholder="11999998888"></div>`,'Salvar');if(!v)return;const tel=v.tl.replace(/\D/g,'');if(tel.length<10){toast('Telefone inválido. Use DDD + número.');return}if(!await v3()){toast('Função disponível depois que o administrador atualizar o script do ponto.');return}try{await api('telefone',{tel});toast('Telefone atualizado.')}catch(e){if(!NEGADO[e.code])toast('Não foi possível salvar agora. Tente de novo.')}}
 const NEGADO={acesso:'Seu acesso foi desativado. Fale com o administrador.',credencial:'Sua senha foi alterada. Entre novamente.'};
 async function api(acao,dados={}){const r=await fetch(CFG.pontoUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:CFG.pontoToken,acao,login:ME.login,av:SESS.av,...dados})});
 const j=await r.json();if(!j.ok){if(NEGADO[j.erro])encerrar(NEGADO[j.erro]);const e=new Error(j.erro||'planilha');e.code=j.erro;throw e}return j}
 // Confere se o acesso continua valendo: site (users.json) e, se disponível, o servidor do ponto (bloqueio imediato).
 let VIG=0,VIGT=0,VIGP=null;
-const conferirAcesso=forcar=>{if(!ME)return Promise.resolve(false);if(VIGP)return VIGP;if(!forcar&&Date.now()-VIG<5000)return Promise.resolve(true);VIG=Date.now();return VIGP=conferir_().finally(()=>VIGP=null)};
+const conferirAcesso=forcar=>{if(!ME)return Promise.resolve(false);if(VIGP)return VIGP;if(Date.now()-VIG<(forcar?15000:60000))return Promise.resolve(true);VIG=Date.now();return VIGP=conferir_().finally(()=>VIGP=null)};
 async function conferir_(){let motivo='';
 try{const db=await getJSON('/data/users.json');const u=db.users.find(x=>x.login===ME.login);
 if(!u||u.active===false)motivo=NEGADO.acesso;else if(u.role!==ME.role)motivo='Seu tipo de acesso foi alterado. Entre novamente.';else if((u.pwEm||'')!==(SESS.pwEm||''))motivo='Sua senha foi redefinida pelo administrador. Entre novamente.'}catch(e){}
@@ -107,12 +110,12 @@ function shell(){
 const groups=NAV.map(([g,items])=>{const it=items.filter(([v])=>can(v));if(!it.length)return '';return `<h5>${g}</h5>`+it.map(([v,l])=>`<button data-view="${v}" title="${l}">${IC[v]}<span>${l}</span>${v==='app'?'<span class="badge">Em breve</span>':v==='financeiro'?'<span class="badge">Em desenv.</span>':''}</button>`).join('')}).join('');
 const mob=ACC[ME.role].filter(v=>SHORT[v]&&!['equipe','financeiro'].includes(v)).slice(0,4);
 $('#app').innerHTML=`<div class="app"><aside class="side" aria-label="Menu do portal"><a class="logo-chip" href="/"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="88" height="36"></a><nav class="side-nav">${groups}</nav>
-<div class="who"><b>${esc(ME.name)}</b><span>${ROLE_LBL[ME.role]}</span><div class="row"><button type="button" id="tsenha">Trocar senha</button><button class="out" id="sair" type="button">Sair</button></div></div></aside>
+<div class="who"><b>${esc(ME.name)}</b><span>${ROLE_LBL[ME.role]}</span><div class="row"><button type="button" id="ttel">Meu telefone</button><button type="button" id="tsenha">Trocar senha</button><button class="out" id="sair" type="button">Sair</button></div></div></aside>
 <button type="button" class="side-tg" id="sidetg" aria-label="Ocultar/mostrar menu">‹</button><div class="scrim" id="scrim"></div><main class="main" id="main"></main>
 <nav class="bnav" aria-label="Navegação rápida">${mob.map(v=>`<button data-view="${v}">${IC[v]}<span>${SHORT[v]}</span></button>`).join('')}<button id="more" aria-label="Abrir menu">${IC.menu}<span>Menu</span></button></nav></div>`;
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
 $('#sair').onclick=()=>encerrar('');
-$('#tsenha').onclick=()=>{fechaMenu();trocarSenha(false).then(ok=>ok&&toast('Senha alterada.'))};
+$('#ttel').onclick=()=>{fechaMenu();meuTelefone()};$('#tsenha').onclick=()=>{fechaMenu();trocarSenha(false).then(ok=>ok&&toast('Senha alterada.'))};
 $('#more').onclick=()=>{$('.side').classList.add('open');$('#scrim').classList.add('on');document.body.classList.add('lock')};
 $('#scrim').onclick=fechaMenu;
 const tg=$('#sidetg'),setHid=h=>{document.body.classList.toggle('side-hid',h);tg.textContent=h?'›':'‹'};
@@ -457,7 +460,7 @@ clearInterval(CLK);const tick=()=>{const c=$('#clk');if(!c)return clearInterval(
 if(!consent){$('#cs').onchange=e=>$('#csb').disabled=!e.target.checked;$('#csb').onclick=()=>{localStorage.setItem(CONS_KEY+'_'+ME.login,new Date().toISOString());pontoTela()}}
 $('#ajb').onclick=solicitarAjuste;minhasSolicitacoes();
 if(next&&consent)$('#mark').onclick=async e=>{if(MARCANDO)return;MARCANDO=true;const b=e.currentTarget,t0=b.innerHTML;b.disabled=true;b.textContent='Abrindo câmera…';let salvo=false;
-try{if(!await conferirAcesso(true))return;const cap=await capturar(next[1]);if(!cap)return;
+try{const acc=conferirAcesso(true);const cap=await capturar(next[1]);if(!cap||!await acc)return;
 if(marcasHoje().has(next[0])){toast('Essa marcação já foi registrada.');return}
 const p={id:u2b(rnd(9)),login:ME.login,name:ME.name,role:ME.role,tipo:next[0],dia:today(),...cap};
 if(!pontoSave([...pontoAll(),p])){toast('Memória do aparelho cheia. Fale com o administrador.');return}salvo=true;
@@ -488,11 +491,11 @@ const fim=v=>{d.remove();done(v)};d.querySelector('.icon-x').onclick=()=>fim(nul
 d.querySelector('#pdf').onsubmit=e=>{e.preventDefault();const v={};for(const el of d.querySelectorAll('input,select,textarea'))if(el.id)v[el.id]=el.value.trim();fim(v)}})}
 const precisaV2=async()=>{if(await v2())return true;toast(PLAN()?'Função disponível depois que o administrador atualizar o script da planilha do ponto.':'A planilha do ponto ainda não está conectada.');return false};
 // Solicitação de ajuste: Solicitação → Pendente → ADM aprova/rejeita. Foto e localização obrigatórias (exceto ADM).
-async function solicitarAjuste(){if(!await precisaV2()||!await conferirAcesso(true))return;const exige=ME.role!=='admin';
+async function solicitarAjuste(){const pode=Promise.all([v2(),conferirAcesso(true)]);const exige=ME.role!=='admin';
 const v=await pedir('Solicitar ajuste de ponto',`<div class="field"><label for="aj-d">Data</label><input id="aj-d" type="date" required max="${today()}" value="${today()}"></div><div class="field"><label for="aj-h">Hora</label><input id="aj-h" type="time" required></div>
 <div class="field"><label for="aj-t">Marcação</label><select id="aj-t">${TIPOS.map(([t,l])=>`<option value="${t}">${l}</option>`).join('')}</select></div>
 <div class="field"><label for="aj-m">Motivo</label><textarea id="aj-m" required maxlength="400" placeholder="Explique o que aconteceu"></textarea></div>${exige?'<p class="hint">Na próxima etapa tire uma foto do rosto e libere a localização.</p>':''}`,exige?'Continuar':'Enviar solicitação');
-if(!v)return;const cap=exige?await capturar('Foto e localização do ajuste'):null;if(exige&&!cap)return;
+if(!v)return;const cap=exige?await capturar('Foto e localização do ajuste'):null;if(exige&&!cap)return;const [ok2,okA]=await pode;if(!okA)return;if(!ok2){await precisaV2();return}
 try{await api('ajuste',{id:u2b(rnd(9)),dia:v['aj-d'],hora:v['aj-h'],tipo:v['aj-t'],motivo:v['aj-m'],name:ME.name,role:ME.role,...(cap||{})});toast('Solicitação enviada para o administrador.');if(CUR==='ponto')minhasSolicitacoes()}
 catch(e){if(!NEGADO[e.code])toast(e.code==='foto'?'Foto e localização são obrigatórias.':'Não foi possível enviar agora. Verifique a internet e tente de novo.')}}
 const SIT_CLS={Pendente:'warn',Aprovado:'ok',Rejeitado:'off'};
@@ -616,13 +619,14 @@ M().innerHTML=top('Usuários e acessos','Cadastre colaboradores, ajudantes, moto
 <label class="drop"><input type="file" id="imp" accept=".xlsx,.xls,.csv"><span>Escolher planilha (.xlsx ou .csv)</span></label><div id="impout"></div></div>
 <div class="box mt"><div class="box-head"><div><h3>Acessos cadastrados</h3><p>${DB.users.length} usuários</p></div><input id="ub" class="sbox" type="search" placeholder="Buscar" aria-label="Buscar usuário"></div>
 <div class="table-wrap"><table id="ut"><thead><tr><th>Nome</th><th>Login</th><th>Tipo</th><th>Veículo ou cliente</th><th>Situação</th><th></th></tr></thead><tbody>
-${DB.users.map(u=>{const p=u._p||{};return `<tr><td>${esc(p.name||'')}</td><td>${esc(LG(u.login))}</td><td>${ROLE_LBL[u.role]}</td><td>${p.placa?esc(p.placa+' · '+p.modelo):p.cliente?esc(p.cliente):'—'}</td><td><span class="st ${u.active===false?'off':'ok'}">${u.active===false?'Desativado':'Ativo'}</span></td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" data-act="ed" data-l="${esc(u.login)}">Editar</button>${u.login===ME.login?'<small>Você</small>':`<button class="btn btn-ghost btn-sm" data-act="pw" data-l="${esc(u.login)}">Resetar senha</button><button class="btn btn-ghost btn-sm" data-act="tg" data-l="${esc(u.login)}">${u.active===false?'Ativar':'Desativar'}</button><button class="btn btn-danger btn-sm" data-act="rm" data-l="${esc(u.login)}">Excluir</button>`}</div></td></tr>`}).join('')}</tbody></table></div></div>
+${DB.users.map(u=>{const p=u._p||{};return `<tr><td>${esc(p.name||'')}<small class="hint" data-tel="${esc(u.login)}" style="display:block">${esc(p.tel||'')}</small></td><td>${esc(LG(u.login))}</td><td>${ROLE_LBL[u.role]}</td><td>${p.placa?esc(p.placa+' · '+p.modelo):p.cliente?esc(p.cliente):'—'}</td><td><span class="st ${u.active===false?'off':'ok'}">${u.active===false?'Desativado':'Ativo'}</span></td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" data-act="ed" data-l="${esc(u.login)}">Editar</button>${u.login===ME.login?'<small>Você</small>':`<button class="btn btn-ghost btn-sm" data-act="pw" data-l="${esc(u.login)}">Resetar senha</button><button class="btn btn-ghost btn-sm" data-act="tg" data-l="${esc(u.login)}">${u.active===false?'Ativar':'Desativar'}</button><button class="btn btn-danger btn-sm" data-act="rm" data-l="${esc(u.login)}">Excluir</button>`}</div></td></tr>`}).join('')}</tbody></table></div></div>
 <div class="box mt"><div class="box-head"><div><h3>Configurações do sistema</h3><p>Conexões técnicas do portal. Só o administrador vê esta área.</p></div></div><details class="gh"${tk?'':' open'}><summary>${tk?'GitHub conectado: alterações são salvas direto no site':'Conectar ao GitHub para salvar alterações no site'}</summary><p class="hint">Cole um token do GitHub com permissão de escrita em Contents no repositório ${REPO}. Ele fica guardado criptografado apenas neste navegador.</p><form class="uform two" id="ghf"><div class="field"><label for="gh-t">Token do GitHub</label><input id="gh-t" type="password" autocomplete="off"></div><button class="btn btn-ghost">${tk?'Trocar token':'Conectar'}</button></form></details><details class="gh"><summary>Chave da automação de Performance</summary><p class="hint">Copie esta chave e cole no GitHub como segredo <b>GETLOG_MASTER_KEY</b> (Settings → Secrets and variables → Actions). Ela tranca os dados de performance antes de irem para o site. Não envie para ninguém.</p><button type="button" class="btn btn-ghost" id="mk-copy">Copiar chave</button></details><details class="gh"${PLAN()?'':' open'}><summary>${PLAN()?'Planilha do ponto conectada':'Conectar a planilha do ponto'}<span id="plv" class="hint"></span></summary><p class="hint">Cole o endereço do App da Web do Apps Script e o mesmo token colocado no código. Fica guardado criptografado no site.</p><form class="uform two" id="plf"><div class="field"><label for="pl-u">Endereço do App da Web</label><input id="pl-u" type="password" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/.../exec" value="${esc(CFG.pontoUrl||'')}"></div><div class="field"><label for="pl-t">Token</label><input id="pl-t" type="password" autocomplete="off" value="${esc(CFG.pontoToken||'')}"></div><button class="btn btn-ghost">Salvar e testar</button></form><p class="msg" id="pl-m"></p></details><details class="gh"${CFG.driveToken?'':' open'}><summary>${CFG.driveToken?'Dados da Performance protegidos por token':'Proteger os dados da Performance (token)'}</summary><p class="hint">Gere um token, salve aqui e cole o MESMO token no script do Drive (instruções em <b>docs/drive-apps-script-token.md</b>). Depois disso o script só entrega os dados para quem entrou no portal.</p><form class="uform two" id="dtf"><div class="field"><label for="dt-t">Token do script do Drive</label><input id="dt-t" type="password" autocomplete="off" value="${esc(CFG.driveToken||'')}"></div><button type="button" class="btn btn-ghost" id="dt-g">Gerar token</button><button class="btn btn-ghost">Salvar</button></form><p class="msg" id="dt-m"></p></details></div>`;
 const role=$('#n-role');const vis=()=>{const r=role.value;$$('[data-for]').forEach(f=>{const t=f.dataset.for;f.hidden=!(t==='p'&&['colaborador','ajudante','motorista'].includes(r)||t==='m'&&r==='motorista'||t==='e'&&['colaborador','ajudante'].includes(r)||t==='f'&&r==='fornecedor')})};role.onchange=vis;vis();
 $('#nu').onsubmit=async e=>{e.preventDefault();const u={name:$('#n-nome').value.trim(),login:norm($('#n-login').value),role:role.value,tel:$('#n-tel').value.trim(),placa:$('#n-placa').value,modelo:$('#n-mod').value,escala:$('#n-esc').value,cliente:$('#n-cli').value};
 const m=$('#u-msg');const er=validate(u);if(er.length){m.className='msg err';m.textContent='Confira: '+er.join(', ')+'.';return}if(DB.users.some(x=>x.login===u.login)){m.className='msg err';m.textContent='Esse login já existe.';return}
 await addUser(u,$('#n-pw').value);await saveFile('data/users.json',DB,'Acesso de '+u.name+' cadastrado.');keepMsg(VIEWS.usuarios)};
 $('#ub').oninput=e=>{const q=norm(e.target.value);$$('#ut tbody tr').forEach(tr=>tr.hidden=q&&!norm(tr.textContent).includes(q))};
+(async()=>{if(!await v3())return;try{const m=(await api('telefones',{})).itens||{};$$('[data-tel]').forEach(el=>{const t=m[el.dataset.tel];if(t)el.textContent=t})}catch(e){}})();
 $$('[data-act]').forEach(b=>b.onclick=async()=>{const u=DB.users.find(x=>x.login===b.dataset.l);if(!u)return;const n=u._p?.name||u.login;
 if(b.dataset.act==='rm'){if(!confirm('Excluir o acesso de '+n+'?'))return;DB.users=DB.users.filter(x=>x!==u);await avisaAcesso(u.login,false);await saveFile('data/users.json',DB,'Acesso de '+n+' excluído.')}
 if(b.dataset.act==='tg'){u.active=u.active===false;await avisaAcesso(u.login,u.active);await saveFile('data/users.json',DB,'Acesso de '+n+(u.active?' ativado.':' desativado.'))}
