@@ -168,10 +168,10 @@
       "login": "d21048208601",
       "role": "ajudante",
       "active": true,
-      "salt": "1FDD4t7j/sXg0c7m431pRg==",
-      "iv": "IUFsaYB/rS4rNHEv",
-      "key": "nqevyeVSJD5jZEYCtGuKbfuzaP0YRPrqr+56Eed0hY/p4SLaDpZ9ZTGap/aSQIgl",
-      "pwEm": "2026-10-19T16:35:41.986Z",
+      "salt": "X4NHBtjGEtWvUBbO0WLHBQ==",
+      "iv": "lERSDO4+ChwZtBwI",
+      "key": "PZSYMsbbUC3MtJZormZnOuA61G6OpTe8w+kV+XTn+IQQzo7+GZ3YsBJ1f2J6444f",
+      "pwEm": "2026-10-19T15:30:17.091Z",
       "ah": "d75bb24be2f74fa03a2d2b7008f07682d275afcad8f146c0601ffa8d04d11bd5",
       "p": {
         "iv": "7Ok4DXZZgM95VWZh",
@@ -313,6 +313,21 @@
         "ct": "aH1b2MltQ4BteSacFkNG6GoCCuBePyeZXvHBTh1brkjmaVXPdUfZF9P3cMAnZ+K3mQIu1uThgd5sI8Ps7u5HvgcrrE8e3TacGtJMjkZT9PX0HOWFOReyE8dAF4vS+f1Qbs74oMEL4tWBo4lVUZg3ykg55oFW25Q8ezCQML6PuDaeWa5ArF3qUoxSQ0jW1wsrx5cZ3rhcMqt1C764oWa7oxk7aq7xPCryW5wGhTHgluE="
       },
       "created": "2026-10-19T15:30:18.136Z"
+    },
+    {
+      "login": "d2109242901",
+      "role": "motorista",
+      "active": true,
+      "salt": "gDJFVXMbu52M9jPQOhSA9w==",
+      "iv": "hoXZ+Q8JPoUmOCEG",
+      "key": "GZNh+8Nw5+bLcRqIcb5hhFCE52C/zLSHGjCUMGy27bHcQKcDPU0alZKncxFIlzl4",
+      "pwEm": "2026-10-19T16:37:41.173Z",
+      "ah": "67b33f0fce3a24e0be5cc6b8c7599b6d9a1f4a1138f9ed333673fd2ac00496f6",
+      "p": {
+        "iv": "tMdxq03rY+xTqT/n",
+        "ct": "g2/+J/t5HLGjUPQ9nAlU2MkrXPEgO6QvqgSeMys5ybr8q4MygoGF8KSKyIHb5knzpaae7I1+cIzdQwbXTxe6XWOv4G3jFTnZHhLtKdd48yhLSL3I90O51v57FUYd8ZwMxzp/MscFU/WQXvJnqDG4rpbCFt5W6iDoRIUR0qPooYi4uT6nkAJfULHpYIMts1ztvIHjUITBBudmQdymeq/VNPKeDlw35ypqjlezpw=="
+      },
+      "created": "2026-10-19T16:37:41.202Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbwZzOY8Qo1q3uE_W6XEn8wwpDwZDv3wOSwbHOTBjT1MAW4FFhF70jGz7HVgXAJxvpasIg/exec"
