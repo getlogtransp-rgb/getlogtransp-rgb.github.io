@@ -420,3 +420,4 @@ body.side-hid .side-tg{left:16px;top:18px}
 @media (min-width:1600px){.main{padding:32px 48px 56px}}
 @media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
 @media (max-width:860px){.side-tg{display:none}}
+#u{text-transform:uppercase}
