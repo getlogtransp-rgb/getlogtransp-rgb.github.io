@@ -20,6 +20,8 @@ async function open_(o){return JSON.parse(dec.decode(await crypto.subtle.decrypt
 async function wrapFor(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,MASTER_RAW))}}
 const getJSON=async p=>{const r=await fetch(p+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('db');return r.json()};
 async function loadDB(){DB=await getJSON('/data/users.json')}
+// Cadastro/reset recém-salvo: o site (GitHub Pages) leva minutos para publicar; o GitHub já tem a versão nova.
+async function loadDBFresco(){try{const r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data/users.json?ref=main',{headers:{Accept:'application/vnd.github.raw'},cache:'no-store'});if(r.ok){DB=await r.json();return true}}catch(e){}return false}
 async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=await open_(u.p)}catch(e){u._p={}}}}
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
 async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),ld('/data/config.json',{}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
@@ -43,13 +45,13 @@ let SESS=null,BLOQ=false;
 // Credencial do servidor do ponto: derivada da senha, separada da chave dos dados. O servidor guarda só o hash dela.
 async function credencial(login,pw){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);return u2b(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode('getlog-auth|'+login),iterations:100000,hash:'SHA-256'},b,256))}
 const hashHex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
-async function login(u,pw){await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr)throw new Error('cred');let raw;
+async function login(u,pw,fresco){if(fresco){if(!await loadDBFresco())throw new Error('cred')}else await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr){if(!fresco)return login(u,pw,true);throw new Error('cred')}let raw;
 const abre=async w=>{try{const k=await kek(pw,b2u(w.salt),DB.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
 const novoDe=sp=>sp&&!sp.erro&&(!usr.pwEm||sp.em>usr.pwEm);
 const pu=abre(usr);let sp=await senhaPlan(usr.login);raw=novoDe(sp)?await abre(sp):await pu;
 // Servidor do ponto não respondeu e a senha não abriu a do site: espera mais pelo servidor antes de dizer "senha errada".
 if(!raw&&sp&&sp.erro){aviso('Conferindo a senha no servidor…');sp=await senhaPlan(usr.login,30000,true);if(novoDe(sp))raw=await abre(sp);else if(sp&&sp.erro)throw new Error('rede')}
-if(!raw)throw new Error('cred');if(usr.active===false)throw new Error('off');
+if(!raw){if(!fresco)return login(u,pw,true);throw new Error('cred')}if(usr.active===false)throw new Error('off');
 return {usr,raw,x:{troca:pw===PW_PADRAO,av:await credencial(usr.login,pw)}}}
 async function start(usr,raw,x){
 MASTER_RAW=raw;MASTER=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']);IDB.chave=MASTER;IDB.dono=usr.login;
@@ -76,8 +78,8 @@ try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console
 (async()=>{let m='';try{m=sessionStorage.getItem('getlog_msg')||'';sessionStorage.removeItem('getlog_msg')}catch(e){}if(m){msg.className='msg err';msg.textContent=m}
 const fim=()=>{document.documentElement.classList.remove('sess');$('#boot')?.remove();sessDel();$('#u').focus()};
 const x=sessGet();if(!x){fim();return}
-try{await loadDB();const usr=DB.users.find(u=>u.login===x.login);
-if(!usr||usr.active===false||usr.role!==x.role||(usr.pwEm||'')!==(x.pwEm||''))throw new Error('revogado');
+try{await loadDB();const ok=u=>u&&u.active!==false&&u.role===x.role&&(u.pwEm||'')===(x.pwEm||'');let usr=DB.users.find(u=>u.login===x.login);
+if(!ok(usr)&&await loadDBFresco())usr=DB.users.find(u=>u.login===x.login);if(!ok(usr))throw new Error('revogado');
 await start(usr,typeof x.k==='string'?b2u(x.k):await unwrapSess(x.k),x)}catch(e){console.warn('sessão',e);fim()}})();
 // ---- Autorização no servidor do ponto (Apps Script) ----
 const PLAN=()=>CFG.pontoUrl&&CFG.pontoToken;
@@ -92,7 +94,8 @@ const j=await r.json();if(!j.ok){if(NEGADO[j.erro])encerrar(NEGADO[j.erro]);cons
 let VIG=0,VIGT=0,VIGP=null;
 const conferirAcesso=forcar=>{if(!ME)return Promise.resolve(false);if(VIGP)return VIGP;if(Date.now()-VIG<(forcar?15000:60000))return Promise.resolve(true);VIG=Date.now();return VIGP=conferir_().finally(()=>VIGP=null)};
 async function conferir_(){let motivo='';
-try{const db=await getJSON('/data/users.json');const u=db.users.find(x=>x.login===ME.login);
+try{const db=await getJSON('/data/users.json');let u=db.users.find(x=>x.login===ME.login);const bate=u=>u&&u.active!==false&&u.role===ME.role&&(u.pwEm||'')===(SESS.pwEm||'');
+if(!bate(u)){try{const r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data/users.json?ref=main',{headers:{Accept:'application/vnd.github.raw'},cache:'no-store'});if(r.ok)u=(await r.json()).users.find(x=>x.login===ME.login)}catch(e){}}
 if(!u||u.active===false)motivo=NEGADO.acesso;else if(u.role!==ME.role)motivo='Seu tipo de acesso foi alterado. Entre novamente.';else if((u.pwEm||'')!==(SESS.pwEm||''))motivo='Sua senha foi redefinida pelo administrador. Entre novamente.'}catch(e){}
 if(motivo){encerrar(motivo);return false}
 if(await v2())try{await api('eu')}catch(e){if(NEGADO[e.code])return false}

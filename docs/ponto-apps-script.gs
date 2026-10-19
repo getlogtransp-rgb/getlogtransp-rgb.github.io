@@ -14,6 +14,7 @@ var TOKEN = 'TROQUE-ESTE-TOKEN';
 // Se o projeto não foi aberto pela planilha (Extensões → Apps Script), coloque aqui o ID da planilha (parte do endereço entre /d/ e /edit).
 var PLANILHA_ID = '';
 var SITE = 'https://getlogbr.com.br';
+var REPO = 'getlogtransp-rgb/getlogtransp-rgb.github.io';
 var VERSAO = 3; // 3: telefone pelo próprio usuário + leituras sem trava
 var PASTA_FOTOS = 'GETLOG - Fotos do ponto';
 var FUSO = 'America/Sao_Paulo';
@@ -62,11 +63,14 @@ function salvaFoto_(dataUrl, nome) {
 }
 // ---------- Identidade ----------
 // Cadastro publicado no site (login, tipo, ativo, data da senha definida pelo admin e hash da credencial dessa senha).
-function usuarios_() {
-    var c = CacheService.getScriptCache(), k = c.get('usuarios');
+// fresco=true: lê direto do GitHub (cadastro/reset que o site ainda não publicou — o site leva alguns minutos).
+function usuarios_(fresco) {
+    var c = CacheService.getScriptCache(), k = !fresco && c.get('usuarios');
     if (k)
         return JSON.parse(k);
-    var r = UrlFetchApp.fetch(SITE + '/data/users.json?t=' + Date.now(), { muteHttpExceptions: true });
+    var r = fresco
+        ? UrlFetchApp.fetch('https://api.github.com/repos/' + REPO + '/contents/data/users.json?ref=main', { muteHttpExceptions: true, headers: { Accept: 'application/vnd.github.raw' } })
+        : UrlFetchApp.fetch(SITE + '/data/users.json?t=' + Date.now(), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200)
         throw falha_('site');
     var m = {};
@@ -86,7 +90,20 @@ function linhaSenha_(login) {
 }
 // Confere quem está pedindo. A senha vigente é a mais recente entre a definida pelo admin (site) e a trocada pela pessoa (aba Senhas).
 function quem_(d) {
-    var u = usuarios_()[d.login];
+    try {
+        return quem1_(d, usuarios_());
+    }
+    catch (x) {
+        // Cadastro novo ou senha resetada agora: o site ainda não publicou; confere direto no GitHub antes de negar.
+        if (x.codigo !== 'acesso' && x.codigo !== 'credencial')
+            throw x;
+        var m = usuarios_(true);
+        CacheService.getScriptCache().put('usuarios', JSON.stringify(m), 60);
+        return quem1_(d, m);
+    }
+}
+function quem1_(d, us) {
+    var u = us[d.login];
     if (!u || !u.active || bloqueado_(d.login))
         throw falha_('acesso');
     var s = linhaSenha_(d.login);
