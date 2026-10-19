@@ -602,7 +602,7 @@ async function addUser(u,pw){const prof=mkProf(u);
 const rec={login:u.login,role:u.role,active:true,...await credAdmin(u.login,pw),p:await seal(prof),created:new Date().toISOString()};rec._p=prof;DB.users.push(rec)}
 // Avisa o servidor do ponto na hora (sem esperar o site publicar) que um acesso foi bloqueado ou liberado.
 const avisaAcesso=async(alvo,ativo)=>{if(await v2())try{await api('acesso',{alvo,ativo})}catch(e){console.warn('acesso',e)}};
-VIEWS.usuarios=async()=>{const g=GEN;await profiles();const tk=await ghToken();if(!vivo(g))return;
+VIEWS.usuarios=async()=>{const g=GEN;try{await loadDB()}catch(e){}await profiles();const tk=await ghToken();if(!vivo(g))return;
 M().innerHTML=top('Usuários e acessos','Cadastre colaboradores, ajudantes, motoristas e fornecedores')+`
 <div class="box"><div class="box-head"><div><h3>Cadastrar acesso</h3><p>Motorista exige placa e modelo do veículo. Fornecedor acessa o site separado do cliente.</p></div></div>
 <form class="uform four" id="nu"><div class="field"><label for="n-nome">Nome completo</label><input id="n-nome" required></div><div class="field"><label for="n-login">Login (ID)</label><input id="n-login" required autocapitalize="none" spellcheck="false"></div>
