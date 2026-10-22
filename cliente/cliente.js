@@ -38,7 +38,7 @@ $('#eye').onclick=()=>{const i=$('#p'),v=i.type==='password';i.type=v?'text':'pa
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')ativo(s).then(v=>v?app():sai());else $('#u').focus();
 // Confere a cada abertura se o acesso continua ativo.
 async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false}catch(e){return true}}
-function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli4');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
+function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli5');indexedDB.deleteDatabase('getlog_cli4');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
 const get=async(q,t)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),60000);try{const r=await fetch(API+'?'+q+(t?'&t='+encodeURIComponent(t):''),{credentials:'omit',cache:'no-store',signal:c.signal});if(!r.ok)throw new Error('http '+r.status);const j=await r.json();if(!j.ok)throw new Error(j.erro||'erro');return j.dados}finally{clearTimeout(tm)}};
 const dk=d=>d.split('.').reverse().join('-');
 const WA='https://wa.me/5511989141009?text='+encodeURIComponent('Olá, GETLOG! Sou cliente e preciso de ajuda com as coletas.');
@@ -49,7 +49,7 @@ const fmtD=k=>k.split('-').reverse().join('/');
 const hr=h=>{if(h==null||h==='')return -1;if(typeof h==='number'||/^\d*\.\d+$/.test(h)){const f=+h%1;return f?Math.floor(f*24):-1}const m=String(h).match(/(\d{1,2}):\d{2}/);return m&&+m[1]<24?+m[1]:-1};
 // Cache do dia no aparelho (versão = modificadoEm do Drive): reabrir é instantâneo e só baixa o que mudou.
 // Cache dos dias no aparelho (IndexedDB, cabe muito mais que o localStorage). Sair apaga.
-const IDB=new Promise(ok=>{try{const q=indexedDB.open('getlog_cli4',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)}catch(e){ok(null)}});
+const IDB=new Promise(ok=>{try{const q=indexedDB.open('getlog_cli5',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)}catch(e){ok(null)}});
 const lerC=async(d,v)=>{const db=await IDB;if(!db)return null;return new Promise(ok=>{try{const q=db.transaction('d').objectStore('d').get(d);q.onsuccess=()=>{const o=q.result;ok(o&&o.v===v?o.r:null)};q.onerror=()=>ok(null)}catch(e){ok(null)}})};
 const gravaC=async(d,v,r)=>{const db=await IDB;if(!db)return;try{db.transaction('d','readwrite').objectStore('d').put({v,r},d)}catch(e){}};
 async function app(){const S=JSON.parse(sessionStorage.getItem(S_KEY));const C=window.GL_CORE;
@@ -70,7 +70,7 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <p class="ft">GETLOG Transportes · <a href="${WA}" target="_blank" rel="noopener">WhatsApp +55 11 98914-1009</a></p></main>
 <a class="wa" href="${WA}" target="_blank" rel="noopener" aria-label="Fale conosco no WhatsApp"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6c-2 0-4-.5-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.2 1.1-1.2 2.8 1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5.1 2.2.9 3 1 4.1.8.7-.1 1.9-.8 2.2-1.5s.3-1.4.2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg><span>Fale conosco</span></a>`;
 $('#sair').onclick=sai;
-const kp=$('#kp');kp.innerHTML='<div class="k sk"></div>'.repeat(4);$('#fms').innerHTML=['Região','Motorista','Prioridade','Status do seller','Visita'].map(l=>`<div class="ms"><button type="button" class="msb" disabled><span>${l}</span><em>Carregando…</em><i>▾</i></button></div>`).join('');
+const kp=$('#kp');kp.innerHTML='<div class="k sk"></div>'.repeat(4);$('#fms').innerHTML=['Cliente','Região','Motorista','Prioridade','Status do seller','Visita'].map(l=>`<div class="ms"><button type="button" class="msb" disabled><span>${l}</span><em>Carregando…</em><i>▾</i></button></div>`).join('');
 const prepL=d=>d.filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).map(x=>({...x,k:dk(x.dia)})).sort((a,b)=>a.k<b.k?1:-1).slice(0,70);
 const novaL=get('fonte=lista',S.t).then(d=>{try{localStorage.setItem('getlog_cli_lista',JSON.stringify(d))}catch(e){}return prepL(d)});
 // Abre na hora com a última lista guardada; a nova chega em segundo plano e só recarrega o que mudou.
@@ -100,13 +100,13 @@ const j=await get('fonte=performance&dia='+encodeURIComponent(it.dia),S.t);const
 const TIER=new Map();for(const o of RC){let t='';for(const [k,v] of Object.entries(o)){const m=String(v??'').match(/^\s*T\s?-?([1-9])\s*$/i)||(/prior|tier|classe|categ|curva|tipo/i.test(k)?String(v??'').match(/\bT\s?-?([1-9])\b/i):null);if(m){t='T'+m[1];break}}if(t){const sid=String(o['SELLER ID']??'').trim(),sn=String(o['SELLER']??'').trim();if(sid)TIER.set('i'+sid,t);if(sn)TIER.set('n'+sn,t)}}
 const tierOf=r=>{const m=String(r.pri).match(/T\s?-?([1-9])/i);return TIER.get('i'+r.sid)||TIER.get('n'+r.seller)||(m?'T'+m[1]:r.pri)};const eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
 // Linha compacta: data, seller, motorista, região, bairro, cidade, status, hora, previsto, coletado do previsto, total, justificado
-const RR=R.filter(r=>tudo||eu.has(r.cli)),VZ=visitados(RR);const out=RR.map(r=>{const g=nS(r.seller)+'|'+r.cli;return [it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep,g,VZ.get(g)?1:0]});gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
+const RR=R.filter(r=>tudo||eu.has(r.cli)),VZ=visitados(RR);const out=RR.map(r=>{const g=nS(r.seller)+'|'+r.cli;return [it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep,g,VZ.get(g)?1:0,r.cli]});gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
 const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1').max=$('#d2').max=kmax;$('#d1').value=$('#d2').value=kmax;
 let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
 const mesK=(o)=>{const d=new Date(LS[0].k+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()+o);return d.toISOString().slice(0,7)};
 const dias=()=>per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
-const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15]});
+const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente'});
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;carregando(true);prog.firstChild.style.width='4%';
 const res=new Array(D.length);let i=0,falhas=0;
@@ -119,15 +119,15 @@ if(!parc)mostraUlt();if(falhas)$('#upd').textContent='Alguns dias não carregara
 montaFiltros();if(!parc)LIM=50;run();if(!parc)setTimeout(adiantar,300)}
 // Depois de abrir, deixa os últimos 7 dias prontos em segundo plano (trocar de período fica instantâneo).
 function adiantar(){const F7=LS.slice(0,7);let i=0;for(let n=0;n<3;n++)(async()=>{while(i<F7.length)await carrega(F7[i++]).catch(()=>{})})()}
-const cls=r=>r.p>0&&r.c>=r.p?['ok','Coletado']:r.c>0||r.t>0?['warn','Parcial']:r.vz?['jus','Justificado']:r.st==='Em rota'?['warn','Em rota']:['bad','Não visitado'];
+const cls=r=>r.p>0&&r.c>=r.p?['ok','Coletado']:r.p<=0&&r.t>0?['ok','Coleta extra']:r.c>0||r.t>0?['warn','Parcial']:r.vz?['jus','Justificado']:r.st==='Em rota'?['warn','Em rota']:['bad','Não visitado'];
 const vis=r=>r.vz;
 // Sellers contados uma vez por dia (seller + cliente), só os com previsto.
 const sel=R=>{const a=new Set,v=new Set;for(const r of R)if(r.p>0){a.add(r.g);if(r.vz)v.add(r.g)}return [a.size,v.size]};const semCol=r=>r.p>0&&r.c<=0&&r.t<=0;
 // ---- Filtros: menus com pesquisa e seleção múltipla ----
-const FD=[['fr','Região',r=>r.r||'Sem região'],['fm','Motorista',r=>r.m||'Sem motorista'],['fp','Prioridade',r=>r.pr&&r.pr!=='—'?r.pr:'Sem prioridade'],['fst','Status do seller',r=>r.st&&r.st!=='—'?r.st:'Sem status'],['fs','Situação da coleta',r=>cls(r)[1]],['fv','Visita',r=>vis(r)?'Visitado':'Não visitado']];
+const FD=[['fc','Cliente',r=>r.cl],['fr','Região',r=>r.r||'Sem região'],['fm','Motorista',r=>r.m||'Sem motorista'],['fp','Prioridade',r=>r.pr&&r.pr!=='—'?r.pr:'Sem prioridade'],['fst','Status do seller',r=>r.st&&r.st!=='—'?r.st:'Sem status'],['fs','Situação da coleta',r=>cls(r)[1]],['fv','Visita',r=>vis(r)?'Visitado':'Não visitado']];
 const SEL={};FD.forEach(([i])=>SEL[i]=new Set());let ABERTO=null;
 const passa=(r,exc)=>FD.every(([i,,f])=>i===exc||!SEL[i].size||SEL[i].has(f(r)));
-const filtra=()=>{const q=norm($('#q').value);return ROWS.filter(r=>passa(r)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci+' '+r.r).includes(q)))};
+const filtra=()=>{const q=norm($('#q').value);return ROWS.filter(r=>passa(r)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci+' '+r.r+' '+r.cl).includes(q)))};
 function montaFiltros(){if($('#fr'))return rotulos();const box=$('#fms');box.innerHTML=FD.filter(([i])=>i!=='fs').map(([i,l])=>`<div class="ms" id="${i}"><button type="button" class="msb" aria-haspopup="listbox"><span>${l}</span><em></em><i>▾</i></button></div>`).join('');
 FD.forEach(([i])=>{const w=$('#'+i);if(!w)return;w.querySelector('.msb').onclick=e=>{e.stopPropagation();ABERTO===i?fecha():abre(i)}});rotulos()}
 function rotulos(){FD.forEach(([i])=>{const n=SEL[i].size,em=$('#'+i+' em');if(!em)return;em.textContent=n?(n===1?[...SEL[i]][0]:n+' selecionados'):'Todos';$('#'+i).classList.toggle('on',!!n)})}
@@ -193,7 +193,7 @@ let SEMR=null,SEMC=false;
 async function carregaSem(){if(SEMC)return;SEMC=true;const lim=new Date(LS[0].k+'T12:00:00');lim.setDate(lim.getDate()-55);const lk=lim.toISOString().slice(0,10);const D=LS.filter(x=>x.k>=semIni(lk));
 const out=new Array(D.length);let i=0;await Promise.all([0,1,2].map(async()=>{while(i<D.length){const k=i++;try{out[k]=await carrega(D[k])}catch(e){out[k]=[]}}}));SEMR=out.flat().map(lin);chW()}
 function chW(){const el=$('#chW');if(!SEMR){el.innerHTML='<p class="emp"><span class="sp"></span> Carregando as últimas semanas…</p>';carregaSem();return}
-const q=norm($('#q').value),R=SEMR.filter(r=>passa(r)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci+' '+r.r).includes(q)));const A=agr(R,r=>semIni(r.dk)).sort((a,b)=>a.k<b.k?-1:1);
+const q=norm($('#q').value),R=SEMR.filter(r=>passa(r)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci+' '+r.r+' '+r.cl).includes(q)));const A=agr(R,r=>semIni(r.dk)).sort((a,b)=>a.k<b.k?-1:1);
 const fim=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()+6);return d.toISOString().slice(0,10)};
 combo(el,{id:'w',titulo:'Performance por semana',minLbl:70,cats:A.map(a=>fmtD(a.k).slice(0,5)+'–'+fmtD(fim(a.k)).slice(0,5)),tip:i=>{const a=A[i],b=A[i-1],p=a.p?a.c/a.p*100:0,pb=b&&b.p?b.c/b.p*100:null;return tipo('Semana '+fmtD(a.k)+' a '+fmtD(fim(a.k)),a)+(pb==null?'':`\nvs. semana anterior: ${p>=pb?'▲':'▼'} ${P1(Math.abs(p-pb)).replace('%',' p.p.')}`)},
 bars:[{n:'Previsto',c:CP,v:A.map(a=>a.p)},{n:'Coletado',c:CC,v:A.map(a=>a.c),lbl:1}],lines:[{n:'% coleta',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1},{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n))}]})}
@@ -222,14 +222,14 @@ $('#t45f').onclick=()=>{const so=SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.tes
 function tabela(){const o=ORD.o,d=ORD.d;const R=[...F].sort((a,b)=>{const x=a[o],y=b[o];return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR'))*d});
 $('#sub').textContent=N(F.length)+' registros';
 document.querySelectorAll('th[data-o]').forEach(th=>{th.classList.toggle('so',th.dataset.o===o);th.dataset.d=d>0?'▲':'▼'});
-$('#tb').innerHTML=R.length?R.slice(0,LIM).map(r=>{const [c,l]=cls(r);return `<tr><td>${fmtD(r.dk).slice(0,5)}</td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="hide-m">${esc(r.r)}</td><td class="hide-m">${esc(r.b)}</td><td class="hide-m">${/T[45]/.test(r.pr)?`<span class="tg">${esc(r.pr)}</span>`:esc(r.pr)}</td><td class="n">${N(r.p)}</td><td class="n">${N(r.c)}</td><td class="n hide-m">${r.h>=0?esc(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):''}</td><td><span class="s ${c}">${esc(l)}</span></td></tr>`}).join(''):'<tr><td colspan="10" class="emp">Nenhuma coleta encontrada.</td></tr>';
+$('#tb').innerHTML=R.length?R.slice(0,LIM).map(r=>{const [c,l]=cls(r);return `<tr><td>${fmtD(r.dk).slice(0,5)}</td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="hide-m">${esc(r.r)}</td><td class="hide-m">${esc(r.b)}</td><td class="hide-m">${/^T[45]$/.test(r.pr)?`<span class="tg">${esc(r.pr)}</span>`:r.pr&&r.pr!=='—'?`<span class="pz" title="${esc(r.pr)}">${esc(r.pr.charAt(0)+r.pr.slice(1).toLowerCase())}</span>`:''}</td><td class="n">${N(r.p)}</td><td class="n">${N(r.c)}</td><td class="n hide-m">${r.h>=0?esc(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):''}</td><td><span class="s ${c}">${esc(l)}</span></td></tr>`}).join(''):'<tr><td colspan="10" class="emp">Nenhuma coleta encontrada.</td></tr>';
 $('#more').innerHTML=R.length>LIM?`<button class="btn2" type="button" id="mais">Mostrar mais (${N(R.length-LIM)} restantes)</button>`:'';if($('#mais'))$('#mais').onclick=()=>{LIM+=300;tabela()}}
 document.querySelectorAll('th[data-o]').forEach(th=>th.onclick=()=>{ORD=ORD.o===th.dataset.o?{o:ORD.o,d:-ORD.d}:{o:th.dataset.o,d:['p','c','h','dk'].includes(th.dataset.o)?-1:1};tabela()});
 // Excel: a biblioteca só é baixada na hora do clique (não pesa na abertura do site).
 let XL=null;const xlsx=()=>XL||(XL=new Promise((ok,err)=>{if(window.XLSX)return ok(window.XLSX);const sc=document.createElement('script');sc.src='/assets/vendor/xlsx/xlsx.full.min.js';sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{XL=null;err()};document.head.appendChild(sc)}));
 $('#csv').onclick=async()=>{const b=$('#csv');b.disabled=true;b.textContent='Gerando…';try{const X=await xlsx();
-const lin=F.map(r=>({'Data':fmtD(r.dk),'Seller':r.s,'Prioridade':r.pr,'Motorista':r.m,'Região':r.r,'Bairro':r.b,'Cidade':r.ci,'Previsto':r.p,'Coletado do previsto':r.c,'Coletado total':r.t,'Hora':r.hs,'Visitado':vis(r)?'Sim':'Não','Situação':cls(r)[1],'Status do seller':r.st}));
-const ws=X.utils.json_to_sheet(lin);ws['!cols']=[10,30,10,24,18,18,14,10,12,12,10,9,14,18].map(w=>({wch:w}));ws['!autofilter']={ref:ws['!ref']};
+const lin=F.map(r=>({'Data':fmtD(r.dk),'Seller':r.s,'Cliente':r.cl,'Prioridade':r.pr,'Motorista':r.m,'Região':r.r,'Bairro':r.b,'Cidade':r.ci,'Previsto':r.p,'Coletado do previsto':r.c,'Coletado total':r.t,'Hora':r.hs,'Visitado':vis(r)?'Sim':'Não','Situação':cls(r)[1],'Status do seller':r.st}));
+const ws=X.utils.json_to_sheet(lin);ws['!cols']=[10,30,14,10,24,18,18,14,10,12,12,10,9,14,18].map(w=>({wch:w}));ws['!autofilter']={ref:ws['!ref']};
 const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,'Coletas');
 const rs=agr(F,r=>r.r||'Sem região').map(a=>({'Região':a.k,'Previsto':a.p,'Coletado':a.c,'% coleta':a.p?+(a.c/a.p*100).toFixed(1):0,'Sellers':a.n,'Visitados':a.v,'% visita':a.n?+(a.v/a.n*100).toFixed(1):0}));X.utils.book_append_sheet(wb,X.utils.json_to_sheet(rs),'Por região');
 const ds=agr(F,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1).map(a=>({'Data':fmtD(a.k),'Previsto':a.p,'Coletado':a.c,'% coleta':a.p?+(a.c/a.p*100).toFixed(1):0,'Sellers':a.n,'Visitados':a.v,'% visita':a.n?+(a.v/a.n*100).toFixed(1):0}));X.utils.book_append_sheet(wb,X.utils.json_to_sheet(ds),'Por dia');
