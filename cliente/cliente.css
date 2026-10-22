@@ -242,3 +242,4 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #app button,#app .k,#app .card,#app .msb,#app .tk,#app .rs,#app .dpb,#app .hd{caret-color:transparent;-webkit-user-select:none;user-select:none}
 #app td,#app .sub{-webkit-user-select:text;user-select:text}
 #app input{caret-color:auto;-webkit-user-select:text;user-select:text}
+#map{height:400px}@media (max-width:600px){#map{height:320px}}

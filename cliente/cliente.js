@@ -258,8 +258,10 @@ LAY.clearLayers();const lugar=r=>r.b?r.b+', '+(r.ci||'São Paulo'):r.cep.length>
 $('#mapS').textContent=A.length?'Bairros atendidos ('+A.length+'); tamanho = volume, cor = performance de coleta':'Sem endereço nos dados do período.';
 for(const a of A){const c=await geo(a.k.startsWith('CEP ')?a.k.slice(4)+', Brasil':a.k+', SP');if(g!==MG)return;if(!c)continue;const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(c);
 L.circleMarker(c,{radius:6+Math.sqrt(a.p/mx)*16,color:cor,weight:2,fillColor:cor,fillOpacity:.35}).bindPopup(`<b>${esc(a.k)}</b><br>Previsto: ${N(a.p)}<br>Coletado: ${N(a.c)}<br>Coleta: <b>${P1(p)}</b> · Visita: ${P1(a.n?a.v/a.n*100:0)}`).addTo(LAY);
-if(pts.length===1||pts.length===8)MAP.fitBounds(pts.length===1?L.latLng(c).toBounds(8000):pts,{padding:[24,24],maxZoom:13})}
-if(pts.length>1)MAP.fitBounds(pts,{padding:[24,24],maxZoom:13})}
+if(pts.length===1)MAP.fitBounds(L.latLng(c).toBounds(6000))}
+// Enquadra onde estão os sellers: ignora pontos isolados (fora de 10%–90%) para o mapa abrir já aproximado.
+if(pts.length>1){const q=(arr,f)=>{const v=[...arr].sort((a,b)=>a-b);return v[Math.min(v.length-1,Math.max(0,Math.round(f*(v.length-1))))]};const la=pts.map(p=>p[0]),lo=pts.map(p=>p[1]),c=pts.length>=10?[.1,.9]:[0,1];
+MAP.fitBounds([[q(la,c[0]),q(lo,c[0])],[q(la,c[1]),q(lo,c[1])]],{padding:[18,18],maxZoom:14})}}
 // ---- Filtros ----
 const PRE=[['1','Hoje'],['2','Hoje e ontem'],['sem','Esta semana'],['sp','Semana passada'],['7','Últimos 7 dias'],['15','Últimos 15 dias'],['30','Últimos 30 dias'],['mes','Este mês'],['mp','Mês passado'],['56','Últimas 8 semanas']];
 const rotPer=()=>{const D=dias();const nome=per==='c'?'Personalizado':(PRE.find(x=>x[0]===per)||[,''])[1];$('#dpn').textContent=nome;$('#dpl').textContent=D.length?(D.length===1?fmtD(D[0].k):fmtD(D[D.length-1].k)+' – '+fmtD(D[0].k))+' · '+D.length+(D.length>1?' dias':' dia'):'Sem dias com dados'};
