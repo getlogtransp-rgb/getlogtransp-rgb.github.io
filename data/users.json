@@ -333,11 +333,11 @@
       "login": "imile",
       "role": "fornecedor",
       "active": true,
-      "salt": "3uDwoUe8wPuuQC+h+IKqqg==",
-      "iv": "NueCsiOLoO4EyaKV",
-      "key": "NTBe7VuuVlFMnRKcxmNr3cBKGclOBmFayMz3JwisENkh8kf4LpUCRhavvMwF258j",
-      "pwEm": "2026-10-22T15:39:48.257Z",
-      "ah": "a9caa87e001565017022984d81d6bc253bbb4d1d6913a0208be026e128088a67",
+      "salt": "QouP9S4+T4nqLKOMp6elHQ==",
+      "iv": "roFj7/OA3FWvZAxL",
+      "key": "Cxj2ok0SzLWS248JqNDOO8w74koDWIE5BIH3Kj4hGa72vusqQxSIw4bpKFvtjAxV",
+      "pwEm": "2026-10-22T15:43:55.237Z",
+      "ah": "4085a305fe1d156d65394c226631993a8a977b744c629a2120ab9618e03722a3",
       "p": {
         "iv": "NRlhzcS6Bwn56h26",
         "ct": "1z4jLNCiUv4at2PkdMOASU/AtYL/tLRR8Nc3B+jKXLvgjfb5IKmseTWEfKdECRKeVB8ss+Jv/oPwcD+KzvJLLxnYT/rYi2fmDAYgA0K3KA42aWHa0fNPHypImCY+I6NX1z0X0u+L6lxctmOsF3+hCg=="
