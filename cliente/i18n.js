@@ -40,7 +40,7 @@ const D={
 'Buscar os dados mais recentes do Drive':'获取最新数据','Clique para ver só T4 e T5':'点击只看 T4 和 T5','Alternar tema claro ou escuro':'切换浅色/深色模式','Tema claro / escuro':'浅色/深色模式'};
 const MES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const R=[
-[/^Última atualização: (.+) às (.+)$/,'最后更新：$1 $2'],[/^(.+) · (\d+) dias$/,'$1 · $2 天'],[/^(.+) · 1 dia$/,'$1 · 1 天'],
+[/^Última atualização: (.+) às (.+)$/,'最后更新：$1 $2'],[/^Atualizado (.+)$/,'更新于 $1'],[/^(.+) · (\d+) dias$/,'$1 · $2 天'],[/^(.+) · 1 dia$/,'$1 · 1 天'],
 [/^(.+) de (.+) pac\.$/,'$1 / $2 件'],[/^(.+) de (.+) pacotes$/,'$1 / $2 件'],[/^(.+) de (.+) sellers$/,'$1 / $2 商家'],[/^de (.+)$/,'共 $1'],
 [/^([\d.]+) registros$/,'共 $1 条记录'],[/^(\d+) selecionados$/,'已选 $1 项'],[/^Mostrar mais \((.+) restantes\)$/,'显示更多（剩余 $1）'],
 [/^Pico (\d+)h · (.+) pac\.$/,'峰值 $1 时 · $2 件'],[/^(\d{1,2})h$/,'$1时'],[/^sellers coletados · total (.+) pac\.$/,'个商家已揽收 · 共揽收 $1 件'],[/^ sellers$/,' 商家'],
