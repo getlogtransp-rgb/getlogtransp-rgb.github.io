@@ -36,3 +36,4 @@ Publicar = commit e push direto no `main` (o dono pediu). Responder em portuguê
 - Dados da Performance via Apps Script do Drive: abertos até o dono colar o token no script (docs/drive-apps-script-token.md). O recorte por motorista continua no navegador.
 - Todos os usuários destrancam a mesma chave mestra: quem já teve acesso pode ter guardado a chave. Revogação real dos arquivos criptografados exigiria trocar a chave e recadastrar senhas.
 - Depois de publicar o portal, colar a versão 2 de `docs/ponto-apps-script.gs` no Apps Script do ponto (mesmo TOKEN) e publicar nova versão.
+- Portal do cliente: `cliente/` (cliente.js, cliente.css, i18n.js PT/中文). `cliente/imiledelivery/index.html` é CÓPIA de `cliente/index.html` (endereço da iMile): ao mudar o HTML ou o `?v=`, copiar de novo (`cp cliente/index.html cliente/imiledelivery/index.html`).

@@ -55,7 +55,7 @@ const R=[
 [/^(.+) pac\.$/,'$1 件'],[/^(.+) pacotes$/,'$1 件'],[/^(.+) sellers$/,'$1 商家'],
 [/^Alguns dias não carregaram \((\d+)\)\. Tente atualizar\.$/,'有 $1 天数据未加载，请刷新。'],
 [/^A conexão está muito lenta\. Aguarde ou $/,'网络非常慢，请稍候或'],[/^Não foi possível carregar: internet lenta ou instável\. $/,'无法加载：网络较慢或不稳定。'],[/^Você está sem internet\. $/,'当前无网络。'],
-[/^Coletas (.+)$/,'$1 揽收看板'],[/^© (\d{4}) GETLOG Transportes · Todos os direitos reservados$/,'© $1 GETLOG Transportes · 版权所有'],[/^Muitas tentativas\. Tente de novo em (\d+) min\.$/,'尝试次数过多，请 $1 分钟后再试。'],[/^Semana$/,'周']];
+[/^Coletas (.+)$/,'$1 揽收看板'],[/^Próxima: (.+?)( · processando| · aguardando)?$/,(m,a,b)=>'下次更新：'+a.replace('amanhã','明天').replace('ontem','昨天')+(b?(b.includes('processando')?' · 处理中':' · 等待中'):'')],[/^© (\d{4}) GETLOG Transportes · Todos os direitos reservados$/,'© $1 GETLOG Transportes · 版权所有'],[/^Muitas tentativas\. Tente de novo em (\d+) min\.$/,'尝试次数过多，请 $1 分钟后再试。'],[/^Semana$/,'周']];
 // Dica dos gráficos (várias linhas).
 const RT=[[/^Previsto: (.+) pacotes$/,'预计：$1 件'],[/^Coletado: (.+) pacotes$/,'已揽收：$1 件'],[/^Coleta: (.+)$/,'揽收率：$1'],[/^Visita: (.+)$/,'拜访率：$1'],
 [/^Sellers: (.+) · visitados (.+) \((.+)\)$/,'商家：$1 · 已拜访 $2（$3）'],[/^Semana (.+) a (.+)$/,'周 $1 至 $2'],[/^vs\. semana anterior: (.) (.+) p\.p\.$/,'较上周：$1 $2 个百分点'],
