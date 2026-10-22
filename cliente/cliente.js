@@ -6,7 +6,6 @@ const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']
 const N=n=>Number(n||0).toLocaleString('pt-BR');const norm=s=>String(s||'').trim().toLowerCase();
 async function kek(pw,salt,iter){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},b,{name:'AES-GCM',length:256},false,['decrypt'])}
 async function prof(raw,u){const k=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['decrypt']);return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(u.p.iv)},k,b2u(u.p.ct))))}
-async function senhaPlan(D,login){if(!D.senhaUrl)return null;try{const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);const r=await fetch(D.senhaUrl+'?senha='+encodeURIComponent(login),{signal:c.signal,cache:'no-store'});clearTimeout(t);const j=await r.json();return j.ok&&j.dados&&j.dados.key?j.dados:null}catch(e){return null}}
 async function db(){const r=await fetch('/data/users.json?t='+Date.now(),{cache:'no-store'});return r.json()}
 const API='https://script.google.com/macros/s/AKfycbzBrdB2u8IlJJ0o9OclHWPcpA3JUi8n5D_ebIkZ6Kzagwt01zmvsaHU50PrA2C9MzCwdA/exec',PW_PADRAO='123456';
 const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
@@ -14,34 +13,23 @@ const hashHex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',e
 async function credencial(login,pw){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);return u2b(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode('getlog-auth|'+login),iterations:100000,hash:'SHA-256'},b,256))}
 async function kekE(pw,salt,iter){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},b,{name:'AES-GCM',length:256},false,['encrypt'])}
 async function abre(raw,o){const k=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['decrypt']);return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},k,b2u(o.ct))))}
-// Senha padrão: obriga a criar uma senha pessoal (grava pelo servidor do ponto, igual ao portal).
-function trocaSenha(login,pwVelha,raw,iter,cfg){return new Promise((ok,falha)=>{const c=$('.lg-card');c.innerHTML=`<img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="120" height="48" class="lg-logo"><h1>Crie sua senha</h1><p>Primeiro acesso (ou senha redefinida). Crie uma senha pessoal para continuar.</p>
-<form id="tf" novalidate><label for="n1">Nova senha</label><input id="n1" type="password" autocomplete="new-password" minlength="6" required><label for="n2">Repita a nova senha</label><input id="n2" type="password" autocomplete="new-password" required><div id="m" class="m" role="status" aria-live="polite"></div><button id="go">Salvar senha</button></form>`;$('#n1').focus();
-$('#tf').onsubmit=async e=>{e.preventDefault();const a=$('#n1').value,b=$('#n2').value,m=$('#m'),go=$('#go');
-if(a!==b){m.textContent='As duas senhas não são iguais.';return}if(a.length<6||a===PW_PADRAO){m.textContent='Use pelo menos 6 caracteres e diferente de '+PW_PADRAO+'.';return}
-if(!cfg.pontoUrl){m.textContent='Não foi possível trocar a senha agora. Fale com a GETLOG.';return}
-go.disabled=true;go.textContent='Salvando...';m.textContent='';
-try{const salt=rnd(16),iv=rnd(12),k=await kekE(a,salt,iter);const av=await credencial(login,a);
-const dados={salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,raw)),em:new Date().toISOString(),ah:await hashHex(av)};
-const r=await fetch(cfg.pontoUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:cfg.pontoToken,acao:'senha',login,av:await credencial(login,pwVelha),...dados})});const j=await r.json();if(!j.ok)throw new Error(j.erro);ok()}
-catch(x){go.disabled=false;go.textContent='Salvar senha';m.textContent='Não foi possível salvar (erro: '+(x.message||'rede')+'). Tente de novo.'}}})}
 // Proteção contra tentativa de senha: após 5 erros, bloqueia o login neste aparelho por alguns minutos.
 const TRV='getlog_cli_trv',trv=()=>{try{return JSON.parse(localStorage.getItem(TRV))||{n:0,ate:0}}catch(e){return {n:0,ate:0}}},trvSet=o=>{try{localStorage.setItem(TRV,JSON.stringify(o))}catch(e){}};
 $('#f').addEventListener('submit',async e=>{e.preventDefault();const m=$('#m'),go=$('#go');const tv=trv();if(tv.ate>Date.now()){m.textContent='Muitas tentativas. Tente de novo em '+Math.ceil((tv.ate-Date.now())/60000)+' min.';return}m.textContent='';go.disabled=true;go.textContent='Verificando...';
-let D,u,raw,p;try{D=await db();u=D.users.find(x=>x.login===norm($('#u').value));if(!u||u.role!=='fornecedor'||u.active===false)throw 0;
+let D,u,raw,p;try{D=await db();u=D.users.find(x=>x.login===norm($('#u').value));if(!u||u.role!=='fornecedor'||u.active===false)throw 0;if(!u.ck){m.textContent='Seu acesso está sendo atualizado por segurança. Fale com a GETLOG.';go.disabled=false;go.textContent='Entrar';return}
 const pw=$('#p').value;const abreW=async w=>{try{const k=await kek(pw,b2u(w.salt),D.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
 // Senha pessoal (criada pelo próprio usuário) fica no servidor do ponto; a do site só vale se for mais nova. Igual ao portal.
-const sp=await senhaPlan(D,u.login);raw=sp&&(!u.pwEm||sp.em>u.pwEm)?await abreW(sp):null;if(!raw)raw=await abreW(u);if(!raw&&sp)raw=await abreW(sp);if(!raw)throw 0;p=await prof(raw,u)}
+// Cliente usa só a chave própria dos clientes (definida pelo admin no site); nada do servidor do ponto.
+raw=await abreW(u);if(!raw)throw 0;p=await prof(raw,u)}
 catch(x){const t=trv();t.n++;if(t.n>=5){t.ate=Date.now()+5*60000*Math.min(6,t.n-4);}trvSet(t);m.textContent=t.n>=5?'Muitas tentativas. Login bloqueado por alguns minutos.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar';return}
 trvSet({n:0,ate:0});
-let cfg={};try{const r=await fetch('/data/config.json?t='+Date.now(),{cache:'no-store'});cfg=await abre(raw,await r.json())}catch(x){}
-if($('#p').value===PW_PADRAO)await trocaSenha(u.login,PW_PADRAO,raw,D.iter,cfg);
+let cfg={};try{const r=await fetch('/data/config-cliente.json?t='+Date.now(),{cache:'no-store'});cfg=await abre(raw,await r.json())}catch(x){}
 sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,t:cfg.driveToken||''}));app()});
 $('#eye').onclick=()=>{const i=$('#p'),v=i.type==='password';i.type=v?'text':'password';$('#eye').setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha');$('#eye').classList.toggle('on',v);i.focus()};
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}// Já logado: abre o painel na hora (sem piscar a tela de login) e confere o acesso em segundo plano.
 if(s&&s.role==='fornecedor'){$('#login').hidden=true;Promise.resolve().then(app);ativo(s).then(v=>{if(!v)sai()})}else $('#u').focus();
 // Confere a cada abertura se o acesso continua ativo.
-async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false}catch(e){return true}}
+async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false&&!!u.ck}catch(e){return true}}
 function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli5');indexedDB.deleteDatabase('getlog_cli4');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
 const get=async(q,t)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),60000);try{const r=await fetch(API+'?'+q+(t?'&t='+encodeURIComponent(t):''),{credentials:'omit',cache:'no-store',signal:c.signal});if(!r.ok)throw new Error('http '+r.status);const j=await r.json();if(!j.ok)throw new Error(j.erro||'erro');return j.dados}finally{clearTimeout(tm)}};
 const dk=d=>d.split('.').reverse().join('-');
@@ -113,6 +101,7 @@ const TIER=new Map();for(const o of RC){let t='';for(const [k,v] of Object.entri
 const tierOf=r=>{const m=String(r.pri).match(/T\s?-?([1-9])/i);return TIER.get('i'+r.sid)||TIER.get('n'+r.seller)||(m?'T'+m[1]:r.pri)};const eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
 // Linha compacta: data, seller, motorista, região, bairro, cidade, status, hora, previsto, coletado do previsto, total, justificado
 const RR=R.filter(r=>tudo||eu.has(r.cli)),VZ=visitados(RR);const out=RR.map(r=>{const g=nS(r.seller)+'|'+r.cli;return [it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep,g,VZ.get(g)?1:0,r.cli]});gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
+if(!LS.length){carregando(false);$('#upd').textContent='Nenhum dia publicado';kp.innerHTML='<div class="k err">Ainda não há dados publicados. Tente de novo mais tarde.</div>';return}
 const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1').max=$('#d2').max=kmax;$('#d1').value=$('#d2').value=kmax;
 let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
@@ -303,5 +292,5 @@ try{const d=await get('fonte=lista&force=1',S.t);try{localStorage.setItem('getlo
 b.disabled=false;b.classList.remove('gir')};
 $('#ajuda').onclick=()=>{if(!$('.tour'))tour()};
 let vt='';try{vt=localStorage.getItem('getlog_tour')}catch(e){}if(vt!==new Date().toDateString())setTimeout(()=>{if(!$('.tour'))tour()},1200);
-novaL.then(N2=>{const ant=new Map(LS.map(x=>[x.dia,x.modificadoEm]));const mud=N2.some(x=>ant.get(x.dia)!==x.modificadoEm)||N2.length!==LS.length;LS=N2;mostraUlt();if(mud){const k1=LS[LS.length-1].k,k2=LS[0].k;$('#d1').min=$('#d2').min=k1;$('#d1').max=$('#d2').max=k2;SEMC=false;SEMR=null;load()}}).catch(()=>{})}
+novaL.then(N2=>{if(!N2.length)return;const ant=new Map(LS.map(x=>[x.dia,x.modificadoEm]));const mud=N2.some(x=>ant.get(x.dia)!==x.modificadoEm)||N2.length!==LS.length;LS=N2;mostraUlt();if(mud){const k1=LS[LS.length-1].k,k2=LS[0].k;$('#d1').min=$('#d2').min=k1;$('#d1').max=$('#d2').max=k2;SEMC=false;SEMR=null;load()}}).catch(()=>{})}
 })();

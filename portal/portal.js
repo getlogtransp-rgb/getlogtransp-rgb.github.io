@@ -22,7 +22,17 @@ const getJSON=async p=>{const r=await fetch(p+'?t='+Date.now(),{cache:'no-store'
 async function loadDB(){DB=await getJSON('/data/users.json')}
 // Cadastro/reset recém-salvo: o site (GitHub Pages) leva minutos para publicar; o GitHub já tem a versão nova.
 async function loadDBFresco(){try{const r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data/users.json?ref=main',{headers:{Accept:'application/vnd.github.raw'},cache:'no-store'});if(r.ok){DB=await r.json();return true}}catch(e){}return false}
-async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=await open_(u.p)}catch(e){u._p={}}}}
+async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=u.ck?await openCli(u.p):await open_(u.p)}catch(e){try{u._p=await open_(u.p)}catch(x){u._p={}}}}}
+// Chave dos CLIENTES (fornecedor): separada da chave mestra. O login do cliente só destranca esta chave, que abre o próprio perfil
+// e data/config-cliente.json (token do Drive) — nunca os arquivos internos. Ela fica guardada dentro do config.json (cifrado com a mestra).
+let CK=null;
+async function chaveCli(){if(CK)return CK;if(CFG.clientKey){CK=b2u(CFG.clientKey);return CK}CK=rnd(32);CFG={...CFG,clientKey:u2b(CK)};await saveFile('data/config.json',await seal(CFG),'Chave do portal do cliente criada.');await salvaCfgCli();return CK}
+const ckKey=async()=>crypto.subtle.importKey('raw',await chaveCli(),{name:'AES-GCM'},false,['encrypt','decrypt']);
+async function sealCli(obj){const k=await ckKey(),iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(JSON.stringify(obj))))}}
+async function openCli(o){const k=await ckKey();return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},k,b2u(o.ct))))}
+async function salvaCfgCli(){await saveFile('data/config-cliente.json',await sealCli({driveToken:CFG.driveToken||''}),'Configuração do portal do cliente atualizada.')}
+async function wrapCli(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,await chaveCli())),ck:1}}
+const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
 async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),ld('/data/config.json',{}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
@@ -45,7 +55,7 @@ let SESS=null,BLOQ=false;
 // Credencial do servidor do ponto: derivada da senha, separada da chave dos dados. O servidor guarda só o hash dela.
 async function credencial(login,pw){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);return u2b(await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode('getlog-auth|'+login),iterations:100000,hash:'SHA-256'},b,256))}
 const hashHex=async s=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(s)))].map(b=>b.toString(16).padStart(2,'0')).join('');
-async function login(u,pw,fresco){if(fresco){if(!await loadDBFresco())throw new Error('cred')}else await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr){if(!fresco)return login(u,pw,true);throw new Error('cred')}let raw;
+async function login(u,pw,fresco){if(fresco){if(!await loadDBFresco())throw new Error('cred')}else await loadDB();const usr=DB.users.find(x=>x.login===norm(u));if(!usr){if(!fresco)return login(u,pw,true);throw new Error('cred')}if(usr.role==='fornecedor'){location.replace('/cliente/');throw new Error('cred')}let raw;
 const abre=async w=>{try{const k=await kek(pw,b2u(w.salt),DB.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
 const novoDe=sp=>sp&&!sp.erro&&(!usr.pwEm||sp.em>usr.pwEm);
 const pu=abre(usr);let sp=await senhaPlan(usr.login);raw=novoDe(sp)?await abre(sp):await pu;
@@ -595,7 +605,7 @@ function editUser(u){return new Promise(done=>{const p=u._p||{};const d=modal('E
 const fim=v=>{d.remove();done(v)};d.querySelector('.icon-x').onclick=()=>fim(false);
 d.querySelector('#ef2').onsubmit=async e=>{e.preventDefault();const n={name:$('#e-nome').value.trim(),login:u.login,role:$('#e-role').value,tel:$('#e-tel').value.trim(),placa:$('#e-placa').value,modelo:$('#e-mod').value,escala:$('#e-esc').value,cliente:$('#e-cli').value};
 const er=validate(n);if(er.length){$('#e-msg').className='msg err';$('#e-msg').textContent='Confira: '+er.join(', ')+'.';return}
-const prof=mkProf(n);u.role=n.role;u.p=await seal(prof);u._p=prof;fim(true);await saveFile('data/users.json',DB,'Cadastro de '+n.name+' atualizado.')}})}
+const prof=mkProf(n);if((u.role==='fornecedor')!==(n.role==='fornecedor')||(n.role==='fornecedor'&&!u.ck)){const pw=n.role==='fornecedor'?pedeSenhaCli(n.name):PW_PADRAO;if(!pw)return;Object.assign(u,await credAdmin(u.login,pw,n.role))}u.role=n.role;u.p=await sealRole(prof,n.role);u._p=prof;fim(true);await saveFile('data/users.json',DB,'Cadastro de '+n.name+' atualizado.')}})}
 // Troca da própria senha. Fica guardada na planilha (aba Senhas), porque só o admin grava no site.
 // Troca da própria senha. A chave trancada pela nova senha fica na planilha (aba Senhas), porque só o admin grava no site.
 // Obrigatória quando a pessoa entra com a senha padrão: a tela não fecha e o portal só abre depois de trocar.
@@ -613,9 +623,11 @@ SESS.av=av;SESS.troca=false;sessSet(SESS);d.remove();done(true)}catch(x){bt.disa
 // Nome fica exatamente como digitado; o vínculo com os dados usa o nome normalizado (GL_CORE.casar).
 const mkProf=u=>({name:u.name,tel:u.tel||'',placa:String(u.placa||'').toUpperCase().replace('-',''),modelo:u.modelo||'',escala:u.escala||'',cliente:u.cliente||'',ref:['motorista','ajudante'].includes(u.role)?u.name:''});
 // ah = hash da credencial do servidor para a senha definida pelo admin (o servidor confere sem conhecer a senha).
-const credAdmin=async(login,pw)=>({...await wrapFor(pw),pwEm:new Date().toISOString(),ah:await hashHex(await credencial(login,pw))});
+const credAdmin=async(login,pw,role)=>({...(role==='fornecedor'?await wrapCli(pw):{...await wrapFor(pw),ck:undefined}),pwEm:new Date().toISOString(),ah:await hashHex(await credencial(login,pw))});
+// Senha de cliente: definida pelo admin (o cliente não troca sozinho), forte e diferente da padrão.
+const pedeSenhaCli=n=>{const pw=prompt('Senha do acesso de cliente '+n+' (mínimo 10 caracteres, com letras e números):');if(pw==null)return null;if(pw.length<10||!/[a-z]/i.test(pw)||!/\d/.test(pw)){alert('Senha fraca: use 10+ caracteres com letras e números.');return null}return pw};
 async function addUser(u,pw){const prof=mkProf(u);
-const rec={login:u.login,role:u.role,active:true,...await credAdmin(u.login,pw),p:await seal(prof),created:new Date().toISOString()};rec._p=prof;DB.users.push(rec)}
+const rec={login:u.login,role:u.role,active:true,...await credAdmin(u.login,pw,u.role),p:await sealRole(prof,u.role),created:new Date().toISOString()};rec._p=prof;DB.users.push(rec)}
 // Avisa o servidor do ponto na hora (sem esperar o site publicar) que um acesso foi bloqueado ou liberado.
 const avisaAcesso=async(alvo,ativo)=>{if(await v2())try{await api('acesso',{alvo,ativo})}catch(e){console.warn('acesso',e)}};
 VIEWS.usuarios=async()=>{const g=GEN;try{await loadDB()}catch(e){}await profiles();const tk=await ghToken();if(!vivo(g))return;
@@ -637,17 +649,18 @@ ${accBox()}<div class="box mt"><div class="box-head"><div><h3>Configurações do
 const role=$('#n-role');const vis=()=>{const r=role.value;$$('[data-for]').forEach(f=>{const t=f.dataset.for;f.hidden=!(t==='p'&&['colaborador','ajudante','motorista'].includes(r)||t==='m'&&r==='motorista'||t==='e'&&['colaborador','ajudante'].includes(r)||t==='f'&&r==='fornecedor')})};role.onchange=vis;vis();
 $('#nu').onsubmit=async e=>{e.preventDefault();const u={name:$('#n-nome').value.trim(),login:norm($('#n-login').value),role:role.value,tel:$('#n-tel').value.trim(),placa:$('#n-placa').value,modelo:$('#n-mod').value,escala:$('#n-esc').value,cliente:$('#n-cli').value};
 const m=$('#u-msg');const er=validate(u);if(er.length){m.className='msg err';m.textContent='Confira: '+er.join(', ')+'.';return}if(DB.users.some(x=>x.login===u.login)){m.className='msg err';m.textContent='Esse login já existe.';return}
-await addUser(u,$('#n-pw').value);await saveFile('data/users.json',DB,'Acesso de '+u.name+' cadastrado.');keepMsg(VIEWS.usuarios)};
+let pwN=$('#n-pw').value;if(u.role==='fornecedor'){pwN=pedeSenhaCli(u.name);if(!pwN)return}await addUser(u,pwN);await saveFile('data/users.json',DB,'Acesso de '+u.name+' cadastrado.');keepMsg(VIEWS.usuarios)};
 accBind();$('#ub').oninput=e=>{const q=norm(e.target.value);$$('#ut tbody tr').forEach(tr=>tr.hidden=q&&!norm(tr.textContent).includes(q))};
 (async()=>{if(!await v3())return;try{const m=(await api('telefones',{})).itens||{};$$('[data-tel]').forEach(el=>{const t=m[el.dataset.tel];if(t)el.textContent=t})}catch(e){}})();
 $$('[data-act]').forEach(b=>b.onclick=async()=>{const u=DB.users.find(x=>x.login===b.dataset.l);if(!u)return;const n=u._p?.name||u.login;
 if(b.dataset.act==='rm'){if(!confirm('Excluir o acesso de '+n+'?'))return;DB.users=DB.users.filter(x=>x!==u);await avisaAcesso(u.login,false);await saveFile('data/users.json',DB,'Acesso de '+n+' excluído.')}
 if(b.dataset.act==='tg'){u.active=u.active===false;await avisaAcesso(u.login,u.active);await saveFile('data/users.json',DB,'Acesso de '+n+(u.active?' ativado.':' desativado.'))}
-if(b.dataset.act==='pw'){if(!confirm('Resetar a senha de '+n+' para '+PW_PADRAO+'?'))return;Object.assign(u,await credAdmin(u.login,PW_PADRAO));await saveFile('data/users.json',DB,'Senha de '+n+' resetada para '+PW_PADRAO+'.')}
+if(b.dataset.act==='pw'&&u.role==='fornecedor'){const pw=pedeSenhaCli(n);if(!pw)return;const pr=u._p||{};Object.assign(u,await credAdmin(u.login,pw,'fornecedor'));u.p=await sealCli(pr);await saveFile('data/users.json',DB,'Senha do cliente '+n+' redefinida.');keepMsg(VIEWS.usuarios);return}
+if(b.dataset.act==='pw'){if(!confirm('Resetar a senha de '+n+' para '+PW_PADRAO+'?'))return;Object.assign(u,await credAdmin(u.login,PW_PADRAO,u.role));await saveFile('data/users.json',DB,'Senha de '+n+' resetada para '+PW_PADRAO+'.')}
 if(b.dataset.act==='ed'){if(!await editUser(u))return}
 keepMsg(VIEWS.usuarios)});
 $('#dt-g').onclick=()=>{const i=$('#dt-t');i.value=u2b(rnd(24)).replace(/[^A-Za-z0-9]/g,'').slice(0,32);i.type='text';$('#dt-m').className='msg';$('#dt-m').textContent='Copie este token para o script do Drive antes de salvar.'};
-$('#dtf').onsubmit=async e=>{e.preventDefault();if(!await confirmaSenha())return;CFG={...CFG,driveToken:$('#dt-t').value.trim()};GL_API.setToken(CFG.driveToken);await saveFile('data/config.json',await seal(CFG),'Token dos dados da Performance salvo.');keepMsg(VIEWS.usuarios)};
+$('#dtf').onsubmit=async e=>{e.preventDefault();if(!await confirmaSenha())return;CFG={...CFG,driveToken:$('#dt-t').value.trim()};GL_API.setToken(CFG.driveToken);await saveFile('data/config.json',await seal(CFG),'Token dos dados da Performance salvo.');if(CFG.clientKey||DB.users.some(x=>x.role==='fornecedor'))await salvaCfgCli();keepMsg(VIEWS.usuarios)};
 $('#plf').onsubmit=async e=>{e.preventDefault();const u=$('#pl-u').value.trim(),t=$('#pl-t').value.trim(),m=$('#pl-m');m.className='msg';m.textContent='Testando…';try{const r=await fetch(u+'?token='+encodeURIComponent(t)+'&desde=9999');const j=await r.json();if(!j.ok)throw new Error(j.erro)}catch(x){m.className='msg err';m.textContent='Não funcionou: confira o endereço e se o token é igual ao do código.';return}CFG={...CFG,pontoUrl:u,pontoToken:t};await saveFile('data/config.json',await seal(CFG),'Planilha do ponto conectada.');keepMsg(VIEWS.usuarios)};v2().then(ok=>{const e=$('#plv');if(e&&PLAN())e.textContent=ok?' · script atualizado':' · script desatualizado: publique a versão nova do arquivo ponto-apps-script.gs'});$('#mk-copy').onclick=async()=>{if(!await confirmaSenha())return;try{await navigator.clipboard.writeText(u2b(MASTER_RAW));$('#mk-copy').textContent='Chave copiada';setTimeout(()=>{navigator.clipboard.writeText('').catch(()=>{});const b=$('#mk-copy');if(b)b.textContent='Copiar chave'},60000)}catch(e){toast('Não foi possível copiar. Tente de novo.')}};$('#ghf').onsubmit=async e=>{e.preventDefault();const t=$('#gh-t').value.trim();if(t){await setToken(t);VIEWS.usuarios()}};
 const xlsx=()=>window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='/assets/vendor/xlsx/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
 $('#dlm').onclick=async()=>{await xlsx();const ws=XLSX.utils.aoa_to_sheet([['NOME','TELEFONE','LOGIN','TIPO','PLACA','MODELO','ESCALA'],['Maria Exemplo da Silva','(11) 98888-7777','maria.silva','Colaborador','','',ESCALAS[0]?.nome||''],['João Exemplo Souza','(11) 97777-6666','joao.souza','Motorista','ABC1D23','Fiorino','']]);ws['!cols']=[30,16,18,18,14,12,12,18].map(w=>({wch:w}));const ins=XLSX.utils.aoa_to_sheet([['Uma pessoa por linha na aba Usuarios.'],['TIPO: Motorista, Colaborador ou Ajudante.'],['Motorista: PLACA e MODELO obrigatórios. MODELO: '+VEIC.join(', ')+'.'],['LOGIN sem espaços (ex.: nome.sobrenome).'],['ESCALA: nome igual ao cadastrado no portal (opcional).'],['Apague as linhas de exemplo antes de importar.']]);ins['!cols']=[{wch:90}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Usuarios');XLSX.utils.book_append_sheet(wb,ins,'Instrucoes');XLSX.writeFile(wb,'modelo-usuarios-getlog.xlsx')};
