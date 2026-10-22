@@ -42,7 +42,7 @@ $('#login').hidden=true;const A=$('#app');A.hidden=false;A.innerHTML='<p class="
 let L=[];try{L=(await get('fonte=lista',S.t)).filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).sort((a,b)=>dk(a.dia)<dk(b.dia)?1:-1).slice(0,31)}catch(e){A.innerHTML='<p class="w body">Não foi possível carregar os dados agora. Tente de novo em instantes.</p>';return}
 const keys=L.map(x=>x.dia),CACHE={};
 const carrega=d=>CACHE[d]||(CACHE[d]=get('fonte=performance&dia='+encodeURIComponent(d),S.t).then(j=>{const R=C.normRows(C.toRecords(j.conteudo),dk(d));// Cliente vazio ou TODOS (ex.: iMile, cliente principal) vê a operação inteira.
-const tudo=!S.cliente||norm(S.cliente)==='todos',eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
+const tudo=!S.cliente||norm(S.cliente)==='todos'||/imile/.test(norm(S.cliente+' '+S.login)),eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
 return {em:j.modificadoEm,rows:R.filter(r=>tudo||eu.has(r.cli)).map(r=>({s:r.seller,m:r.mo.replace(/^.*? - /,''),r:r.reg,p:r.prev,c:r.col,st:r.st,h:r.hora}))}}).catch(e=>{delete CACHE[d];throw e}));
 $('#login').hidden=true;
 A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><button class="out" id="sair">Sair</button></div>
