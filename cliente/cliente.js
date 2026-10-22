@@ -57,7 +57,7 @@ $('#login').hidden=true;const A=$('#app');A.hidden=false;
 A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><div class="hd-act"><a class="out wa-top" href="${WA}" target="_blank" rel="noopener">Fale conosco</a>${window.GL_TEMA?GL_TEMA.btn('out ic'):''}<button class="out" id="sair">Sair</button></div></div>
 <h1>Coletas ${esc(S.name)}</h1><p>Performance de coleta e de visita, em tempo real, da operação GETLOG.</p><span class="upd"><i></i><span id="upd">Conectando ao Drive...</span></span></div></header>
 <main class="w body"><section class="flt"><div class="pr"><div class="dp" id="dp"><button type="button" class="dpb" id="dpb" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span><small id="dpn">Período</small><b id="dpl">—</b></span><i>▾</i></button></div>
-<div class="chips" id="per" role="group" aria-label="Atalhos de período">${[['1','Último dia'],['7','7 dias'],['sem','Esta semana'],['30','30 dias']].map(([v,l])=>`<button type="button" data-p="${v}">${l}</button>`).join('')}</div></div><input type="hidden" id="d1"><input type="hidden" id="d2">
+<div class="chips" id="per" role="group" aria-label="Atalhos de período">${[['1','Hoje'],['7','7 dias'],['sem','Esta semana'],['30','30 dias']].map(([v,l])=>`<button type="button" data-p="${v}">${l}</button>`).join('')}</div></div><input type="hidden" id="d1"><input type="hidden" id="d2">
 <div class="fl"><div class="fms" id="fms"></div><input id="q" type="search" placeholder="Buscar seller, motorista, bairro…" aria-label="Buscar"></div><div class="fa" id="fa" hidden></div>
 <div class="prog" id="prog" hidden><i></i></div></section><div class="ld" id="ld" hidden role="status" aria-live="polite"><span class="sp"></span><span id="ldt">Carregando dados…</span></div>
 <div class="kp" id="kp"></div><section class="card t45" id="t45" hidden></section>
@@ -235,7 +235,7 @@ L.circleMarker(c,{radius:6+Math.sqrt(a.p/mx)*16,color:cor,weight:2,fillColor:cor
 if(pts.length===1||pts.length===8)MAP.fitBounds(pts.length===1?L.latLng(c).toBounds(8000):pts,{padding:[24,24],maxZoom:13})}
 if(pts.length>1)MAP.fitBounds(pts,{padding:[24,24],maxZoom:13})}
 // ---- Filtros ----
-const PRE=[['1','Último dia'],['2','Últimos 2 dias'],['sem','Esta semana'],['sp','Semana passada'],['7','Últimos 7 dias'],['15','Últimos 15 dias'],['30','Últimos 30 dias'],['mes','Este mês'],['mp','Mês passado'],['56','Últimas 8 semanas']];
+const PRE=[['1','Hoje'],['2','Hoje e ontem'],['sem','Esta semana'],['sp','Semana passada'],['7','Últimos 7 dias'],['15','Últimos 15 dias'],['30','Últimos 30 dias'],['mes','Este mês'],['mp','Mês passado'],['56','Últimas 8 semanas']];
 const rotPer=()=>{const D=dias();const nome=per==='c'?'Personalizado':(PRE.find(x=>x[0]===per)||[,''])[1];$('#dpn').textContent=nome;$('#dpl').textContent=D.length?(D.length===1?fmtD(D[0].k):fmtD(D[D.length-1].k)+' – '+fmtD(D[0].k))+' · '+D.length+(D.length>1?' dias':' dia'):'Sem dias com dados'};
 const setPer=v=>{per=v;document.querySelectorAll('#per button').forEach(b=>b.classList.toggle('on',b.dataset.p===v));rotPer();load()};
 document.querySelectorAll('#per button').forEach(b=>b.onclick=()=>setPer(b.dataset.p));
