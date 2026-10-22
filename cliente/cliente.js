@@ -29,7 +29,6 @@ let D,u,raw,p;try{D=await db();u=D.users.find(x=>x.login===norm($('#u').value));
 const k=await kek($('#p').value,b2u(u.salt),D.iter);raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(u.iv)},k,b2u(u.key)));p=await prof(raw,u)}
 catch(x){m.textContent='Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar';return}
 let cfg={};try{const r=await fetch('/data/config.json?t='+Date.now(),{cache:'no-store'});cfg=await abre(raw,await r.json())}catch(x){}
-if(!p.cliente){m.textContent='Seu acesso ainda não tem cliente vinculado. Fale com a GETLOG.';go.disabled=false;go.textContent='Entrar';return}
 if($('#p').value===PW_PADRAO)await trocaSenha(u.login,PW_PADRAO,raw,D.iter,cfg);
 sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,t:cfg.driveToken||''}));app()});
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')ativo(s).then(v=>v?app():sai());else $('#u').focus();
@@ -42,8 +41,9 @@ async function app(){const S=JSON.parse(sessionStorage.getItem(S_KEY));const C=w
 $('#login').hidden=true;const A=$('#app');A.hidden=false;A.innerHTML='<p class="w body">Carregando...</p>';
 let L=[];try{L=(await get('fonte=lista',S.t)).filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).sort((a,b)=>dk(a.dia)<dk(b.dia)?1:-1).slice(0,31)}catch(e){A.innerHTML='<p class="w body">Não foi possível carregar os dados agora. Tente de novo em instantes.</p>';return}
 const keys=L.map(x=>x.dia),CACHE={};
-const carrega=d=>CACHE[d]||(CACHE[d]=get('fonte=performance&dia='+encodeURIComponent(d),S.t).then(j=>{const R=C.normRows(C.toRecords(j.conteudo),dk(d));const eu=C.casar([S.cliente],R.map(r=>r.cli));
-return {em:j.modificadoEm,rows:R.filter(r=>eu.has(r.cli)).map(r=>({s:r.seller,m:r.mo.replace(/^.*? - /,''),r:r.reg,p:r.prev,c:r.col,st:r.st,h:r.hora}))}}).catch(e=>{delete CACHE[d];throw e}));
+const carrega=d=>CACHE[d]||(CACHE[d]=get('fonte=performance&dia='+encodeURIComponent(d),S.t).then(j=>{const R=C.normRows(C.toRecords(j.conteudo),dk(d));// Cliente vazio ou TODOS (ex.: iMile, cliente principal) vê a operação inteira.
+const tudo=!S.cliente||norm(S.cliente)==='todos',eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
+return {em:j.modificadoEm,rows:R.filter(r=>tudo||eu.has(r.cli)).map(r=>({s:r.seller,m:r.mo.replace(/^.*? - /,''),r:r.reg,p:r.prev,c:r.col,st:r.st,h:r.hora}))}}).catch(e=>{delete CACHE[d];throw e}));
 $('#login').hidden=true;
 A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><button class="out" id="sair">Sair</button></div>
 <h1>Coletas ${esc(S.name)}</h1><p>Previsto, coletado e status de cada seller atendido pela GETLOG.</p><span class="upd"><i></i><span id="upd"></span></span></div></header>
