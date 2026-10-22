@@ -238,3 +238,7 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 @media (max-width:600px){#tbl th:nth-child(10){width:96px}#tbl td:nth-child(10) .s{font-size:.7rem;padding:3px 7px}}
 .hd-t h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:600px){.wa-top{display:none}.hd-act{gap:6px}.hd-act .out{padding:8px 10px}.pr{grid-template-columns:1fr 1fr}.dp,.qw{grid-column:1/-1}.t45b,.lmp{min-height:46px;font-size:.85rem;padding:0 10px}.t45b .tg{display:none}}
+/* Sem cursor de digitação em botões, cartões e textos (só nos campos de busca/senha) */
+#app button,#app .k,#app .card,#app .msb,#app .tk,#app .rs,#app .dpb,#app .hd{caret-color:transparent;-webkit-user-select:none;user-select:none}
+#app td,#app .sub{-webkit-user-select:text;user-select:text}
+#app input{caret-color:auto;-webkit-user-select:text;user-select:text}
