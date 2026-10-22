@@ -38,7 +38,7 @@ $('#eye').onclick=()=>{const i=$('#p'),v=i.type==='password';i.type=v?'text':'pa
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')ativo(s).then(v=>v?app():sai());else $('#u').focus();
 // Confere a cada abertura se o acesso continua ativo.
 async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false}catch(e){return true}}
-function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
+function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli4');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
 const get=async(q,t)=>{const c=new AbortController(),tm=setTimeout(()=>c.abort(),60000);try{const r=await fetch(API+'?'+q+(t?'&t='+encodeURIComponent(t):''),{credentials:'omit',cache:'no-store',signal:c.signal});if(!r.ok)throw new Error('http '+r.status);const j=await r.json();if(!j.ok)throw new Error(j.erro||'erro');return j.dados}finally{clearTimeout(tm)}};
 const dk=d=>d.split('.').reverse().join('-');
 const WA='https://wa.me/5511989141009?text='+encodeURIComponent('Olá, GETLOG! Sou cliente e preciso de ajuda com as coletas.');
@@ -49,13 +49,13 @@ const fmtD=k=>k.split('-').reverse().join('/');
 const hr=h=>{if(h==null||h==='')return -1;if(typeof h==='number'||/^\d*\.\d+$/.test(h)){const f=+h%1;return f?Math.floor(f*24):-1}const m=String(h).match(/(\d{1,2}):\d{2}/);return m&&+m[1]<24?+m[1]:-1};
 // Cache do dia no aparelho (versão = modificadoEm do Drive): reabrir é instantâneo e só baixa o que mudou.
 // Cache dos dias no aparelho (IndexedDB, cabe muito mais que o localStorage). Sair apaga.
-const IDB=new Promise(ok=>{try{const q=indexedDB.open('getlog_cli3',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)}catch(e){ok(null)}});
+const IDB=new Promise(ok=>{try{const q=indexedDB.open('getlog_cli4',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)}catch(e){ok(null)}});
 const lerC=async(d,v)=>{const db=await IDB;if(!db)return null;return new Promise(ok=>{try{const q=db.transaction('d').objectStore('d').get(d);q.onsuccess=()=>{const o=q.result;ok(o&&o.v===v?o.r:null)};q.onerror=()=>ok(null)}catch(e){ok(null)}})};
 const gravaC=async(d,v,r)=>{const db=await IDB;if(!db)return;try{db.transaction('d','readwrite').objectStore('d').put({v,r},d)}catch(e){}};
 async function app(){const S=JSON.parse(sessionStorage.getItem(S_KEY));const C=window.GL_CORE;
 $('#login').hidden=true;const A=$('#app');A.hidden=false;
-A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><div class="hd-act"><a class="out wa-top" href="${WA}" target="_blank" rel="noopener">Fale conosco</a>${window.GL_TEMA?GL_TEMA.btn('out ic'):''}<button class="out ic" id="ajuda" type="button" aria-label="Como usar" title="Como usar">?</button><button class="out" id="sair">Sair</button></div></div>
-<h1>Coletas ${esc(S.name)}</h1><p>Performance de coleta e de visita, em tempo real, da operação GETLOG.</p><span class="upd"><i></i><span id="upd">Conectando ao Drive...</span></span></div></header>
+A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><div class="hd-t"><h1>Coletas ${esc(S.name)}</h1><span class="upd"><i></i><span id="upd">Conectando ao Drive...</span></span></div><div class="hd-act"><a class="out wa-top" href="${WA}" target="_blank" rel="noopener">Fale conosco</a>${window.GL_TEMA?GL_TEMA.btn('out ic'):''}<button class="out ic" id="ajuda" type="button" aria-label="Como usar" title="Como usar">?</button><button class="out" id="sair">Sair</button></div></div>
+</div></header>
 <main class="w body"><section class="flt"><div class="pr"><div class="dp" id="dp"><button type="button" class="dpb" id="dpb" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span><small id="dpn">Período</small><b id="dpl">—</b></span><i>▾</i></button></div>
 <button type="button" class="t45b" id="t45b" aria-pressed="false"><span class="tg">T4</span><span class="tg">T5</span> Só T4 e T5</button><div class="qw"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Buscar seller, motorista, bairro…" aria-label="Buscar"></div></div><input type="hidden" id="d1"><input type="hidden" id="d2">
 <div class="fms" id="fms"></div><div class="fa" id="fa" hidden></div>
@@ -84,6 +84,15 @@ if(!LS)try{carregando(true);LS=await novaL;carregando(false)}catch(e){falhou();$
 const mostraUlt=()=>{const ult=LS.reduce((m,x)=>{const t=new Date(x.modificadoEm).getTime();return t>m?t:m},0);if(ult){const e=new Date(ult);$('#upd').textContent='Última atualização: '+e.toLocaleDateString('pt-BR')+' às '+e.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}};mostraUlt();
 // Cliente vazio ou TODOS (ex.: iMile, cliente principal) vê a operação inteira.
 const tudo=!S.cliente||norm(S.cliente)==='todos'||/imile/.test(norm(S.cliente+' '+S.login));
+// Visita: mesma regra da Performance do portal. Conta por SELLER (nome + cliente) no dia: visitado = coletou algo ou justificou
+// (status de justificativa, motivo na observação ou coluna JUSTIFICADO); baixa indevida sem coleta/justificativa fica pendente.
+const nS=x=>String(x??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+const JST=new Set(['LOJA FECHADA','FECHADA','PRODUTO INDISPONIVEL','CODIGO DE COLETA NAO INFORMADO','ENDERECO DIVERGENTE','NAO LOCALIZEI O ENDERECO','ERRO DO SISTEMA','PACOTE CANCELADO','KWAI - ERRO NA OCORRENCIA','DROP RECEBEU','DROP CANCELADO OU FORA DA DS FM NOR','PACOTE CANCELADO OU FORA DA DS FM NOR']);
+const isJ=x=>{const v=nS(x);return JST.has(v)||v==='MISS SCAN'||v.startsWith('MISS SCAN /')};const mPac=v=>v.startsWith('MISS SCAN')||v.includes('CANCELADO');
+const motivo=rows=>{for(const r of rows){const v=nS(r.st);if(isJ(r.st)&&!mPac(v))return 1}for(const r of rows)for(const p of String(r.jtxt||'').split(' / ')){const m=p.trim().match(/^(.*?)\s*\((\d+)\)$/);if(m&&+m[2]&&isJ(m[1])&&!mPac(nS(m[1])))return 1}return 0};
+function visitados(R){const G=new Map();for(const r of R){const k=nS(r.seller)+'|'+r.cli;let g=G.get(k);if(!g)G.set(k,g={rows:[],pen:0});g.rows.push(r);g.pen+=r.pen}const out=new Map();
+for(const [k,g] of G){const col=g.rows.some(r=>r.col>0||r.tot>0),just=!!motivo(g.rows)||(g.pen<=0&&g.rows.some(r=>isJ(r.st)||(r.jus>0&&nS(r.st)!=='BAIXA INDEVIDA'))),vis=col||just;
+const bx=g.rows.some(r=>nS(r.st)==='BAIXA INDEVIDA');if(bx&&!col&&!g.rows.some(r=>r.jus>0&&nS(r.st)!=='BAIXA INDEVIDA')){out.set(k,false);continue}out.set(k,vis||g.pen<=0)}return out}
 const MEM={};const key=it=>it.dia+'|'+it.modificadoEm;
 const carrega=it=>MEM[key(it)]||(MEM[key(it)]=(async()=>{const h=await lerC(it.dia,it.modificadoEm);if(h)return h;
 const j=await get('fonte=performance&dia='+encodeURIComponent(it.dia),S.t);const RC=C.toRecords(j.conteudo),R=C.normRows(RC,it.k);
@@ -91,13 +100,13 @@ const j=await get('fonte=performance&dia='+encodeURIComponent(it.dia),S.t);const
 const TIER=new Map();for(const o of RC){let t='';for(const [k,v] of Object.entries(o)){const m=String(v??'').match(/^\s*T\s?-?([1-9])\s*$/i)||(/prior|tier|classe|categ|curva|tipo/i.test(k)?String(v??'').match(/\bT\s?-?([1-9])\b/i):null);if(m){t='T'+m[1];break}}if(t){const sid=String(o['SELLER ID']??'').trim(),sn=String(o['SELLER']??'').trim();if(sid)TIER.set('i'+sid,t);if(sn)TIER.set('n'+sn,t)}}
 const tierOf=r=>{const m=String(r.pri).match(/T\s?-?([1-9])/i);return TIER.get('i'+r.sid)||TIER.get('n'+r.seller)||(m?'T'+m[1]:r.pri)};const eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
 // Linha compacta: data, seller, motorista, região, bairro, cidade, status, hora, previsto, coletado do previsto, total, justificado
-const out=R.filter(r=>tudo||eu.has(r.cli)).map(r=>[it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep]);gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
+const RR=R.filter(r=>tudo||eu.has(r.cli)),VZ=visitados(RR);const out=RR.map(r=>{const g=nS(r.seller)+'|'+r.cli;return [it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep,g,VZ.get(g)?1:0]});gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
 const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1').max=$('#d2').max=kmax;$('#d1').value=$('#d2').value=kmax;
 let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
 const mesK=(o)=>{const d=new Date(LS[0].k+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()+o);return d.toISOString().slice(0,7)};
 const dias=()=>per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
-const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,'')});
+const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15]});
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;carregando(true);prog.firstChild.style.width='4%';
 const res=new Array(D.length);let i=0,falhas=0;
@@ -111,7 +120,9 @@ montaFiltros();if(!parc)LIM=50;run();if(!parc)setTimeout(adiantar,300)}
 // Depois de abrir, deixa os últimos 7 dias prontos em segundo plano (trocar de período fica instantâneo).
 function adiantar(){const F7=LS.slice(0,7);let i=0;for(let n=0;n<3;n++)(async()=>{while(i<F7.length)await carrega(F7[i++]).catch(()=>{})})()}
 const cls=r=>r.st==='Em rota'?['warn','Em rota']:r.p>0&&r.c>=r.p?['ok','Coletado']:r.c>0||r.t>0?['warn','Parcial']:['bad',r.j>0?'Justificado':r.st&&r.st!=='—'&&r.st!=='Coletado'?r.st:'Não coletado'];
-const vis=r=>r.t>0||r.j>0||r.c>0;const semCol=r=>r.p>0&&r.c<=0&&r.t<=0;
+const vis=r=>r.vz;
+// Sellers contados uma vez por dia (seller + cliente), só os com previsto.
+const sel=R=>{const a=new Set,v=new Set;for(const r of R)if(r.p>0){a.add(r.g);if(r.vz)v.add(r.g)}return [a.size,v.size]};const semCol=r=>r.p>0&&r.c<=0&&r.t<=0;
 // ---- Filtros: menus com pesquisa e seleção múltipla ----
 const FD=[['fr','Região',r=>r.r||'Sem região'],['fm','Motorista',r=>r.m||'Sem motorista'],['fp','Prioridade',r=>r.pr&&r.pr!=='—'?r.pr:'Sem prioridade'],['fst','Status do seller',r=>r.st&&r.st!=='—'?r.st:'Sem status'],['fs','Situação da coleta',r=>cls(r)[1]],['fv','Visita',r=>vis(r)?'Visitado':'Não visitado']];
 const SEL={};FD.forEach(([i])=>SEL[i]=new Set());let ABERTO=null;
@@ -132,17 +143,17 @@ inp.oninput=desenha;pn.querySelector('[data-a="t"]').onclick=()=>{desenha().forE
 $('#'+id).appendChild(pn);desenha();if(matchMedia('(hover:hover)').matches)inp.focus()}
 let AT=0;const aplica=()=>{rotulos();clearTimeout(AT);AT=setTimeout(()=>{LIM=50;run()},120)};
 document.addEventListener('click',fecha);document.addEventListener('keydown',e=>{if(e.key==='Escape')fecha()});
-const agr=(R,key)=>{const M=new Map();for(const r of R){const k=key(r);let o=M.get(k);if(!o)M.set(k,o={k,p:0,c:0,t:0,n:0,v:0});o.p+=r.p;o.c+=Math.min(r.c,r.p);o.t+=r.t;o.n++;if(vis(r))o.v++}return [...M.values()]};
+const agr=(R,key)=>{const M=new Map();for(const r of R){const k=key(r);let o=M.get(k);if(!o)M.set(k,o={k,p:0,c:0,t:0,n:0,v:0});o.p+=r.p;o.c+=Math.min(r.c,r.p);o.t+=r.t;if(r.p>0){(o.A||(o.A=new Set)).add(r.g);if(r.vz)(o.B||(o.B=new Set)).add(r.g)}}for(const o of M.values()){o.n=o.A?o.A.size:0;o.v=o.B?o.B.size:0}return [...M.values()]};
 let F=[];
-function run(){F=filtra();const at=FD.filter(([i])=>SEL[i].size).map(([i,l])=>`<button type="button" data-x="${i}">${l}: ${esc([...SEL[i]].slice(0,2).join(', '))}${SEL[i].size>2?' +'+(SEL[i].size-2):''} ✕</button>`);if($('#q').value)at.push(`<button type="button" data-x="q">Busca: ${esc($('#q').value)} ✕</button>`);const fa=$('#fa');fa.hidden=!at.length;fa.innerHTML=at.join('')+(at.length>1?'<button type="button" class="cl" data-x="*">Limpar tudo</button>':'');fa.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();const x=b.dataset.x;if(x==='*'||x==='q')$('#q').value='';if(x==='*')FD.forEach(([i])=>SEL[i].clear());else if(x!=='q')SEL[x].clear();rotulos();LIM=50;run()});const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,V=F.filter(vis).length,pv=F.length?V/F.length*100:0;
+function run(){F=filtra();const at=FD.filter(([i])=>SEL[i].size).map(([i,l])=>`<button type="button" data-x="${i}">${l}: ${esc([...SEL[i]].slice(0,2).join(', '))}${SEL[i].size>2?' +'+(SEL[i].size-2):''} ✕</button>`);if($('#q').value)at.push(`<button type="button" data-x="q">Busca: ${esc($('#q').value)} ✕</button>`);const fa=$('#fa');fa.hidden=!at.length;fa.innerHTML=at.join('')+(at.length>1?'<button type="button" class="cl" data-x="*">Limpar tudo</button>':'');fa.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();const x=b.dataset.x;if(x==='*'||x==='q')$('#q').value='';if(x==='*')FD.forEach(([i])=>SEL[i].clear());else if(x!=='q')SEL[x].clear();rotulos();LIM=50;run()});const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,[nSel,V]=sel(F),pv=nSel?V/nSel*100:0;
 const pend=F.filter(semCol).length;
-const sC=F.filter(r=>r.c>0||r.t>0).length,nV=F.length-V;
+const sC=new Set(F.filter(r=>r.p>0&&(r.c>0||r.t>0)).map(r=>r.g)).size,nV=nSel-V;
 // Cartões clicáveis: filtram a tela (clicar de novo tira o filtro).
 const K=(l,v,s,c,f)=>{const on=f&&SEL[f[0]].size===1&&SEL[f[0]].has(f[1]);return `<${f?'button type="button"':'div'} class="k${c?' pc':''}${f?' kb':''}${on?' on':''}"${f?` data-f="${f[0]}" data-v="${esc(f[1])}" title="Clique para filtrar"`:''}${c?` style="--c:${c}"`:''}><small>${l}</small><b>${v}</b>${s||''}</${f?'button':'div'}>`};const ring=p=>`<div class="ring"><i style="width:${Math.min(100,p)}%"></i></div>`;
-kp.innerHTML=K('Previsto',N(P)+' <em>pacotes</em>',`<span class="ks"><b>${N(F.length)}</b> sellers</span>`)+K('Coletado do previsto',N(Cc)+' <em>pacotes</em>',`<span class="ks"><b>${N(sC)}</b> sellers coletados · total ${N(T)} pac.</span>`,'',['fs','Coletado'])+K('Sellers visitados',N(V),`<span class="ks">clique para ver a lista</span>`,'var(--ok)',['fv','Visitado'])+K('Sellers não visitados',N(nV),`<span class="ks">clique para ver a lista</span>`,nV?'var(--bad)':'var(--ok)',['fv','Não visitado']);
+kp.innerHTML=K('Previsto',N(P)+' <em>pacotes</em>',`<span class="ks"><b>${N(nSel)}</b> sellers</span>`)+K('Coletado do previsto',N(Cc)+' <em>pacotes</em>',`<span class="ks"><b>${N(sC)}</b> sellers coletados · total ${N(T)} pac.</span>`,'',['fs','Coletado'])+K('Sellers visitados',N(V),`<span class="ks">clique para ver a lista</span>`,'var(--ok)',['fv','Visitado'])+K('Sellers não visitados',N(nV),`<span class="ks">clique para ver a lista</span>`,nV?'var(--bad)':'var(--ok)',['fv','Não visitado']);
 // Roscas: % de coleta (pacotes) e % de visita (sellers), cada uma com o seu número no centro.
-{const ros=(t,p,cor,sub,tip)=>{const r=46,c=2*Math.PI*r;return `<div class="rs" data-t="${tip}"><svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><circle cx="60" cy="60" r="${r}" class="dt" stroke-width="12"/><circle cx="60" cy="60" r="${r}" fill="none" stroke="${cor}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c*Math.min(100,p)/100} ${c}" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="dv">${P1(p)}</text></svg><b>${t}</b><small>${sub}</small></div>`};
-$('#dn').innerHTML=ros('Coleta',pc,pcCor(pc),`${N(Cc)} de ${N(P)} pac.`,`Coleta: ${P1(pc)}\n${N(Cc)} de ${N(P)} pacotes`)+ros('Visita',pv,pcCor(pv),`${N(V)} de ${N(F.length)} sellers`,`Visita: ${P1(pv)}\n${N(V)} de ${N(F.length)} sellers`)}
+{const ros=(t,p,cor,sub,tip)=>{const r=46,c=2*Math.PI*r,id='rg'+t;return `<div class="rs" data-t="${tip}"><svg viewBox="0 0 120 120" width="120" height="120" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${cor[0]}"/><stop offset="1" stop-color="${cor[1]}"/></linearGradient></defs><circle cx="60" cy="60" r="${r}" class="dt" stroke-width="12"/><circle cx="60" cy="60" r="${r}" fill="none" stroke="url(#${id})" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c*Math.min(100,p)/100} ${c}" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="dv">${P1(p)}</text></svg><b>${t} <span class="st ${p>=98?'ok':p>=85?'warn':'bad'}">${p>=98?'ótimo':p>=85?'atenção':'crítico'}</span></b><small>${sub}</small></div>`};
+$('#dn').innerHTML=ros('Coleta',pc,['#f86800','#ffb057'],`${N(Cc)} de ${N(P)} pac.`,`Coleta: ${P1(pc)}\n${N(Cc)} de ${N(P)} pacotes`)+ros('Visita',pv,['#2563eb','#22c3ee'],`${N(V)} de ${N(nSel)} sellers`,`Visita: ${P1(pv)}\n${N(V)} de ${N(nSel)} sellers`)}
 $('#t45b').classList.toggle('on',SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('T5'));
 kp.querySelectorAll('.kb').forEach(b=>b.onclick=()=>{const f=b.dataset.f,v=b.dataset.v,on=SEL[f].size===1&&SEL[f].has(v);SEL[f].clear();if(!on)SEL[f].add(v);rotulos();LIM=50;run();if(!on)$('#tbl').scrollIntoView({behavior:'smooth',block:'start'})});
 charts();t45();tabela();mapa()}
@@ -197,15 +208,14 @@ A.addEventListener('pointermove',mostraTip);A.addEventListener('pointerdown',mos
 let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(F.length||ROWS.length){charts();MAP&&MAP.invalidateSize()}},150)});
 // ---- Destaque T4/T5: sellers prioritários ----
 function t45(){const el=$('#t45'),is=r=>/^T[45]$/.test(r.pr);const X=F.filter(is);el.hidden=false;if(!X.length){el.innerHTML='<div class="tb-h"><div><h2>Foco: sellers T4 e T5</h2><p class="sub">Nenhum seller T4 ou T5 encontrado no período e filtros escolhidos.</p></div></div>';return}
-const g=['T4','T5'].map(t=>{const R=X.filter(r=>r.pr.replace(/\s/g,'').includes(t)),P=R.reduce((a,r)=>a+r.p,0),Cc=R.reduce((a,r)=>a+Math.min(r.c,r.p),0),pc=P?Cc/P*100:0,v=R.length?R.filter(vis).length/R.length*100:0;
-const on=SEL.fp.size===1&&SEL.fp.has(t),nc=R.filter(semCol).length;
-if(!R.length)return `<div class="tk vz"><span class="tg">${t}</span><p>Nenhum seller ${t} no período e filtros escolhidos.</p></div>`;
-return `<button type="button" class="tk${on?' on':''}" data-t="${t}" title="Clique para ver só ${t}"><div class="tkh"><span class="tg">${t}</span><span class="tkp" style="color:${pcCor(pc)}">${P1(pc)}<small>coleta</small></span></div><div class="ring" style="--c:${pcCor(pc)}"><i style="width:${Math.min(100,pc)}%"></i></div>
-<div class="tkm"><span><small>Pacotes coletados</small><b>${N(Cc)}</b><em>de ${N(P)}</em></span><span><small>Sellers visitados</small><b>${N(R.filter(vis).length)}</b><em>de ${N(R.length)} · ${P1(v)}</em></span><span class="${nc?'bad':'ok'}"><small>Sem coleta</small><b>${N(nc)}</b><em>sellers</em></span></div></button>`}).join('');
+// T4 e T5 são um grupo só: um cartão com o resultado somado (clique filtra os dois).
+const g=(()=>{const R=X,P=R.reduce((a,r)=>a+r.p,0),Cc=R.reduce((a,r)=>a+Math.min(r.c,r.p),0),pc=P?Cc/P*100:0,[rn,rv]=sel(R),v=rn?rv/rn*100:0,nc=new Set(R.filter(semCol).map(r=>r.g)).size,on=SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('T5');
+return `<button type="button" class="tk tk1${on?' on':''}" id="tkx" title="Clique para ver só T4 e T5"><div class="tkh"><span><span class="tg">T4</span> <span class="tg">T5</span></span><span class="tkp" style="color:${pcCor(pc)}">${P1(pc)}<small>coleta</small></span></div><div class="ring" style="--c:${pcCor(pc)}"><i style="width:${Math.min(100,pc)}%"></i></div>
+<div class="tkm"><span><small>Pacotes coletados</small><b>${N(Cc)}</b><em>de ${N(P)}</em></span><span><small>Sellers visitados</small><b>${N(rv)}</b><em>de ${N(rn)} · ${P1(v)}</em></span><span class="${nc?'bad':'ok'}"><small>Sem coleta</small><b>${N(nc)}</b><em>sellers</em></span></div></button>`})();
 const pend=X.filter(r=>cls(r)[0]!=='ok').sort((a,b)=>b.p-a.p);
 el.innerHTML=`<div class="tb-h"><div><h2>Foco: sellers T4 e T5</h2><p class="sub">Acompanhamento em destaque dos sellers de maior prioridade</p></div><button class="btn2" type="button" id="t45f">${SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.test(x))?'Ver todos':'Ver só T4 e T5'}</button></div>
 <div class="tks">${g}</div>${pend.length?`<p class="sub"><b>${N(pend.length)}</b> ainda sem coleta completa:</p><div class="tw"><table><tbody>${pend.slice(0,5).map(r=>`<tr><td><span class="tg">${esc(r.pr)}</span></td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="n">${N(r.c)}/${N(r.p)}</td><td><span class="s ${cls(r)[0]}">${esc(cls(r)[1])}</span></td></tr>`).join('')}</tbody></table></div>`:'<p class="sub ok-t">Todos os sellers T4 e T5 foram coletados. ✔</p>'}`;
-el.querySelectorAll('.tk').forEach(b=>b.onclick=()=>{const t=b.dataset.t,on=SEL.fp.size===1&&SEL.fp.has(t);SEL.fp.clear();if(!on)SEL.fp.add(t);rotulos();LIM=50;run()});
+$('#tkx').onclick=()=>$('#t45f').click();
 $('#t45f').onclick=()=>{const so=SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.test(x));SEL.fp.clear();if(!so){SEL.fp.add('T4');SEL.fp.add('T5')}rotulos();LIM=50;run()}}
 // ---- Tabela ----
 function tabela(){const o=ORD.o,d=ORD.d;const R=[...F].sort((a,b)=>{const x=a[o],y=b[o];return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR'))*d});
@@ -260,15 +270,15 @@ let qt=0;$('#q').oninput=()=>{clearTimeout(qt);qt=setTimeout(()=>{LIM=50;run()},
 setPer('1');
 // Passo a passo rápido: aparece no 1º acesso de cada dia (e pelo botão "?").
 const TOUR=[['#dpb','Período','Escolha o dia ou o intervalo: hoje, semana, mês ou datas no calendário.'],['#t45b','T4 e T5','Um clique mostra só os sellers T4 e T5 em toda a tela.'],['#fms','Filtros','Região, motorista, status, visita… Cada menu tem pesquisa e aceita vários itens.'],['.kw','Indicadores','% de coleta e de visita. Clique nos cartões para filtrar a lista.'],['#t45','Foco T4 e T5','Resultado de cada grupo. Clique no cartão para ver só ele.'],['#chW','Gráficos','Passe o mouse (ou toque) nas colunas para ver todos os números.'],['#csv','Excel','Baixa a lista filtrada em planilha.'],['.wa','Fale conosco','Fala direto com a GETLOG no WhatsApp.']];
-function tour(){let i=0;const ov=document.createElement('div');ov.className='tour';ov.innerHTML='<div class="th"></div><div class="tc" role="dialog" aria-live="polite"></div>';document.body.appendChild(ov);
-const fim=()=>{ov.remove();removeEventListener('resize',pos);try{localStorage.setItem('getlog_tour',new Date().toDateString())}catch(e){}};
+function tour(){let i=0;const ov=document.createElement('div');ov.className='tour';ov.innerHTML='<div class="th"></div><div class="tc" role="dialog" aria-live="polite"></div>';document.body.appendChild(ov);const H=document.documentElement,ovf=H.style.overflow;H.style.overflow='hidden';const trava=e=>e.preventDefault();ov.addEventListener('wheel',trava,{passive:false});ov.addEventListener('touchmove',trava,{passive:false});
+const fim=()=>{ov.remove();H.style.overflow=ovf;removeEventListener('resize',pos);removeEventListener('scroll',pos);try{localStorage.setItem('getlog_tour',new Date().toDateString())}catch(e){}};
 const pos=()=>{const [sel,t,d]=TOUR[i],el=$(sel);if(!el||!el.getClientRects().length){i++;return i<TOUR.length?pos():fim()}const r=el.getBoundingClientRect(),h=ov.querySelector('.th'),c=ov.querySelector('.tc');
 Object.assign(h.style,{left:r.left-6+'px',top:r.top-6+'px',width:r.width+12+'px',height:r.height+12+'px'});
 c.innerHTML=`<small>${i+1} de ${TOUR.length}</small><b>${t}</b><p>${d}</p><div><button type="button" class="btn2" data-a="s">Pular</button><button type="button" class="btn2 pri" data-a="n">${i===TOUR.length-1?'Começar':'Próximo'}</button></div>`;
 const cw=Math.min(320,innerWidth-24),abaixo=r.bottom+12+170<innerHeight;Object.assign(c.style,{width:cw+'px',left:Math.max(12,Math.min(innerWidth-cw-12,r.left))+'px',top:(abaixo?r.bottom+14:Math.max(12,r.top-14-c.offsetHeight))+'px'});
 c.querySelector('[data-a="s"]').onclick=fim;c.querySelector('[data-a="n"]').onclick=()=>{i++;i<TOUR.length?ir():fim()}};
-const ir=()=>{const el=$(TOUR[i][0]);if(el)el.scrollIntoView({block:'center'});setTimeout(pos,250)};addEventListener('resize',pos);ir()}
-$('#ajuda').onclick=tour;
+const ir=()=>{const el=$(TOUR[i][0]);if(el)el.scrollIntoView({block:'center'});requestAnimationFrame(pos);setTimeout(pos,200)};addEventListener('resize',pos);addEventListener('scroll',pos,{passive:true});ir()}
+$('#ajuda').onclick=()=>{if(!$('.tour'))tour()};
 let vt='';try{vt=localStorage.getItem('getlog_tour')}catch(e){}if(vt!==new Date().toDateString())setTimeout(()=>{if(!$('.tour'))tour()},1200);
 novaL.then(N2=>{const ant=new Map(LS.map(x=>[x.dia,x.modificadoEm]));const mud=N2.some(x=>ant.get(x.dia)!==x.modificadoEm)||N2.length!==LS.length;LS=N2;mostraUlt();if(mud){const k1=LS[LS.length-1].k,k2=LS[0].k;$('#d1').min=$('#d2').min=k1;$('#d1').max=$('#d2').max=k2;SEMC=false;SEMR=null;load()}}).catch(()=>{})}
 })();
