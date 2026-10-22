@@ -6,6 +6,7 @@ const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']
 const N=n=>Number(n||0).toLocaleString('pt-BR');const norm=s=>String(s||'').trim().toLowerCase();
 async function kek(pw,salt,iter){const b=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},b,{name:'AES-GCM',length:256},false,['decrypt'])}
 async function prof(raw,u){const k=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['decrypt']);return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(u.p.iv)},k,b2u(u.p.ct))))}
+async function senhaPlan(D,login){if(!D.senhaUrl)return null;try{const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);const r=await fetch(D.senhaUrl+'?senha='+encodeURIComponent(login),{signal:c.signal,cache:'no-store'});clearTimeout(t);const j=await r.json();return j.ok&&j.dados&&j.dados.key?j.dados:null}catch(e){return null}}
 async function db(){const r=await fetch('/data/users.json?t='+Date.now(),{cache:'no-store'});return r.json()}
 const API='https://script.google.com/macros/s/AKfycbzBrdB2u8IlJJ0o9OclHWPcpA3JUi8n5D_ebIkZ6Kzagwt01zmvsaHU50PrA2C9MzCwdA/exec',PW_PADRAO='123456';
 const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
@@ -26,15 +27,18 @@ const r=await fetch(cfg.pontoUrl,{method:'POST',headers:{'Content-Type':'text/pl
 catch(x){go.disabled=false;go.textContent='Salvar senha';m.textContent='Não foi possível salvar (erro: '+(x.message||'rede')+'). Tente de novo.'}}})}
 $('#f').addEventListener('submit',async e=>{e.preventDefault();const m=$('#m'),go=$('#go');m.textContent='';go.disabled=true;go.textContent='Verificando...';
 let D,u,raw,p;try{D=await db();u=D.users.find(x=>x.login===norm($('#u').value));if(!u||u.role!=='fornecedor'||u.active===false)throw 0;
-const k=await kek($('#p').value,b2u(u.salt),D.iter);raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(u.iv)},k,b2u(u.key)));p=await prof(raw,u)}
+const pw=$('#p').value;const abreW=async w=>{try{const k=await kek(pw,b2u(w.salt),D.iter);return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(w.iv)},k,b2u(w.key)))}catch(e){return null}};
+// Senha pessoal (criada pelo próprio usuário) fica no servidor do ponto; a do site só vale se for mais nova. Igual ao portal.
+const sp=await senhaPlan(D,u.login);raw=sp&&(!u.pwEm||sp.em>u.pwEm)?await abreW(sp):null;if(!raw)raw=await abreW(u);if(!raw&&sp)raw=await abreW(sp);if(!raw)throw 0;p=await prof(raw,u)}
 catch(x){m.textContent='Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar';return}
 let cfg={};try{const r=await fetch('/data/config.json?t='+Date.now(),{cache:'no-store'});cfg=await abre(raw,await r.json())}catch(x){}
 if($('#p').value===PW_PADRAO)await trocaSenha(u.login,PW_PADRAO,raw,D.iter,cfg);
 sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,t:cfg.driveToken||''}));app()});
+$('#eye').onclick=()=>{const i=$('#p'),v=i.type==='password';i.type=v?'text':'password';$('#eye').setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha');$('#eye').classList.toggle('on',v);i.focus()};
 let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')ativo(s).then(v=>v?app():sai());else $('#u').focus();
 // Confere a cada abertura se o acesso continua ativo.
 async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false}catch(e){return true}}
-function sai(){sessionStorage.removeItem(S_KEY);location.reload()}
+function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
 const get=async(q,t)=>{const r=await fetch(API+'?'+q+(t?'&t='+encodeURIComponent(t):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);const j=await r.json();if(!j.ok)throw new Error(j.erro||'erro');return j.dados};
 const dk=d=>d.split('.').reverse().join('-');
 const WA='https://wa.me/5511989141009?text='+encodeURIComponent('Olá, GETLOG! Sou cliente e preciso de ajuda com as coletas.');
@@ -44,17 +48,20 @@ const fmtD=k=>k.split('-').reverse().join('/');
 // Hora "14:32", "22/10/2026 14:32" ou fração do Excel → hora inteira (0–23) ou -1.
 const hr=h=>{if(h==null||h==='')return -1;if(typeof h==='number'||/^\d*\.\d+$/.test(h)){const f=+h%1;return f?Math.floor(f*24):-1}const m=String(h).match(/(\d{1,2}):\d{2}/);return m&&+m[1]<24?+m[1]:-1};
 // Cache do dia no aparelho (versão = modificadoEm do Drive): reabrir é instantâneo e só baixa o que mudou.
-const CK='getlog_cli2_';const lerC=(d,v)=>{try{const o=JSON.parse(localStorage.getItem(CK+d));return o&&o.v===v?o.r:null}catch(e){return null}};
-const gravaC=(d,v,r)=>{try{localStorage.setItem(CK+d,JSON.stringify({v,r}))}catch(e){try{Object.keys(localStorage).filter(k=>k.startsWith(CK)).forEach(k=>localStorage.removeItem(k))}catch(x){}}};
+// Cache dos dias no aparelho (IndexedDB, cabe muito mais que o localStorage). Sair apaga.
+const IDB=new Promise(ok=>{try{const q=indexedDB.open('getlog_cli3',1);q.onupgradeneeded=()=>q.result.createObjectStore('d');q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)}catch(e){ok(null)}});
+const lerC=async(d,v)=>{const db=await IDB;if(!db)return null;return new Promise(ok=>{try{const q=db.transaction('d').objectStore('d').get(d);q.onsuccess=()=>{const o=q.result;ok(o&&o.v===v?o.r:null)};q.onerror=()=>ok(null)}catch(e){ok(null)}})};
+const gravaC=async(d,v,r)=>{const db=await IDB;if(!db)return;try{db.transaction('d','readwrite').objectStore('d').put({v,r},d)}catch(e){}};
 async function app(){const S=JSON.parse(sessionStorage.getItem(S_KEY));const C=window.GL_CORE;
 $('#login').hidden=true;const A=$('#app');A.hidden=false;
 A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="chip-logo"><img src="/assets/logo-getlog.webp" alt="GETLOG" width="84" height="34"></span><div class="hd-act"><a class="out wa-top" href="${WA}" target="_blank" rel="noopener">Fale conosco</a><button class="out" id="sair">Sair</button></div></div>
 <h1>Coletas ${esc(S.name)}</h1><p>Performance de coleta e de visita, em tempo real, da operação GETLOG.</p><span class="upd"><i></i><span id="upd">Conectando ao Drive...</span></span></div></header>
-<main class="w body"><section class="flt"><div class="chips" id="per" role="group" aria-label="Período">${[['1','Último dia'],['2','2 dias'],['7','7 dias'],['15','15 dias'],['30','30 dias'],['c','Personalizado']].map(([v,l])=>`<button type="button" data-p="${v}">${l}</button>`).join('')}</div>
+<main class="w body"><section class="flt"><div class="chips" id="per" role="group" aria-label="Período">${[['1','Último dia'],['2','2 dias'],['sem','Esta semana'],['sp','Semana passada'],['7','7 dias'],['15','15 dias'],['30','30 dias'],['56','8 semanas'],['c','Personalizado']].map(([v,l])=>`<button type="button" data-p="${v}">${l}</button>`).join('')}</div>
 <div class="rng" id="rng" hidden><label>De <input type="date" id="d1"></label><label>Até <input type="date" id="d2"></label></div>
-<div class="fl"><select id="fr" aria-label="Região"></select><select id="fm" aria-label="Motorista"></select><select id="fp" aria-label="Prioridade"></select><select id="fs" aria-label="Situação"><option value="">Todas as situações</option><option value="ok">Coletado</option><option value="warn">Parcial / em rota</option><option value="bad">Não coletado</option></select><input id="q" type="search" placeholder="Buscar seller, motorista ou bairro" aria-label="Buscar"></div>
+<div class="fl"><select id="fr" aria-label="Região"><option value="">Todas as regiões</option></select><select id="fm" aria-label="Motorista"><option value="">Todos os motoristas</option></select><select id="fp" aria-label="Prioridade"><option value="">Todas as prioridades</option></select><select id="fs" aria-label="Situação"><option value="">Todas as situações</option><option value="ok">Coletado</option><option value="warn">Parcial / em rota</option><option value="bad">Não coletado</option></select><input id="q" type="search" placeholder="Buscar seller, motorista ou bairro" aria-label="Buscar"></div><div class="fa" id="fa" hidden></div>
 <div class="prog" id="prog" hidden><i></i></div></section>
 <div class="kp" id="kp"></div><section class="card t45" id="t45" hidden></section>
+<section class="card"><h2>Performance por semana</h2><p class="sub">Semana de segunda a domingo · % de coleta e visita, previsto e coletado</p><div class="wk" id="chW"></div></section>
 <div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">Previsto × coletado e % de coleta e visita</p><div class="ch" id="chD"></div></section>
 <section class="card"><h2>Coletas por hora</h2><p class="sub">Pacotes coletados em cada hora e acumulado do previsto</p><div class="ch" id="chH"></div></section></div>
 <div class="g2"><section class="card"><h2>Performance por região</h2><p class="sub">% de coleta do previsto</p><div class="ch" id="chR"></div></section>
@@ -64,34 +71,45 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <a class="wa" href="${WA}" target="_blank" rel="noopener" aria-label="Fale conosco no WhatsApp"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6c-2 0-4-.5-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.2 1.1-1.2 2.8 1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5.1 2.2.9 3 1 4.1.8.7-.1 1.9-.8 2.2-1.5s.3-1.4.2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg><span>Fale conosco</span></a>`;
 $('#sair').onclick=sai;
 const kp=$('#kp');kp.innerHTML='<div class="k sk"></div>'.repeat(6);
-let LS=[];try{LS=(await get('fonte=lista',S.t)).filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).map(x=>({...x,k:dk(x.dia)})).sort((a,b)=>a.k<b.k?1:-1).slice(0,60)}
-catch(e){$('#upd').textContent='Sem conexão com o Drive';kp.innerHTML='<div class="k err">Não foi possível carregar os dados agora. <button class="btn2" onclick="location.reload()">Tentar de novo</button></div>';return}
-if(!LS.length){$('#upd').textContent='Nenhum dia publicado';kp.innerHTML='';return}
-const ult=LS.reduce((m,x)=>{const t=new Date(x.modificadoEm).getTime();return t>m?t:m},0);if(ult){const e=new Date(ult);$('#upd').textContent='Última atualização: '+e.toLocaleDateString('pt-BR')+' às '+e.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
+const prepL=d=>d.filter(x=>/^\d{2}\.\d{2}\.\d{4}$/.test(x.dia)).map(x=>({...x,k:dk(x.dia)})).sort((a,b)=>a.k<b.k?1:-1).slice(0,60);
+const novaL=get('fonte=lista',S.t).then(d=>{try{localStorage.setItem('getlog_cli_lista',JSON.stringify(d))}catch(e){}return prepL(d)});
+// Abre na hora com a última lista guardada; a nova chega em segundo plano e só recarrega o que mudou.
+let LS=null;try{const c=JSON.parse(localStorage.getItem('getlog_cli_lista'));if(Array.isArray(c)&&c.length)LS=prepL(c)}catch(e){}
+if(!LS)try{LS=await novaL}catch(e){$('#upd').textContent='Sem conexão com o Drive';kp.innerHTML='<div class="k err">Não foi possível carregar os dados agora. <button class="btn2" onclick="location.reload()">Tentar de novo</button></div>';return}
+const mostraUlt=()=>{const ult=LS.reduce((m,x)=>{const t=new Date(x.modificadoEm).getTime();return t>m?t:m},0);if(ult){const e=new Date(ult);$('#upd').textContent='Última atualização: '+e.toLocaleDateString('pt-BR')+' às '+e.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}};mostraUlt();
 // Cliente vazio ou TODOS (ex.: iMile, cliente principal) vê a operação inteira.
 const tudo=!S.cliente||norm(S.cliente)==='todos'||/imile/.test(norm(S.cliente+' '+S.login));
-const MEM={};
-const carrega=it=>MEM[it.dia]||(MEM[it.dia]=(async()=>{const h=lerC(it.dia,it.modificadoEm);if(h)return h;
-const j=await get('fonte=performance&dia='+encodeURIComponent(it.dia),S.t);const R=C.normRows(C.toRecords(j.conteudo),it.k);const eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
+const MEM={};const key=it=>it.dia+'|'+it.modificadoEm;
+const carrega=it=>MEM[key(it)]||(MEM[key(it)]=(async()=>{const h=await lerC(it.dia,it.modificadoEm);if(h)return h;
+const j=await get('fonte=performance&dia='+encodeURIComponent(it.dia),S.t);const RC=C.toRecords(j.conteudo),R=C.normRows(RC,it.k);
+// Classe do seller (T1…T5): procura em qualquer coluna (TIPO DE PRIORIDADE, classe, tier…), não só numa.
+const TIER=new Map();for(const o of RC){let t='';for(const [k,v] of Object.entries(o)){const m=String(v??'').match(/^\s*T\s?-?([1-9])\s*$/i)||(/prior|tier|classe|categ|curva|tipo/i.test(k)?String(v??'').match(/\bT\s?-?([1-9])\b/i):null);if(m){t='T'+m[1];break}}if(t){const sid=String(o['SELLER ID']??'').trim(),sn=String(o['SELLER']??'').trim();if(sid)TIER.set('i'+sid,t);if(sn)TIER.set('n'+sn,t)}}
+const tierOf=r=>{const m=String(r.pri).match(/T\s?-?([1-9])/i);return TIER.get('i'+r.sid)||TIER.get('n'+r.seller)||(m?'T'+m[1]:r.pri)};const eu=tudo?null:C.casar([S.cliente],R.map(r=>r.cli));
 // Linha compacta: data, seller, motorista, região, bairro, cidade, status, hora, previsto, coletado do previsto, total, justificado
-const out=R.filter(r=>tudo||eu.has(r.cli)).map(r=>[it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,r.pri]);gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[it.dia];throw e}));
+const out=R.filter(r=>tudo||eu.has(r.cli)).map(r=>[it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep]);gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
 const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1').max=$('#d2').max=kmax;$('#d1').value=$('#d2').value=kmax;
 let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
-const dias=()=>per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
+const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
+const dias=()=>per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;prog.firstChild.style.width='4%';
 const res=new Array(D.length);let i=0,falhas=0;
-await Promise.all(Array.from({length:Math.min(4,D.length)},async()=>{while(i<D.length){const k=i++;try{res[k]=await carrega(D[k])}catch(e){res[k]=[];falhas++}if(g!==GEN)return;prog.firstChild.style.width=(++feitos/D.length*100)+'%'}}));
-if(g!==GEN)return;prog.hidden=true;ROWS=res.flat().map(a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase()}));
-if(falhas)$('#upd').textContent='Alguns dias não carregaram ('+falhas+'). Tente atualizar.';
+let pt=0;const parcial=()=>{if(g!==GEN||feitos===D.length)return;clearTimeout(pt);pt=setTimeout(()=>{if(g===GEN&&feitos<D.length)monta(res.filter(Boolean),0,true)},120)};
+await Promise.all(Array.from({length:Math.min(6,D.length)},async()=>{while(i<D.length){const k=i++;try{res[k]=await carrega(D[k])}catch(e){res[k]=[];falhas++}if(g!==GEN)return;prog.firstChild.style.width=(++feitos/D.length*100)+'%';parcial()}}));
+if(g!==GEN)return;prog.hidden=true;monta(res,falhas)}
+// Monta a tela com o que já chegou (os dias aparecem conforme carregam).
+function monta(res,falhas,parc){ROWS=res.flat().map(a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,'')}));
+if(!parc)mostraUlt();if(falhas)$('#upd').textContent='Alguns dias não carregaram ('+falhas+'). Tente atualizar.';
 const FP=$('#fp').value;const opt=(id,lbl,vals)=>{const el=$('#'+id),v=el.value;el.innerHTML=`<option value="">${lbl}</option>`+[...new Set(vals.filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(x=>`<option${x===v?' selected':''}>${esc(x)}</option>`).join('')};
-opt('fr','Todas as regiões',ROWS.map(r=>r.r));opt('fm','Todos os motoristas',ROWS.map(r=>r.m));opt('fp','Todas as prioridades',ROWS.map(r=>r.pr).filter(x=>x&&x!=='—'));if(ROWS.some(r=>/T\s?[45]/.test(r.pr))){const f=$('#fp');f.insertAdjacentHTML('beforeend','<option value="T45">Só T4 e T5</option>');if(FP==='T45')f.value='T45'}LIM=50;run()}
+opt('fr','Todas as regiões',ROWS.map(r=>r.r));opt('fm','Todos os motoristas',ROWS.map(r=>r.m));opt('fp','Todas as prioridades',ROWS.map(r=>r.pr).filter(x=>x&&x!=='—'));if(ROWS.some(r=>/T\s?[45]/.test(r.pr))){const f=$('#fp');f.insertAdjacentHTML('beforeend','<option value="T45">Só T4 e T5</option>');if(FP==='T45')f.value='T45'}if(!parc)LIM=50;run();if(!parc)setTimeout(adiantar,300)}
+// Depois de abrir, deixa os últimos 7 dias prontos em segundo plano (trocar de período fica instantâneo).
+function adiantar(){const F7=LS.slice(0,7);let i=0;for(let n=0;n<3;n++)(async()=>{while(i<F7.length)await carrega(F7[i++]).catch(()=>{})})()}
 const cls=r=>r.st==='Em rota'?['warn','Em rota']:r.p>0&&r.c>=r.p?['ok','Coletado']:r.c>0||r.t>0?['warn','Parcial']:['bad',r.j>0?'Justificado':r.st&&r.st!=='—'&&r.st!=='Coletado'?r.st:'Não coletado'];
 const vis=r=>r.t>0||r.j>0||r.c>0;
 const filtra=()=>{const q=norm($('#q').value),fr=$('#fr').value,fm=$('#fm').value,fs=$('#fs').value,fp=$('#fp').value;return ROWS.filter(r=>(!fp||(fp==='T45'?/T\s?[45]/.test(r.pr):r.pr===fp))&&(!fr||r.r===fr)&&(!fm||r.m===fm)&&(!fs||cls(r)[0]===fs)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci).includes(q)))};
 const agr=(R,key)=>{const M=new Map();for(const r of R){const k=key(r);let o=M.get(k);if(!o)M.set(k,o={k,p:0,c:0,t:0,n:0,v:0});o.p+=r.p;o.c+=Math.min(r.c,r.p);o.t+=r.t;o.n++;if(vis(r))o.v++}return [...M.values()]};
 let F=[];
-function run(){F=filtra();const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,V=F.filter(vis).length,pv=F.length?V/F.length*100:0;
+function run(){F=filtra();const at=[['fr','Região'],['fm','Motorista'],['fp','Prioridade'],['fs','Situação']].filter(([i])=>$('#'+i).value).map(([i,l])=>`<button type="button" data-x="${i}">${l}: ${esc($('#'+i).selectedOptions[0].text)} ✕</button>`);if($('#q').value)at.push(`<button type="button" data-x="q">Busca: ${esc($('#q').value)} ✕</button>`);const fa=$('#fa');fa.hidden=!at.length;fa.innerHTML=at.join('')+(at.length>1?'<button type="button" class="cl" data-x="*">Limpar tudo</button>':'');fa.querySelectorAll('button').forEach(b=>b.onclick=()=>{(b.dataset.x==='*'?['fr','fm','fp','fs','q']:[b.dataset.x]).forEach(i=>$('#'+i).value='');LIM=50;run()});const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,V=F.filter(vis).length,pv=F.length?V/F.length*100:0;
 const pend=F.filter(r=>cls(r)[0]==='bad').length;
 const K=(l,v,s,c)=>`<div class="k${c?' pc':''}"${c?` style="--c:${c}"`:''}><small>${l}</small><b>${v}</b>${s||''}</div>`;const ring=p=>`<div class="ring"><i style="width:${Math.min(100,p)}%"></i></div>`;
 kp.innerHTML=K('Pacotes previstos',N(P))+K('Coletados do previsto',N(Cc),`<span class="ks">Total coletado: ${N(T)}</span>`)+K('Performance de coleta',P1(pc),ring(pc),pcCor(pc))+K('Performance de visita',P1(pv),ring(pv),pcCor(pv))+K('Sellers visitados',N(V)+' <em>de '+N(F.length)+'</em>')+K('Não coletados',N(pend),'',pend?'var(--bad)':'var(--ok)');
@@ -117,14 +135,18 @@ const pk=hs.reduce((a,b)=>H[b]>H[a]?b:a,hs[0]);el.innerHTML=s+`</svg><div class=
 function chR(){const el=$('#chR'),A=agr(F,r=>r.r||'Sem região').sort((a,b)=>b.p-a.p);if(!A.length){el.innerHTML='<p class="emp">Sem dados.</p>';return}
 el.innerHTML=`<div class="rg">${A.map(a=>{const p=a.p?a.c/a.p*100:0,v=a.n?a.v/a.n*100:0;return `<button type="button" class="rr${$('#fr').value===a.k?' on':''}" data-r="${esc(a.k)}"><span class="rn">${esc(a.k)}</span><span class="rb"><i style="width:${Math.min(100,p)}%;background:${pcCor(p)}"></i></span><b style="color:${pcCor(p)}">${P1(p)}</b><small>${N(a.c)} de ${N(a.p)} · visita ${P1(v)}</small></button>`}).join('')}</div>`;
 el.querySelectorAll('.rr').forEach(b=>b.onclick=()=>{const f=$('#fr');f.value=f.value===b.dataset.r?'':b.dataset.r;run()})}
-function charts(){chD();chH();chR()}
+function chW(){const el=$('#chW'),A=agr(F,r=>semIni(r.dk)).sort((a,b)=>a.k<b.k?-1:1);if(!A.length){el.innerHTML='<p class="emp">Sem dados no período.</p>';return}
+const fim=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()+6);return d.toISOString().slice(0,10)};
+el.innerHTML=A.map((a,i)=>{const p=a.p?a.c/a.p*100:0,v=a.n?a.v/a.n*100:0,ant=A[i-1],pa=ant&&ant.p?ant.c/ant.p*100:null,dl=pa==null?'':`<span class="dl ${p>=pa?'up':'dn'}">${p>=pa?'▲':'▼'} ${P1(Math.abs(p-pa)).replace('%',' p.p.')} vs. anterior</span>`;
+return `<div class="wkc"><small>${fmtD(a.k).slice(0,5)} a ${fmtD(fim(a.k)).slice(0,5)}</small><b style="color:${pcCor(p)}">${P1(p)}</b>${dl}<div class="ring" style="--c:${pcCor(p)}"><i style="width:${Math.min(100,p)}%"></i></div><span>coleta · ${N(a.c)} de ${N(a.p)}</span><span>visita <b>${P1(v)}</b> · ${N(a.n)} sellers</span></div>`}).join('')}
+function charts(){chW();chD();chH();chR()}
 let rt=0;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(F.length||ROWS.length){charts();MAP&&MAP.invalidateSize()}},150)});
 // ---- Destaque T4/T5: sellers prioritários ----
-function t45(){const el=$('#t45'),is=r=>/\bT\s?[45]\b/.test(r.pr);const X=F.filter(is);if(!X.length){el.hidden=true;return}el.hidden=false;
+function t45(){const el=$('#t45'),is=r=>/^T[45]$/.test(r.pr);const X=F.filter(is);el.hidden=false;if(!X.length){el.innerHTML='<div class="tb-h"><div><h2>Foco: sellers T4 e T5</h2><p class="sub">Nenhum seller T4 ou T5 encontrado no período e filtros escolhidos.</p></div></div>';return}
 const g=['T4','T5'].map(t=>{const R=X.filter(r=>r.pr.replace(/\s/g,'').includes(t)),P=R.reduce((a,r)=>a+r.p,0),Cc=R.reduce((a,r)=>a+Math.min(r.c,r.p),0),pc=P?Cc/P*100:0,v=R.length?R.filter(vis).length/R.length*100:0;
 return `<div class="tk"><span class="tg">${t}</span><b style="color:${pcCor(pc)}">${R.length?P1(pc):'—'}</b><small>coleta · ${N(Cc)} de ${N(P)} pacotes</small><small>visita ${R.length?P1(v):'—'} · ${N(R.length)} sellers</small></div>`}).join('');
 const pend=X.filter(r=>cls(r)[0]!=='ok').sort((a,b)=>b.p-a.p);
-el.innerHTML=`<div class="tb-h"><div><h2>Sellers prioritários T4 e T5</h2><p class="sub">Acompanhamento em destaque dos sellers de maior prioridade</p></div><button class="btn2" type="button" id="t45f">${$('#fp').value==='T45'?'Ver todos':'Ver só T4 e T5'}</button></div>
+el.innerHTML=`<div class="tb-h"><div><h2>Foco: sellers T4 e T5</h2><p class="sub">Acompanhamento em destaque dos sellers de maior prioridade</p></div><button class="btn2" type="button" id="t45f">${$('#fp').value==='T45'?'Ver todos':'Ver só T4 e T5'}</button></div>
 <div class="tks">${g}</div>${pend.length?`<p class="sub"><b>${N(pend.length)}</b> ainda sem coleta completa:</p><div class="tw"><table><tbody>${pend.slice(0,5).map(r=>`<tr><td><span class="tg">${esc(r.pr)}</span></td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="n">${N(r.c)}/${N(r.p)}</td><td><span class="s ${cls(r)[0]}">${esc(cls(r)[1])}</span></td></tr>`).join('')}</tbody></table></div>`:'<p class="sub ok-t">Todos os sellers T4 e T5 foram coletados. ✔</p>'}`;
 $('#t45f').onclick=()=>{const f=$('#fp');f.value=f.value==='T45'?'':'T45';LIM=50;run()}}
 // ---- Tabela ----
@@ -140,10 +162,10 @@ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t
 let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo')||'{}')}catch(e){}
 const geo=k=>k in GEO?Promise.resolve(GEO[k]):(GQ=GQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(k));const j=await r.json();if(j[0])v=[+j[0].lat,+j[0].lon]}catch(e){return null}
 GEO[k]=v;try{localStorage.setItem('getlog_geo',JSON.stringify(GEO))}catch(e){}await new Promise(r=>setTimeout(r,1100));return v}));
-async function mapa(){if(!window.L)return;const g=++MG;if(!MAP){MAP=L.map('map',{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(MAP);LAY=L.layerGroup().addTo(MAP)}
-LAY.clearLayers();const A=agr(F.filter(r=>r.b||r.ci),r=>[r.b,r.ci||'São Paulo'].filter(Boolean).join(', ')).sort((a,b)=>b.p-a.p).slice(0,60);const mx=Math.max(1,...A.map(a=>a.p));const pts=[];
+async function mapa(){if(!window.L)return;const g=++MG;if(!MAP){MAP=L.map('map',{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',{maxZoom:19,subdomains:'abcd',attribution:'© OpenStreetMap · © CARTO'}).addTo(MAP);LAY=L.layerGroup().addTo(MAP)}
+LAY.clearLayers();const lugar=r=>r.b?r.b+', '+(r.ci||'São Paulo'):r.cep.length>=5?'CEP '+r.cep.slice(0,5)+'-'+(r.cep.slice(5,8)||'000'):r.ci?r.ci:'';const A=agr(F.filter(lugar),lugar).sort((a,b)=>b.p-a.p).slice(0,60);const mx=Math.max(1,...A.map(a=>a.p));const pts=[];
 $('#mapS').textContent=A.length?'Bairros atendidos ('+A.length+'); tamanho = volume, cor = performance de coleta':'Sem endereço nos dados do período.';
-for(const a of A){const c=await geo(a.k+', SP');if(g!==MG)return;if(!c)continue;const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(c);
+for(const a of A){const c=await geo(a.k.startsWith('CEP ')?a.k.slice(4)+', Brasil':a.k+', SP');if(g!==MG)return;if(!c)continue;const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(c);
 L.circleMarker(c,{radius:6+Math.sqrt(a.p/mx)*16,color:cor,weight:2,fillColor:cor,fillOpacity:.35}).bindPopup(`<b>${esc(a.k)}</b><br>Previsto: ${N(a.p)}<br>Coletado: ${N(a.c)}<br>Coleta: <b>${P1(p)}</b> · Visita: ${P1(a.n?a.v/a.n*100:0)}`).addTo(LAY);
 if(pts.length===1||pts.length===8)MAP.fitBounds(pts.length===1?L.latLng(c).toBounds(8000):pts,{padding:[24,24],maxZoom:13})}
 if(pts.length>1)MAP.fitBounds(pts,{padding:[24,24],maxZoom:13})}
@@ -152,5 +174,6 @@ const setPer=v=>{per=v;document.querySelectorAll('#per button').forEach(b=>b.cla
 document.querySelectorAll('#per button').forEach(b=>b.onclick=()=>setPer(b.dataset.p));
 ['d1','d2'].forEach(i=>$('#'+i).onchange=()=>load());['fr','fm','fs','fp'].forEach(i=>$('#'+i).onchange=()=>{LIM=50;run()});
 let qt=0;$('#q').oninput=()=>{clearTimeout(qt);qt=setTimeout(()=>{LIM=50;run()},200)};
-setPer('1')}
+setPer('1');
+novaL.then(N2=>{const ant=new Map(LS.map(x=>[x.dia,x.modificadoEm]));const mud=N2.some(x=>ant.get(x.dia)!==x.modificadoEm)||N2.length!==LS.length;LS=N2;mostraUlt();if(mud){const k1=LS[LS.length-1].k,k2=LS[0].k;$('#d1').min=$('#d2').min=k1;$('#d1').max=$('#d2').max=k2;load()}}).catch(()=>{})}
 })();
