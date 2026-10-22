@@ -27,7 +27,7 @@ Publicar = commit e push direto no `main` (o dono pediu). Responder em portuguê
 - Bibliotecas de terceiros hospedadas no próprio site (`assets/vendor/`: Leaflet, SheetJS). Não voltar a carregar de CDN.
 - Script do Drive: o portal envia `&t=<token>` (CFG.driveToken, salvo criptografado). Passo a passo para o dono em `docs/drive-apps-script-token.md`.
 - Copiar a chave mestra / salvar token pede a senha de novo (`confirmaSenha`).
-- Clientes (tipo fornecedor) NÃO usam a chave mestra: `ck:1` em users.json = a senha destranca a CHAVE DOS CLIENTES (`CFG.clientKey`, guardada no config.json), que abre só o perfil do cliente e `data/config-cliente.json` (token do Drive). Senha de cliente é definida pelo admin (mín. 10, letras+números); cliente não troca sozinho. Fornecedor sem `ck` é bloqueado no /cliente até o admin redefinir a senha.
+- Clientes (tipo fornecedor) NÃO usam a chave mestra: `ck:1` em users.json = a senha destranca a CHAVE DOS CLIENTES (`CFG.clientKey`, guardada no config.json), que abre só o perfil do cliente e `data/config-cliente.json` (token do Drive). Senha de cliente é definida pelo admin (mín. 8, letras+números); cliente não troca sozinho. Fornecedor sem `ck` é bloqueado no /cliente até o admin redefinir a senha.
 
 ## Testar antes de publicar
 `python3 -m http.server` na pasta + Playwright (Chromium já instalado). Validar sintaxe: `node -e "new Function(require('fs').readFileSync('portal/portal.js','utf8'))"`.

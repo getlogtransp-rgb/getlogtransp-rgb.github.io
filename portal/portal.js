@@ -625,7 +625,7 @@ const mkProf=u=>({name:u.name,tel:u.tel||'',placa:String(u.placa||'').toUpperCas
 // ah = hash da credencial do servidor para a senha definida pelo admin (o servidor confere sem conhecer a senha).
 const credAdmin=async(login,pw,role)=>({...(role==='fornecedor'?await wrapCli(pw):{...await wrapFor(pw),ck:undefined}),pwEm:new Date().toISOString(),ah:await hashHex(await credencial(login,pw))});
 // Senha de cliente: definida pelo admin (o cliente não troca sozinho), forte e diferente da padrão.
-const pedeSenhaCli=n=>{const pw=prompt('Senha do acesso de cliente '+n+' (mínimo 10 caracteres, com letras e números):');if(pw==null)return null;if(pw.length<10||!/[a-z]/i.test(pw)||!/\d/.test(pw)){alert('Senha fraca: use 10+ caracteres com letras e números.');return null}return pw};
+const pedeSenhaCli=n=>{const pw=prompt('Senha do acesso de cliente '+n+' (mínimo 8 caracteres, com letras e números):');if(pw==null)return null;if(pw.length<8||!/[a-z]/i.test(pw)||!/\d/.test(pw)){alert('Senha fraca: use 8 ou mais caracteres com letras e números.');return null}return pw};
 async function addUser(u,pw){const prof=mkProf(u);
 const rec={login:u.login,role:u.role,active:true,...await credAdmin(u.login,pw,u.role),p:await sealRole(prof,u.role),created:new Date().toISOString()};rec._p=prof;DB.users.push(rec)}
 // Avisa o servidor do ponto na hora (sem esperar o site publicar) que um acesso foi bloqueado ou liberado.
