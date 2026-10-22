@@ -38,7 +38,8 @@ let cfg={};try{const r=await fetch('/data/config.json?t='+Date.now(),{cache:'no-
 if($('#p').value===PW_PADRAO)await trocaSenha(u.login,PW_PADRAO,raw,D.iter,cfg);
 sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,t:cfg.driveToken||''}));app()});
 $('#eye').onclick=()=>{const i=$('#p'),v=i.type==='password';i.type=v?'text':'password';$('#eye').setAttribute('aria-label',v?'Ocultar senha':'Mostrar senha');$('#eye').classList.toggle('on',v);i.focus()};
-let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}if(s&&s.role==='fornecedor')ativo(s).then(v=>v?app():sai());else $('#u').focus();
+let s=null;try{s=JSON.parse(sessionStorage.getItem(S_KEY))}catch(e){}// Já logado: abre o painel na hora (sem piscar a tela de login) e confere o acesso em segundo plano.
+if(s&&s.role==='fornecedor'){$('#login').hidden=true;Promise.resolve().then(app);ativo(s).then(v=>{if(!v)sai()})}else $('#u').focus();
 // Confere a cada abertura se o acesso continua ativo.
 async function ativo(s){try{const u=(await db()).users.find(x=>x.login===s.login);return !!u&&u.role==='fornecedor'&&u.active!==false}catch(e){return true}}
 function sai(){sessionStorage.removeItem(S_KEY);try{localStorage.removeItem('getlog_cli_lista');indexedDB.deleteDatabase('getlog_cli5');indexedDB.deleteDatabase('getlog_cli4');indexedDB.deleteDatabase('getlog_cli3');indexedDB.deleteDatabase('getlog_cli2');indexedDB.deleteDatabase('getlog_cli')}catch(e){}location.reload()}
@@ -64,8 +65,8 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <div class="fms" id="fms"></div><div class="fa" id="fa" hidden></div>
 <div class="prog" id="prog" hidden><i></i></div></section><div class="ld" id="ld" hidden role="status" aria-live="polite"><span class="sp"></span><span id="ldt">Carregando dados…</span></div>
 <div class="kw"><div class="dn" id="dn"></div><div class="kp" id="kp"></div></div><section class="card t45" id="t45" hidden></section>
-<section class="card"><h2>Performance por semana</h2><p class="sub" id="chWs">Últimas 8 semanas (segunda a domingo) · respeita os filtros, não o período</p><div class="ch" id="chW"></div></section>
-<div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">% coletado e % de visita da operação inteira (não segue os filtros) · passe o mouse para ver os números</p><div class="ch" id="chD"></div></section>
+<section class="card"><h2>Performance por semana</h2><p class="sub" id="chWs">% de visita por semana (últimas 8, segunda a domingo) · coleta em cinza como referência</p><div class="ch" id="chW"></div></section>
+<div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">% de visita por dia da operação inteira (não segue os filtros) · coleta em cinza como referência</p><div class="ch" id="chD"></div></section>
 <section class="card"><h2>Coletas por hora</h2><p class="sub">Barras: pacotes coletados na hora (número embaixo) · linha: % acumulado do previsto</p><div class="ch" id="chH"></div></section></div>
 <div class="g2"><section class="card"><h2>Performance por região</h2><p class="sub">% de visita (sellers) · coleta em segundo plano · clique para filtrar</p><div class="ch" id="chR"></div></section>
 <section class="card"><h2>Mapa da operação</h2><p class="sub" id="mapS">Bairros atendidos; cor = performance de coleta</p><div id="map"></div></section></div>
@@ -184,8 +185,8 @@ o.bars.forEach((b,k)=>{const v=b.v[i],yy=y(v),hh=pt+ch-yy;s+=`<rect class="bar" 
 if(b.lbl&&o.under){if(k===0)s+=`<text x="${cx(i)}" y="${h-2}" class="vl sm" text-anchor="middle">${kfmt(v)}</text>`}else if(b.lbl&&bw>=34&&v>0){const lx=x0+k*(bwi+gap)+bwi/2;const tw=kfmt(v).length*6.4+6;s+=hh>=22&&bwi>=tw?`<text x="${lx}" y="${pt+ch-7}" class="vl in" text-anchor="middle">${kfmt(v)}</text>`:`<text x="${lx}" y="${yy-5}" class="vl" text-anchor="middle">${kfmt(v)}</text>`}});
 if(i%passo===0)s+=`<text x="${cx(i)}" y="${h-(o.under?20:14)}" class="ax" text-anchor="middle">${esc(o.cats[i])}</text>`}
 (o.lines||[]).forEach((l,li)=>{const P=l.v.map((v,i)=>v==null?null:[cx(i),yp(v)]);const seg=P.filter(Boolean);if(!seg.length)return;
-s+=`<polyline points="${seg.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${l.c}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" class="ln"/>`;
-P.forEach((p,i)=>{if(!p)return;s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4.5" fill="${l.c}" class="pt"/>`;if(l.lbl&&bw>=36){const out=(o.lines||[]).find((x,k)=>k!==li&&x.v[i]!=null);const up=!out||l.v[i]>out.v[i]||(l.v[i]===out.v[i]&&li===0);if(out&&l.v[i]===out.v[i]&&li>0)return;s+=`<text x="${p[0]}" y="${up?p[1]-10:p[1]+18}" class="vl pc" fill="${l.c}" text-anchor="middle">${String(Math.round(l.v[i]*10)/10).replace('.',',')}%</text>`}})});
+s+=`<polyline points="${seg.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${l.c}" stroke-width="${l.w||2.5}" stroke-linejoin="round" stroke-linecap="round" class="ln"/>`;
+P.forEach((p,i)=>{if(!p)return;s+=`<circle cx="${p[0]}" cy="${p[1]}" r="${l.w?5.5:3.5}" fill="${l.c}" class="pt"/>`;if(l.lbl&&bw>=36){const out=(o.lines||[]).find((x,k)=>k!==li&&x.v[i]!=null);const up=!out||l.v[i]>out.v[i]||(l.v[i]===out.v[i]&&li===0);if(out&&l.v[i]===out.v[i]&&li>0)return;s+=`<text x="${p[0]}" y="${up?p[1]-10:p[1]+18}" class="vl pc" fill="${l.c}" text-anchor="middle">${String(Math.round(l.v[i]*10)/10).replace('.',',')}%</text>`}})});
 el.innerHTML=s+'</svg>'+`<div class="lg2">${o.bars.map(b=>`<span><i style="background:${b.c}"></i>${b.n}</span>`).join('')}${(o.lines||[]).map(l=>`<span><i class="lnI" style="background:${l.c}"></i>${l.n}</span>`).join('')}${o.extra||''}</div>`}
 let CP,CC,CO='#f86800',CV;const cores=()=>{const dk=document.documentElement.dataset.theme==='dark';CP=dk?'#3b4f78':'#93a8d2';CC=dk?'#6f9bff':'#002060';CV=dk?'#3ccf8e':'#11834e'};cores();
 // Ao trocar o tema, redesenha os gráficos com as cores certas.
@@ -194,7 +195,7 @@ const pcs=(c,p)=>p?c/p*100:null;
 function tipo(t,a){return `${t}\nPrevisto: ${N(a.p)} pacotes\nColetado: ${N(a.c)} pacotes\nColeta: ${P1(a.p?a.c/a.p*100:0)}\nSellers: ${N(a.n)} · visitados ${N(a.v)} (${P1(a.n?a.v/a.n*100:0)})`}
 // Por dia: sempre a operação inteira do período (não segue os filtros), só as taxas de coleta e de visita.
 function chD(){const A=agr(ROWS,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1);combo($('#chD'),{id:'d',titulo:'Performance por dia',cats:A.map(a=>fmtD(a.k).slice(0,5)),tip:i=>tipo(fmtD(A[i].k),A[i]),
-bars:[],lines:[{n:'% coletado',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1},{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1}]})}
+bars:[],lines:[{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1,w:4},{n:'% coleta (referência)',c:'#b9c3d6',v:A.map(a=>pcs(a.c,a.p))}]})}
 function chH(){const H=new Array(24).fill(0),S=new Array(24).fill(0);let P=0;for(const r of F){P+=r.p;if(r.h>=0){H[r.h]+=r.t;S[r.h]++}}const ini=H.findIndex(v=>v>0);if(ini<0){$('#chH').innerHTML='<p class="emp">Sem horários de coleta no período.</p>';return}
 const fim=23-[...H].reverse().findIndex(v=>v>0),hs=[];for(let i=ini;i<=fim;i++)hs.push(i);let ac=0;const AC=hs.map(x=>(ac+=H[x],P?ac/P*100:0));const pk=hs.reduce((a,b)=>H[b]>H[a]?b:a,hs[0]);
 combo($('#chH'),{id:'h',titulo:'Coletas por hora',minLbl:34,under:1,cats:hs.map(x=>x+'h'),tip:i=>`${hs[i]}h às ${hs[i]}h59\nColetados na hora: ${N(H[hs[i]])} pacotes\nSellers com coleta: ${N(S[hs[i]])}\nAcumulado: ${P1(AC[i])} do previsto`,
@@ -207,7 +208,7 @@ function chW(){const el=$('#chW');if(!SEMR){el.innerHTML='<p class="emp"><span c
 const q=norm($('#q').value),R=SEMR.filter(r=>passa(r)&&(!q||norm(r.s+' '+r.m+' '+r.b+' '+r.ci+' '+r.r+' '+r.cl).includes(q)));const A=agr(R,r=>semIni(r.dk)).sort((a,b)=>a.k<b.k?-1:1);
 const fim=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()+6);return d.toISOString().slice(0,10)};
 combo(el,{id:'w',titulo:'Performance por semana',minLbl:70,cats:A.map(a=>fmtD(a.k).slice(0,5)+'–'+fmtD(fim(a.k)).slice(0,5)),tip:i=>{const a=A[i],b=A[i-1],p=a.p?a.c/a.p*100:0,pb=b&&b.p?b.c/b.p*100:null;return tipo('Semana '+fmtD(a.k)+' a '+fmtD(fim(a.k)),a)+(pb==null?'':`\nvs. semana anterior: ${p>=pb?'▲':'▼'} ${P1(Math.abs(p-pb)).replace('%',' p.p.')}`)},
-bars:[{n:'Previsto',c:CP,v:A.map(a=>a.p)},{n:'Coletado',c:CC,v:A.map(a=>a.c),lbl:1}],lines:[{n:'% coleta',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1},{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n))}]})}
+bars:[],lines:[{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1,w:4},{n:'% coleta (referência)',c:'#b9c3d6',v:A.map(a=>pcs(a.c,a.p))}]})}
 function chR(){const el=$('#chR'),A=agr(F,r=>r.r||'Sem região').sort((a,b)=>b.n-a.n);if(!A.length){el.innerHTML='<p class="emp">Sem dados.</p>';return}
 el.innerHTML=`<div class="rg">${A.map(a=>{const p=a.p?a.c/a.p*100:0,v=a.n?a.v/a.n*100:0;return `<button type="button" class="rr${SEL.fr.has(a.k)?' on':''}" data-r="${esc(a.k)}"><span class="rn">${esc(a.k)}</span><span class="rb"><i style="width:${Math.min(100,v)}%;background:${pcCor(v)}"></i></span><b style="color:${pcCor(v)}">${P1(v)}</b><small>visita · ${N(a.v)} de ${N(a.n)} sellers · coleta <b style="color:${pcCor(p)}">${P1(p)}</b> (${N(a.c)} de ${N(a.p)} pac.)</small></button>`}).join('')}</div>`;
 el.querySelectorAll('.rr').forEach(b=>b.onclick=()=>{const k=b.dataset.r,on=SEL.fr.size===1&&SEL.fr.has(k);SEL.fr.clear();if(!on)SEL.fr.add(k);rotulos();LIM=50;run()})}
