@@ -62,7 +62,7 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <div class="prog" id="prog" hidden><i></i></div></section><div class="ld" id="ld" hidden role="status" aria-live="polite"><span class="sp"></span><span id="ldt">Carregando dados…</span></div>
 <div class="kp" id="kp"></div><section class="card t45" id="t45" hidden></section>
 <section class="card"><h2>Performance por semana</h2><p class="sub" id="chWs">Últimas 8 semanas (segunda a domingo) · respeita os filtros, não o período</p><div class="ch" id="chW"></div></section>
-<div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">Previsto × coletado e % de coleta e visita · passe o mouse para ver os números</p><div class="ch" id="chD"></div></section>
+<div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">% coletado e % de visita da operação inteira (não segue os filtros) · passe o mouse para ver os números</p><div class="ch" id="chD"></div></section>
 <section class="card"><h2>Coletas por hora</h2><p class="sub">Pacotes coletados em cada hora e % acumulado do previsto · passe o mouse para ver os números</p><div class="ch" id="chH"></div></section></div>
 <div class="g2"><section class="card"><h2>Performance por região</h2><p class="sub">% de coleta do previsto</p><div class="ch" id="chR"></div></section>
 <section class="card"><h2>Mapa da operação</h2><p class="sub" id="mapS">Bairros atendidos; cor = performance de coleta</p><div id="map"></div></section></div>
@@ -147,12 +147,12 @@ const W=el=>Math.max(260,el.clientWidth-24);
 const kfmt=v=>v>=1e6?(v/1e6).toFixed(1).replace('.',',')+' mi':v>=1e4?Math.round(v/1e3)+' mil':v>=1e3?(v/1e3).toFixed(1).replace('.',',')+' mil':String(Math.round(v));
 // Gráfico combinado (barras + linhas de %): rótulos que não brigam com o desenho e dica com todos os números da coluna.
 function combo(el,o){const n=o.cats.length;if(!n){el.innerHTML='<p class="emp">Sem dados no período.</p>';return}
-const w=W(el),h=o.h||280,pl=48,pr=o.lines&&o.lines.length?46:12,pt=30,pb=38,cw=w-pl-pr,ch=h-pt-pb,bw=cw/n;
-const mx=Math.max(1,...o.bars.flatMap(b=>b.v))*1.12,y=v=>pt+ch-v/mx*ch,yp=v=>pt+ch-Math.max(0,Math.min(100,v))/100*ch,cx=i=>pl+i*bw+bw/2;
+const w=W(el),h=o.h||280,pl=o.bars.length?48:14,pr=o.lines&&o.lines.length?46:12,pt=30,pb=38,cw=w-pl-pr,ch=h-pt-pb,bw=cw/n;
+const mx=Math.max(1,...o.bars.flatMap(b=>b.v))*1.12,y=v=>pt+ch-v/mx*ch,LO=o.bars.length?0:Math.max(0,Math.floor((Math.min(100,...(o.lines||[]).flatMap(l=>l.v).filter(v=>v!=null))-6)/10)*10),yp=v=>pt+ch-(Math.max(LO,Math.min(100,v))-LO)/(100-LO)*ch,cx=i=>pl+i*bw+bw/2;
 const nb=o.bars.length,gap=Math.min(4,bw*.06),bwi=Math.min(34,(bw*.72-gap*(nb-1))/nb),tot=nb*bwi+gap*(nb-1);
 const passo=Math.max(1,Math.ceil(n/Math.max(1,Math.floor(cw/(o.minLbl||54)))));
 let s=`<svg width="${w}" height="${h}" role="img" aria-label="${esc(o.titulo||'')}"><defs>${o.bars.map((b,k)=>`<linearGradient id="g${o.id}${k}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${b.c}"/><stop offset="1" stop-color="${b.c}" stop-opacity=".78"/></linearGradient>`).join('')}</defs>`;
-for(let i=0;i<=4;i++){const v=mx/1.12*i/4;s+=`<line x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${pl-8}" y="${y(v)+4}" class="ax" text-anchor="end">${kfmt(v)}</text>`+(pr>12?`<text x="${w-pr+8}" y="${yp(i*25)+4}" class="ax">${i*25}%</text>`:'')}
+for(let i=0;i<=4;i++){const v=mx/1.12*i/4;s+=(o.bars.length?`<line x1="${pl}" x2="${w-pr}" y1="${y(v)}" y2="${y(v)}" class="gl"/><text x="${pl-8}" y="${y(v)+4}" class="ax" text-anchor="end">${kfmt(v)}</text>`:`<line x1="${pl}" x2="${w-pr}" y1="${yp(LO+(100-LO)*i/4)}" y2="${yp(LO+(100-LO)*i/4)}" class="gl"/>`)+(pr>12?`<text x="${w-pr+8}" y="${yp(LO+(100-LO)*i/4)+4}" class="ax">${Math.round(LO+(100-LO)*i/4)}%</text>`:'')}
 for(let i=0;i<n;i++){const x0=cx(i)-tot/2;s+=`<rect class="hz" x="${pl+i*bw}" y="${pt-8}" width="${bw}" height="${ch+8}" data-t="${esc(o.tip(i))}"/>`;
 o.bars.forEach((b,k)=>{const v=b.v[i],yy=y(v),hh=pt+ch-yy;s+=`<rect class="bar" x="${x0+k*(bwi+gap)}" y="${yy}" width="${bwi}" height="${Math.max(0,hh)}" rx="${Math.min(5,bwi/3)}" fill="url(#g${o.id}${k})"/>`;
 if(b.lbl&&bwi>=16&&v>0){const lx=x0+k*(bwi+gap)+bwi/2;s+=hh>=22&&bwi>=26?`<text x="${lx}" y="${pt+ch-7}" class="vl in" text-anchor="middle">${kfmt(v)}</text>`:`<text x="${lx}" y="${yy-5}" class="vl" text-anchor="middle">${kfmt(v)}</text>`}});
@@ -166,8 +166,9 @@ let CP,CC,CO='#f86800',CV;const cores=()=>{const dk=document.documentElement.dat
 new MutationObserver(()=>{cores();if(ROWS.length)run()}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 const pcs=(c,p)=>p?c/p*100:null;
 function tipo(t,a){return `${t}\nPrevisto: ${N(a.p)} pacotes\nColetado: ${N(a.c)} pacotes\nColeta: ${P1(a.p?a.c/a.p*100:0)}\nSellers: ${N(a.n)} · visitados ${N(a.v)} (${P1(a.n?a.v/a.n*100:0)})`}
-function chD(){const A=agr(F,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1);combo($('#chD'),{id:'d',titulo:'Performance por dia',cats:A.map(a=>fmtD(a.k).slice(0,5)),tip:i=>tipo(fmtD(A[i].k),A[i]),
-bars:[{n:'Previsto',c:CP,v:A.map(a=>a.p)},{n:'Coletado',c:CC,v:A.map(a=>a.c),lbl:1}],lines:[{n:'% coleta',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1},{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n))}]})}
+// Por dia: sempre a operação inteira do período (não segue os filtros), só as taxas de coleta e de visita.
+function chD(){const A=agr(ROWS,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1);combo($('#chD'),{id:'d',titulo:'Performance por dia',cats:A.map(a=>fmtD(a.k).slice(0,5)),tip:i=>tipo(fmtD(A[i].k),A[i]),
+bars:[],lines:[{n:'% coletado',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1},{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1}]})}
 function chH(){const H=new Array(24).fill(0),S=new Array(24).fill(0);let P=0;for(const r of F){P+=r.p;if(r.h>=0){H[r.h]+=r.t;S[r.h]++}}const ini=H.findIndex(v=>v>0);if(ini<0){$('#chH').innerHTML='<p class="emp">Sem horários de coleta no período.</p>';return}
 const fim=23-[...H].reverse().findIndex(v=>v>0),hs=[];for(let i=ini;i<=fim;i++)hs.push(i);let ac=0;const AC=hs.map(x=>(ac+=H[x],P?ac/P*100:0));const pk=hs.reduce((a,b)=>H[b]>H[a]?b:a,hs[0]);
 combo($('#chH'),{id:'h',titulo:'Coletas por hora',minLbl:34,cats:hs.map(x=>x+'h'),tip:i=>`${hs[i]}h às ${hs[i]}h59\nColetados na hora: ${N(H[hs[i]])} pacotes\nSellers com coleta: ${N(S[hs[i]])}\nAcumulado: ${P1(AC[i])} do previsto`,

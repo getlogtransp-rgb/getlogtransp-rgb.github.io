@@ -148,3 +148,9 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 [data-theme=dark] .dd.off{color:#3a4864}[data-theme=dark] .chips button:hover,[data-theme=dark] .cp button:hover{background:#1a2c4f}[data-theme=dark] .k.sk{background:linear-gradient(90deg,#121f37,#1a2a47,#121f37);background-size:200% 100%}
 [data-theme=dark] .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9)}[data-theme=dark] .chip-logo{background:#fff}[data-theme=dark] .hd{background:linear-gradient(135deg,#050b17,#0b1a3a)}
 [data-theme=dark] .btn2.xl{background:#107c41;color:#fff;border-color:#107c41}
+/* Tabela sem rolagem lateral: colunas fixas, texto quebra dentro da célula */
+#tbl table{table-layout:fixed}#tbl .tw{overflow-x:hidden}
+#tbl th,#tbl td{padding:10px 8px;white-space:normal;overflow-wrap:anywhere;font-size:.84rem;vertical-align:middle}
+#tbl td.sl{min-width:0;max-width:none}
+#tbl th:nth-child(1){width:52px}#tbl th:nth-child(4){width:13%}#tbl th:nth-child(5){width:11%}#tbl th:nth-child(6){width:64px}#tbl th:nth-child(7),#tbl th:nth-child(8){width:74px}#tbl th:nth-child(9){width:52px}#tbl th:nth-child(10){width:104px}
+@media (max-width:600px){#tbl th:nth-child(7),#tbl th:nth-child(8){width:62px}#tbl th:nth-child(10){width:92px}}
