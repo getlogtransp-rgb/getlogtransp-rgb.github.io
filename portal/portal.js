@@ -9,7 +9,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const N=n=>Number(n||0).toLocaleString('pt-BR');
 // Login não diferencia maiúscula/minúscula nem espaços: guarda minúsculo, mostra maiúsculo.
 const norm=s=>String(s||'').replace(/\s+/g,'').toLowerCase();const LG=s=>String(s||'').toUpperCase();
-let CFG={},DB=null,MASTER=null,MASTER_RAW=null,ME=null,AVISOS=[],ESCALAS=[],FIN=null,ROWS=null;
+let CFG_OK=false,CFG={},DB=null,MASTER=null,MASTER_RAW=null,ME=null,AVISOS=[],ESCALAS=[],FIN=null,ROWS=null;
 const ROLE_LBL={admin:'Administrador',colaborador:'Colaborador',ajudante:'Ajudante',motorista:'Motorista',fornecedor:'Fornecedor'};
 const VEIC=['Fiorino','Van','VUC','HR','3/4','Carreta','Carro','Moto'];
 const LIVE=['dash','coletados','equipe','financeiro'];
@@ -26,7 +26,7 @@ async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=u.c
 // Chave dos CLIENTES (fornecedor): separada da chave mestra. O login do cliente só destranca esta chave, que abre o próprio perfil
 // e data/config-cliente.json (token do Drive) — nunca os arquivos internos. Ela fica guardada dentro do config.json (cifrado com a mestra).
 let CK=null;
-async function chaveCli(){if(CK)return CK;if(CFG.clientKey){CK=b2u(CFG.clientKey);return CK}CK=rnd(32);CFG={...CFG,clientKey:u2b(CK)};await saveFile('data/config.json',await seal(CFG),'Chave do portal do cliente criada.');await salvaCfgCli();return CK}
+async function chaveCli(){if(CK)return CK;if(CFG.clientKey){CK=b2u(CFG.clientKey);return CK}if(!CFG_OK)throw new Error('Configuração não carregada. Recarregue a página.');CK=rnd(32);CFG={...CFG,clientKey:u2b(CK)};await saveFile('data/config.json',await seal(CFG),'Chave do portal do cliente criada.');await salvaCfgCli();return CK}
 const ckKey=async()=>crypto.subtle.importKey('raw',await chaveCli(),{name:'AES-GCM'},false,['encrypt','decrypt']);
 async function sealCli(obj){const k=await ckKey(),iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(JSON.stringify(obj))))}}
 async function openCli(o){const k=await ckKey();return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},k,b2u(o.ct))))}
@@ -34,7 +34,7 @@ async function salvaCfgCli(){await saveFile('data/config-cliente.json',await sea
 async function wrapCli(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,await chaveCli())),ck:1}}
 const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
-async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),ld('/data/config.json',{}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
+async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),getJSON('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
 // erro/tempo esgotado devolve {erro:true} (não é "sem senha nova") para o login tentar de novo com mais tempo.
 const SP=new Map();
@@ -574,7 +574,7 @@ if(!await conferirAcesso(true))return;b.disabled=true;try{await api('decidir',{i
 async function ghToken(){const s=localStorage.getItem(GH_KEY);if(!s)return null;try{const o=JSON.parse(s);return dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct)))}catch(e){return null}}
 async function setToken(t){const iv=rnd(12);localStorage.setItem(GH_KEY,JSON.stringify({iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},MASTER,enc.encode(t)))}))}
 let LAST=['',''];
-async function saveFile(path,obj,note){if(obj===DB&&CFG.pontoUrl)DB.senhaUrl=CFG.pontoUrl;const body=JSON.stringify(obj,(k,v)=>k==='_p'?undefined:v,2)+'\n';const tk=await ghToken();
+async function saveFile(path,obj,note){if(path==='data/config.json'&&!CFG_OK)throw new Error('Configuração não carregada. Recarregue a página antes de salvar.');if(obj===DB&&CFG.pontoUrl)DB.senhaUrl=CFG.pontoUrl;const body=JSON.stringify(obj,(k,v)=>k==='_p'?undefined:v,2)+'\n';const tk=await ghToken();
 const say=(c,t)=>{LAST=[c,t];const o=$('#u-msg');if(o){o.className='msg '+c;o.textContent=t}};
 if(!tk){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([body],{type:'application/json'}));a.download=path.split('/').pop();a.click();say('err',note+' Ainda não foi publicado: conecte o GitHub em Usuários e acessos → Configurações do sistema. Uma cópia foi baixada neste aparelho.');return}
 say('','Salvando...');const api='https://api.github.com/repos/'+REPO+'/contents/'+path;const h={Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'};
