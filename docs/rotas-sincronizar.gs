@@ -25,7 +25,7 @@ var SYNC = {
 };
 
 function nrmSync_(s) {
-  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').replace(/^'/, '').trim();
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').replace(/^'/, '').trim();
 }
 function limpaSync_(s) {
   return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
