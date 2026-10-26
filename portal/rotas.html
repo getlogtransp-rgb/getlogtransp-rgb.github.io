@@ -55,7 +55,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 <input id="q" type="search" placeholder="Buscar seller, rua, bairro, CEP ou cidade" autocomplete="off">
 <select id="fm"></select>
 </div>
-<div class="barra"><span id="cont"></span><span><button class="link" id="todos"></button><button class="link" id="limpar">Limpar seleção</button></span></div>
+<div class="barra"><span id="cont"></span><span><button class="link" id="todos"></button><button class="link" id="sinc">Sincronizar com a planilha</button><button class="link" id="limpar">Limpar seleção</button></span></div>
 <div id="lista"></div>
 <div id="mais" class="vazio" hidden><button class="btn sec" id="maisb">Mostrar mais</button></div>
 </main>
@@ -171,6 +171,17 @@ $('dl').addEventListener('click',e=>{
 });
 $('tu').onclick=()=>{if(S.desfazer){const d=S.desfazer;S.desfazer=null;$('toast').style.display='none';salvar(d,'desfeito')}};
 document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;localStorage.setItem('rotas_base',S.base);S.fm='';S.q='';$('q').value='';carregar()});
+$('sinc').onclick=async()=>{
+  const b=$('sinc'),aviso=(t,er)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=true;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
+  b.disabled=true;b.textContent='Sincronizando...';
+  try{
+    const r=await fetch(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,acao:'sincronizar',usuario})}).then(x=>x.json());
+    if(r.erro)throw new Error(r.erro);
+    await carregar();
+    aviso('Sincronizado: '+r.linhasNovas+(r.linhasNovas===1?' seller novo':' sellers novos')+', '+r.motoristasNovos+(r.motoristasNovos===1?' motorista novo':' motoristas novos'),false);
+  }catch(e){aviso('Não foi possível sincronizar. Nada foi alterado.',true)}
+  b.disabled=false;b.textContent='Sincronizar com a planilha';
+};
 carregar();
 </script>
 </body>

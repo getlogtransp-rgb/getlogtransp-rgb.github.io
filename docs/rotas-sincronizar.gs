@@ -23,10 +23,15 @@ var SYNC = {
 };
 
 function nrmSync_(s) {
-  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').replace(/^'/, '').trim();
 }
 function limpaSync_(s) {
   return String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+}
+/** Evita que um texto da base vire fórmula na planilha (=, +, -, @ no começo). */
+function seguroSync_(s) {
+  s = String(s == null ? '' : s);
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 function ehGetSync_(m) {
   return /^GET\b/i.test(limpaSync_(m));
@@ -96,9 +101,8 @@ function sincronizarRotas() {
     v.slice(1).forEach(function (r) {
       if (!r[0]) return;
       var nome = nrmSync_(r[0]), b = nrmSync_(r[1]);
-      if (modo === 'cliente') tem[nome + '|' + b] = 1;
-      else tem['ID:' + b] = (tem['ID:' + b] || '') + ';' + nome;
-      for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) { tem[nome + '|' + nrmSync_(h[c])] = 1; if (modo === 'id') tem['ID:' + b + '|' + nrmSync_(h[c])] = 1; }
+      if (modo === 'cliente') { tem[nome + '|' + b] = 1; for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) tem[nome + '|' + nrmSync_(h[c])] = 1; }
+      else { tem['N:' + nome] = 1; tem['I:' + b] = 1; }
     });
 
     // Motoristas válidos (aba _MOTORISTAS) + os GET novos da base
@@ -107,27 +111,29 @@ function sincronizarRotas() {
     shM.getDataRange().getValues().forEach(function (r) { if (r[0]) mots[nrmSync_(r[0])] = String(r[0]); });
     var novosMot = [];
     itens.forEach(function (o) {
-      if (o.mot && !mots[nrmSync_(o.mot)]) { mots[nrmSync_(o.mot)] = o.mot; novosMot.push([o.mot]); }
+      if (o.mot && !mots[nrmSync_(o.mot)]) { mots[nrmSync_(o.mot)] = o.mot; novosMot.push([seguroSync_(o.mot)]); }
     });
     if (novosMot.length) shM.getRange(shM.getLastRow() + 1, 1, novosMot.length, 1).setValues(novosMot);
 
     // Linhas novas, no layout da planilha (só o que a base sabe; o resto fica em branco)
-    var linhas = [], semColuna = [];
+    var linhas = [], semColuna = [], largura = Math.max(h.length, 12);
     itens.forEach(function (o) {
       var nome = nrmSync_(o.seller), cli = nrmSync_(o.cliente);
-      if (tem[nome + '|' + cli] || (o.sid && tem['ID:' + nrmSync_(o.sid) + '|' + cli])) return;
-      tem[nome + '|' + cli] = 1;
-      var r = h.map(function () { return ''; });
-      r[0] = o.seller;
-      r[1] = modo === 'cliente' ? o.cliente : o.sid;
-      r[3] = o.bairro;
+      // coluna B = cliente: um registro por seller + cliente; coluna B = ID: o seller só entra se ainda não existir
+      var chaves = modo === 'cliente' ? [nome + '|' + cli] : ['N:' + nome].concat(o.sid ? ['I:' + nrmSync_(o.sid)] : []);
+      if (chaves.some(function (k) { return tem[k]; })) return;
+      chaves.forEach(function (k) { tem[k] = 1; });
+      var r = []; for (var z = 0; z < largura; z++) r.push('');
+      r[0] = seguroSync_(o.seller);
+      r[1] = seguroSync_(modo === 'cliente' ? o.cliente : o.sid);
+      r[3] = seguroSync_(o.bairro);
       var ci = -1;
       for (var c = 6; c <= 10; c++) if (nrmSync_(h[c]) === cli) ci = c;
       if (ci >= 0) r[ci] = o.qtd; else semColuna.push(o.seller + ' / ' + o.cliente);
-      if (o.mot) r[11] = mots[nrmSync_(o.mot)];
+      if (o.mot) r[11] = seguroSync_(mots[nrmSync_(o.mot)]);
       linhas.push(r);
     });
-    if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, h.length).setValues(linhas);
+    if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, largura).setValues(linhas);
 
     var resumo = { base: f.getName(), sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, semColunaDoCliente: semColuna.slice(0, 20) };
     Logger.log(JSON.stringify(resumo));
@@ -142,3 +148,9 @@ function instalarGatilhoSincronia() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sincronizarRotas') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('sincronizarRotas').timeBased().everyDays(1).atHour(7).create();
 }
+
+/**
+ * Botão "Sincronizar com a planilha" da tela Rotas.
+ * No doPost do Code.gs, logo DEPOIS da linha que confere o token e ANTES de "const lock", acrescente:
+ *   if (d.acao === 'sincronizar') return resposta(sincronizarRotas());
+ */
