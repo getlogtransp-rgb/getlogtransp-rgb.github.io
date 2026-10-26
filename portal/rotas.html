@@ -12,7 +12,7 @@ body{margin:0;background:var(--bg);color:#0E1F45;font:14px/1.4 Inter,'Segoe UI',
 header{background:var(--nav);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 header h1{margin:0;font-size:18px}
 header span{border-left:3px solid var(--lar);padding-left:10px}
-main{max-width:1280px;margin:0 auto;padding:0 16px 12px}
+main{max-width:none;margin:0;padding:0 16px 12px}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--bd);background:#fff;margin:0 -16px 12px;padding:0 16px;overflow-x:auto}
 .aba{padding:14px 18px;border:0;border-bottom:3px solid transparent;background:none;font-weight:600;color:var(--mut);cursor:pointer;white-space:nowrap}
 .aba.on{color:var(--tit);border-bottom-color:var(--lar)}
@@ -22,11 +22,12 @@ main{max-width:1280px;margin:0 auto;padding:0 16px 12px}
 .panel{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px}
 input,select{height:36px;border:1px solid #CBD3DF;border-radius:7px;padding:0 10px;font:inherit;background:#fff;color:#0E1F45}
 input:focus,select:focus{outline:0;border-color:var(--tit)}
-.fbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px}
-.fbar #q{flex:1 1 240px;min-width:200px}
-.fbar #fcep{width:120px}
+.fbar{display:grid;grid-template-columns:minmax(220px,2.4fr) repeat(4,minmax(0,1fr)) minmax(0,1.1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px}
+.fbar #q,.fbar #fcep{width:100%;min-width:0}
+@media(max-width:900px){.fbar{grid-template-columns:1fr 1fr}.fbar #q{grid-column:1/-1}}
 .dd{position:relative}
-.ddb{display:inline-flex;align-items:center;gap:6px;border:1px solid #CBD3DF;background:#fff;border-radius:7px;padding:0 10px;height:36px;font-size:13px;color:#2F3F63;white-space:nowrap;max-width:220px}
+.ddb{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:1px solid #CBD3DF;background:#fff;border-radius:7px;padding:0 10px;height:36px;font-size:13px;color:#2F3F63;white-space:nowrap}
+.ddb>span{flex:1;text-align:left}
 .ddb:hover{border-color:var(--mut)}
 .ddb span{overflow:hidden;text-overflow:ellipsis}
 .ddb.on{border-color:var(--tit);background:#E8EDF9;color:var(--tit);font-weight:600}
@@ -70,9 +71,9 @@ button:disabled{opacity:.55;cursor:default}
 .alerta{background:#FDECEA;border:1px solid #F5C2BE;border-radius:8px;padding:10px 12px;margin:0 0 8px;color:#8E2A22;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .faixa{background:#FFF3EA;border:1px solid #FFD9BD;border-radius:8px;padding:8px 12px;margin:0 0 8px;color:var(--tit)}
 .tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
-table{border-collapse:collapse;width:100%;min-width:980px;background:#fff}
-th{position:sticky;top:0;background:#F4F6FA;text-align:left;font-size:12.5px;color:var(--tit);padding:11px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}
-td{padding:10px;border-bottom:1px solid var(--bd);vertical-align:middle}
+table{border-collapse:collapse;width:100%;background:#fff}
+th{position:sticky;top:0;background:#F4F6FA;text-align:left;font-size:12.5px;color:var(--tit);padding:11px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:middle;white-space:nowrap}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:#F8FAFD}
 tbody tr.sel{background:#FFF3EA;box-shadow:inset 3px 0 0 var(--lar)}
@@ -83,6 +84,14 @@ td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .num{text-align:right;white-space:nowrap}
 .cls span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 8px;font-size:12px;margin:1px 4px 1px 0;white-space:nowrap}
 .mot{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-weight:600;color:var(--tit);white-space:nowrap}
+.mot.alt{font-weight:500}
+.mot.sug{border-style:dashed;color:var(--mut);font-weight:500}
+.mot.vz{color:var(--mut);font-weight:500}
+.noalt .calt{display:none}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.xb{border:0;background:none;font-size:24px;line-height:1;color:var(--mut);padding:0 4px;margin:-4px -4px 0 0}
+.xb:hover{color:var(--tit)}
+#dx{height:48px;font-size:15px;width:100%}
 .mot.sem{background:#FDECEA;border-color:#F5C2BE;color:var(--er)}
 .pag{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:10px 0 0;color:var(--mut);flex-wrap:wrap}
 .pag select{width:auto;height:36px}
@@ -117,19 +126,20 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 <div class="dir">
 <button class="btn sec" id="exportar">Exportar</button>
 <button class="btn sec" id="sinc">Sincronizar com a planilha</button>
+<button class="btn sec" id="gsug">Gravar alternativos sugeridos</button>
 <button class="btn esc" id="atrib">Atribuir motoristas &#9662;</button>
-<div class="menu" id="menu" hidden><button id="m1"></button><button id="m2"></button></div>
+<div class="menu" id="menu" hidden><button id="m1"></button><button id="m2"></button><button id="m3"></button></div>
 </div>
 </div>
 <div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
-<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th>Clientes</th><th>Endereço</th><th>Bairro</th><th>Cidade</th><th>CEP</th><th class="num">Média</th><th>Motorista</th></tr></thead><tbody id="lista"></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th>Clientes</th><th>Endereço</th><th>Bairro</th><th>Cidade</th><th>CEP</th><th class="num">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
 </div>
 </main>
 <div class="acao" id="acao" hidden><b id="nsel"></b><button class="btn" id="trocar"></button><button class="btn sec" id="lsel">Limpar seleção</button></div>
 <dialog id="dlg"><div class="dl">
-<b id="dt"></b>
+<div class="dh"><b id="dt"></b><button class="xb" id="dxx" aria-label="Fechar">&times;</button></div>
 <input id="dq" type="search" placeholder="Digite parte do nome do motorista" autocomplete="off">
 <div class="lista" id="dl"></div>
 <button class="btn sec" id="dx">Cancelar</button>
@@ -166,9 +176,27 @@ const h=location.hash.match(/motorista=([^&]+)/);
 if(h)S.f.mot.add(decodeURIComponent(h[1]));
 function aplicar(r){
   const MA=x=>String(x==null?'':x).trim().toUpperCase();
-  S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+  S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',alt:l.alternativo||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
   S.mots=r.motoristas||[];
+  // Ranking de motoristas por região (CEP de 5 dígitos, bairro, cidade): base das sugestões
+  const reg={cep:{},bai:{},cid:{}};
+  S.linhas.forEach(l=>{if(!l.motorista)return;const k=chaveReg(l);for(const t in reg)if(k[t]){const o=reg[t][k[t]]=reg[t][k[t]]||{};o[l.motorista]=(o[l.motorista]||0)+1}});
+  S.reg=reg;S.rk={};
 }
+function aplicar0(){const reg={cep:{},bai:{},cid:{}};S.linhas.forEach(l=>{if(!l.motorista)return;const k=chaveReg(l);for(const t in reg)if(k[t]){const o=reg[t][k[t]]=reg[t][k[t]]||{};o[l.motorista]=(o[l.motorista]||0)+1}});S.reg=reg;S.rk={}}
+function chaveReg(l){return {cep:l.cep.replace(/\D/g,'').slice(0,5),bai:norm(l.bairro),cid:norm(l.cidade)}}
+// Motoristas da região do seller, do que mais atende para o que menos atende (sem o motorista oficial dele)
+function rankRegiao(l){
+  const k=chaveReg(l);
+  for(const t of ['cep','bai','cid']){
+    if(!k[t])continue;const c=S.reg[t][k[t]];if(!c)continue;
+    const id=t+k[t];
+    const lista=(S.rk[id]=S.rk[id]||Object.keys(c).sort((a,b)=>c[b]-c[a])).filter(m=>m!==l.motorista&&S.mots.includes(m));
+    if(lista.length)return lista;
+  }
+  return [];
+}
+const altSug=l=>l.alt?'':(rankRegiao(l)[0]||'');
 // Como nas outras telas: qualquer clique aqui dentro recolhe o menu lateral do portal
 addEventListener('click',()=>{try{parent!==window&&parent.GL_SIDE_HIDE&&parent.GL_SIDE_HIDE()}catch(e){}},true);
 // Cópia só da sessão desta aba (some ao fechar o navegador): a tela abre na hora e atualiza em segundo plano
@@ -244,7 +272,13 @@ function sugestoes(){
   return out;
 }
 const plural=(n,a,b)=>n+' '+(n===1?a:b);
+function celAlt(l){
+  if(l.alt)return '<button class="mot alt" data-ua="1">'+esc(curto(l.alt))+'</button>';
+  const g=altSug(l);
+  return g?'<button class="mot sug" data-ua="1" title="Sugerido pela região. Clique para gravar ou trocar">'+esc(curto(g))+'</button>':'<button class="mot vz" data-ua="1">Definir</button>';
+}
 function desenhar(){
+  $('lista').closest('table').classList.toggle('noalt',S.base==='ee');
   document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('on',a.dataset.b===S.base));
   const base=S.linhas.filter(l=>passa(l,'st')),nSem=base.filter(l=>!l.motorista).length;
   const rot={todos:'Todos ('+base.length+')',sem:'Sem motorista ('+nSem+')',com:'Com motorista ('+(base.length-nSem)+')'};
@@ -254,7 +288,7 @@ function desenhar(){
   const ini=(S.pag-1)*S.lim,vis=f.slice(ini,ini+S.lim);
   S.vis=vis;
   $('cont').textContent='Exibindo '+vis.length+' de '+f.length+(f.length===1?' resultado':' resultados');
-  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'</td><td class="cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'</td><td class="m">'+esc(l.bairro)+'</td><td class="m">'+esc(l.cidade)+'</td><td class="m">'+esc(l.cep)+'</td><td class="num m">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td></tr>').join('')||'<tr><td colspan="9" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'</td><td class="cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'</td><td class="m">'+esc(l.bairro)+'</td><td class="m">'+esc(l.cidade)+'</td><td class="m">'+esc(l.cep)+'</td><td class="num m">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -264,6 +298,8 @@ function desenhar(){
   else fx.hidden=true;
   $('pinfo').textContent=f.length?('Mostrando '+(ini+1)+' a '+(ini+vis.length)+' de '+f.length):'';
   $('pn').textContent='Página '+S.pag+' de '+np;$('ant').disabled=S.pag<=1;$('prox').disabled=S.pag>=np;
+  $('m3').textContent='Alternativo dos '+plural(S.sel.size,'selecionado','selecionados');$('m3').disabled=!S.sel.size||S.base==='ee';
+  const nSug=S.base==='ee'?0:S.linhas.filter(l=>!l.alt&&altSug(l)).length;$('gsug').hidden=!nSug;$('gsug').textContent='Gravar alternativos sugeridos ('+nSug+')';
   $('m1').textContent='Aos '+plural(S.sel.size,'selecionado','selecionados');$('m1').disabled=!S.sel.size;
   $('m2').textContent='A todos os '+f.length+' do filtro';$('m2').disabled=!f.length;
   const pend=S.linhas.filter(l=>!l.motorista).length,sug=pend?sugestoes().length:0;
@@ -273,30 +309,31 @@ function desenhar(){
   $('nsel').textContent=plural(S.sel.size,'seller selecionado','sellers selecionados');
   $('trocar').textContent='Atribuir motorista';
 }
-function abrirTroca(keys){
-  S.alvo=keys;
-  const rows=S.linhas.filter(l=>keys.includes(l.k));
-  $('dt').textContent='Novo motorista para '+rows.length+(rows.length===1?' seller':' sellers');
-  const cep=new Set(rows.map(l=>l.cep.slice(0,5)));
-  const c={};S.linhas.forEach(l=>{if(cep.has(l.cep.slice(0,5)))c[l.motorista]=(c[l.motorista]||0)+1});
-  S.ops=Object.keys(c).sort((a,b)=>c[b]-c[a]).map(m=>({m,det:c[m]+' sellers na região',g:'Sugeridos para esta região'})).concat(S.mots.filter(m=>!c[m]).map(m=>({m,det:'',g:'Outros motoristas'})));
+function abrirTroca(keys,modo){
+  S.alvo=keys;S.modo=modo||'mot';
+  const alt=S.modo==='alt',rows=S.linhas.filter(l=>keys.includes(l.k));
+  $('dt').textContent=(alt?'Motorista alternativo para ':'Novo motorista para ')+rows.length+(rows.length===1?' seller':' sellers');
+  const cep=new Set(rows.map(l=>l.cep.slice(0,5))),ofi=new Set(rows.map(l=>l.motorista));
+  const c={};S.linhas.forEach(l=>{if(l.motorista&&cep.has(l.cep.slice(0,5)))c[l.motorista]=(c[l.motorista]||0)+1});
+  const sug=Object.keys(c).filter(m=>!(alt&&rows.length===1&&ofi.has(m))).sort((a,b)=>c[b]-c[a]);
+  S.ops=(alt?[{m:'',det:'',g:'Sem alternativo',rm:1}]:[]).concat(sug.map(m=>({m,det:c[m]+' sellers na região',g:'Sugeridos para esta região'})),S.mots.filter(m=>!c[m]&&!(alt&&rows.length===1&&ofi.has(m))).map(m=>({m,det:'',g:'Outros motoristas'})));
   $('dq').value='';desenharOps();
   $('dlg').showModal();
 }
 function desenharOps(){
   const t=norm($('dq').value).split(/\s+/).filter(Boolean);
   let g='',o='';
-  S.ops.filter(x=>t.every(y=>norm(x.m).includes(y))).slice(0,300).forEach(x=>{
+  S.ops.filter(x=>x.rm||t.every(y=>norm(x.m).includes(y))).slice(0,300).forEach(x=>{
     if(x.g!==g){g=x.g;o+='<div class="gr">'+g+'</div>'}
-    o+='<div class="op" data-m="'+esc(x.m)+'"><span>'+esc(x.m)+'</span><small>'+esc(x.det)+'</small></div>';
+    o+='<div class="op" data-m="'+esc(x.m)+'"><span>'+(x.rm?'Remover alternativo':esc(x.m))+'</span><small>'+esc(x.det)+'</small></div>';
   });
   $('dl').innerHTML=o||'<div class="vazio">Nenhum motorista encontrado.</div>';
 }
 async function salvar(mudancas,msg){
   const toast=(t,er,u)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
-  const ant=mudancas.map(m=>({k:m.k,motorista:S.linhas.find(l=>l.k===m.k).motorista}));
-  const aplicar=lst=>lst.forEach(m=>{S.linhas.find(l=>l.k===m.k).motorista=m.motorista});
-  aplicar(mudancas);desenharFiltros();desenhar();
+  const ant=mudancas.map(m=>({k:m.k,campo:m.campo,motorista:S.linhas.find(l=>l.k===m.k)[m.campo==='alt'?'alt':'motorista']}));
+  const aplicar=lst=>lst.forEach(m=>{S.linhas.find(l=>l.k===m.k)[m.campo==='alt'?'alt':'motorista']=m.motorista});
+  aplicar(mudancas);S.reg&&aplicar0();desenharFiltros();desenhar();
   S.ocupado=true;
   try{
     // gravar o mesmo motorista duas vezes não muda nada, então repetir uma vez é seguro
@@ -306,7 +343,7 @@ async function salvar(mudancas,msg){
     else toast('Salvo: '+msg,false,true);
     S.desfazer=ant;
   }catch(e){
-    aplicar(ant);desenharFiltros();desenhar();
+    aplicar(ant);aplicar0();desenharFiltros();desenhar();
     toast('Não foi possível salvar. Nada foi alterado.',true,false);
   }
   S.ocupado=false;
@@ -315,6 +352,7 @@ $('lista').addEventListener('click',e=>{
   const c=e.target.closest('tr[data-k]');if(!c)return;
   const k=c.dataset.k;
   if(e.target.closest('[data-um]')){abrirTroca([k]);return}
+  if(e.target.closest('[data-ua]')){abrirTroca([k],'alt');return}
   const ix=S.vis.findIndex(l=>l.k===k);
   if(e.shiftKey&&S.ult>=0&&S.ult<S.vis.length){
     const [a,b]=[Math.min(S.ult,ix),Math.max(S.ult,ix)],marca=!S.sel.has(k);
@@ -367,24 +405,32 @@ $('prox').onclick=()=>{S.pag++;desenhar();scrollTo(0,0)};
 $('atrib').onclick=e=>{e.stopPropagation();$('menu').hidden=!$('menu').hidden};
 document.addEventListener('click',()=>{$('menu').hidden=true});
 $('m1').onclick=()=>abrirTroca([...S.sel]);
+$('m3').onclick=()=>abrirTroca([...S.sel],'alt');
+$('gsug').onclick=()=>{
+  const m=S.linhas.filter(l=>!l.alt&&altSug(l)).map(l=>({k:l.k,motorista:altSug(l),campo:'alt'}));if(!m.length)return;
+  if(!confirm('Gravar na planilha o motorista alternativo sugerido pela região para '+plural(m.length,'seller','sellers')+'? Dá para desfazer logo depois.'))return;
+  salvar(m,plural(m.length,'alternativo','alternativos')+' pela região');
+};
 $('m2').onclick=()=>abrirTroca(filtradas().map(l=>l.k));
 // Exportar: CSV (ponto e vírgula, acentos corretos no Excel) com o que está filtrado
 $('exportar').onclick=()=>{
   const cel=v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
   const f=filtradas();
-  const linhas=[['Seller','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista']].concat(f.map(l=>[l.seller,l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'']));
+  const linhas=[['Seller','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista','Motorista alternativo']].concat(f.map(l=>[l.seller,l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'',l.alt||'']));
   const blob=new Blob(['﻿'+linhas.map(r=>r.map(cel).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rotas-'+S.base+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 };
 $('dq').oninput=desenharOps;
-$('dx').onclick=()=>$('dlg').close();
+const fechaDlg=()=>$('dlg').close();
+$('dx').onclick=fechaDlg;$('dxx').onclick=fechaDlg;
+$('dlg').addEventListener('click',e=>{if(e.target===$('dlg'))fechaDlg()}); // clique fora do quadro fecha
 $('dl').addEventListener('click',e=>{
   const o=e.target.closest('.op');if(!o)return;
-  const m=o.dataset.m,keys=S.alvo;
-  if(keys.length>1&&!confirm('Trocar '+keys.length+' sellers para '+m+'?'))return;
-  $('dlg').close();
+  const m=o.dataset.m,keys=S.alvo,alt=S.modo==='alt';
+  if(keys.length>1&&!confirm((alt&&!m?'Remover o alternativo de ':'Trocar ')+keys.length+' sellers'+(m?' para '+m:'')+'?'))return;
+  fechaDlg();
   S.sel.clear();
-  salvar(keys.map(k=>({k,motorista:m})),plural(keys.length,'seller','sellers')+' para '+curto(m));
+  salvar(keys.map(k=>alt?{k,motorista:m,campo:'alt'}:{k,motorista:m}),plural(keys.length,'seller','sellers')+(alt?' (alternativo)':'')+(m?' para '+curto(m):': alternativo removido'));
 });
 $('tu').onclick=()=>{if(S.desfazer){const d=S.desfazer;S.desfazer=null;$('toast').style.display='none';salvar(d,'desfeito')}};
 document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;localStorage.setItem('rotas_base',S.base);limpaTudo();carregar()});
