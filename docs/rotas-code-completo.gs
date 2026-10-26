@@ -2,8 +2,10 @@ const P = PropertiesService.getScriptProperties();
 const BASES = {
   semana: { prop: 'ID_SEMANA', arquivo: 'ROTEIRIZAÇÃO -  COLETA GERAL.xlsx' },
   sabado: { prop: 'ID_SABADO', arquivo: 'ROTEIRIZAÇÃO -  COLETA GERAL SABADO.xlsx' },
-  ee: { prop: 'ID_EE', arquivo: 'ROTEIRIZAÇÃO - EU ENTREGO.csv' }
+  ee: { prop: 'ID_EE', arquivo: 'ROTEIRIZAÇÃO - EU ENTREGO.csv' },
+  ee_sabado: { prop: 'ID_EE_SABADO', arquivo: 'ROTEIRIZAÇÃO - EU ENTREGO SABADO.csv' }
 };
+const ehEE = b => b === 'ee' || b === 'ee_sabado'; // as duas bases EU ENTREGO têm o mesmo layout (aba EE)
 const COL_MOT = 12;
 const COL_ALT = 13; // coluna M da aba GERAL: motorista alternativo
 const COLS_VOLUME = [6, 7, 8, 9, 10];
@@ -32,7 +34,7 @@ function doGet_(e) {
   const q = e.parameter;
   if (q.token !== P.getProperty('TOKEN') || !BASES[q.base]) return resposta({ erro: 'acesso' });
   const ss = abrir(q.base);
-  if (q.base === 'ee') {
+  if (ehEE(q.base)) {
     const v = ss.getSheetByName('EE').getDataRange().getValues();
     const ix = indicesEE(v[0]);
     const linhas = v.slice(1).filter(r => r[ix.id]).map(r => ({
@@ -76,7 +78,7 @@ function doPost_(e) {
   lock.waitLock(30000);
   try {
     const ss = abrir(d.base);
-    const ee = d.base === 'ee';
+    const ee = ehEE(d.base);
     const sh = ss.getSheetByName(ee ? 'EE' : 'GERAL');
     const v = sh.getDataRange().getValues();
     const ix = ee ? indicesEE(v[0]) : null;
@@ -149,12 +151,12 @@ function doGet(e) {
 function doPost(e) {
   try { return doPost_(e); } catch (err) { return resposta({ erro: String(err) }); }
 }
-function blobEE(ss) {
+function blobEE(ss, nome) {
   const v = ss.getSheetByName('EE').getDataRange().getValues();
   const ix = indicesEE(v[0]);
   const cpf = c => { const s = String(c); return /^\d+$/.test(s) ? s.padStart(11, '0') : s; };
   const linhas = [CAB_EE].concat(v.slice(1).filter(r => r[ix.id]).map(r => [r[ix.id], cpf(r[ix.cpf]), r[ix.placa], r[ix.nome]]));
-  return Utilities.newBlob('', 'text/csv', BASES.ee.arquivo).setDataFromString(linhas.map(l => l.join(';')).join('\r\n') + '\r\n', 'windows-1252');
+  return Utilities.newBlob('', 'text/csv', nome || BASES.ee.arquivo).setDataFromString(linhas.map(l => l.join(';')).join('\r\n') + '\r\n', 'windows-1252');
 }
 function exportar() {
   const pasta = DriveApp.getFolderById(P.getProperty('ID_PASTA'));
@@ -162,8 +164,8 @@ function exportar() {
     const id = P.getProperty(BASES[b].prop);
     if (!id) return;
     const nome = BASES[b].arquivo;
-    const blob = b === 'ee'
-      ? blobEE(SpreadsheetApp.openById(id))
+    const blob = ehEE(b)
+      ? blobEE(SpreadsheetApp.openById(id), nome)
       : UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/export?format=xlsx', { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } }).getBlob().setName(nome);
     const it = pasta.getFilesByName(nome);
     if (it.hasNext()) Drive.Files.update({}, it.next().getId(), blob);

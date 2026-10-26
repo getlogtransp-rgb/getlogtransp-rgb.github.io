@@ -38,6 +38,9 @@ input:focus,select:focus{outline:0;border-color:var(--tit)}
 .pop.r{left:auto;right:0}
 .ms-s{padding:8px;border-bottom:1px solid #EDF0F5}
 .ms-s input{width:100%;height:34px}
+.ms-o{display:flex;gap:6px;padding:8px 10px 0}
+.ord{flex:1;border:1px solid #CBD3DF;background:#fff;border-radius:7px;padding:5px 0;font-size:12.5px;font-weight:600;color:var(--mut)}
+.ord.on{background:#E8EDF9;border-color:var(--tit);color:var(--tit)}
 .ms-a{display:flex;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #EDF0F5}
 .lnk{background:none;border:0;color:var(--tit);font-weight:600;font-size:12.5px;padding:2px}
 .lnk:hover{text-decoration:underline}
@@ -71,9 +74,9 @@ button:disabled{opacity:.55;cursor:default}
 .alerta{background:#FDECEA;border:1px solid #F5C2BE;border-radius:8px;padding:10px 12px;margin:0 0 8px;color:#8E2A22;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .faixa{background:#FFF3EA;border:1px solid #FFD9BD;border-radius:8px;padding:8px 12px;margin:0 0 8px;color:var(--tit)}
 .tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
-table{border-collapse:collapse;width:100%;background:#fff}
-th{position:sticky;top:0;background:#F4F6FA;text-align:left;font-size:12.5px;color:var(--tit);padding:11px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
-td{padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:middle;white-space:nowrap}
+table{border-collapse:collapse;width:100%;background:#fff;font-size:12.5px}
+th{position:sticky;top:0;background:#F4F6FA;text-align:left;font-size:12.5px;color:var(--tit);padding:9px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid var(--bd);vertical-align:middle;white-space:nowrap}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:#F8FAFD}
 tbody tr.sel{background:#FFF3EA;box-shadow:inset 3px 0 0 var(--lar)}
@@ -82,12 +85,15 @@ td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .s{font-weight:700;color:var(--tit)}
 .m{color:var(--mut)}
 .num{text-align:right;white-space:nowrap}
-.cls span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 8px;font-size:12px;margin:1px 4px 1px 0;white-space:nowrap}
-.mot{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-weight:600;color:var(--tit);white-space:nowrap}
+.cls span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 7px;font-size:11px;margin:1px 4px 1px 0;white-space:nowrap}
+.mot{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:600;color:var(--tit);white-space:nowrap}
 .mot.alt{font-weight:500}
 .mot.sug{border-style:dashed;color:var(--mut);font-weight:500}
 .mot.vz{color:var(--mut);font-weight:500}
 .noalt .calt{display:none}
+.sub2{display:none;font-size:11.5px;margin-top:2px}
+.compact .sub2{display:block}
+.compact .ccl,.compact .cb,.compact .cc,.compact .cp{display:none}
 .dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .xb{border:0;background:none;font-size:24px;line-height:1;color:var(--mut);padding:0 4px;margin:-4px -4px 0 0}
 .xb:hover{color:var(--tit)}
@@ -115,10 +121,10 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 <body>
 <header><h1><span>Rotas</span></h1><div id="usr" class="m" style="color:#C9D2E3"></div></header>
 <main>
-<div class="abas"><button class="aba" data-b="semana">Segunda a sexta</button><button class="aba" data-b="sabado">Sábado</button><button class="aba" data-b="ee">EU ENTREGO</button></div>
+<div class="abas"><button class="aba" data-b="semana">GERAL - SEGUNDA A SEXTA</button><button class="aba" data-b="ee">EU ENTREGO - SEGUNDA A SEXTA</button><button class="aba" data-b="ee_sabado">EU ENTREGO - SÁBADO</button></div>
 <div id="msg" class="vazio" hidden></div>
 <div id="painel" hidden>
-<div class="sub" id="sub"><button class="stb" data-st="todos"></button><button class="stb" data-st="sem"></button><button class="stb" data-st="com"></button></div>
+
 <div class="fbar"><input id="q" type="search" placeholder="Buscar seller, rua, bairro, CEP ou cidade" autocomplete="off"><span id="dds" style="display:contents"></span><input id="fcep" type="search" inputmode="numeric" placeholder="CEP começa com" autocomplete="off"><button class="link u" id="limpar">Limpar tudo</button></div>
 <div class="chips" id="chips"></div>
 <div class="tool">
@@ -133,7 +139,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 </div>
 <div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
-<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th>Clientes</th><th>Endereço</th><th>Bairro</th><th>Cidade</th><th>CEP</th><th class="num">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="num">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
 </div>
 </main>
@@ -168,7 +174,8 @@ const $=id=>document.getElementById(id);
 const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const curto=m=>m?m.replace(/^GET\s*-\s*/i,''):'Sem motorista';
-const S={base:localStorage.getItem('rotas_base')||'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',pag:1,lim:100,ult:-1,desfazer:null};
+const BASES_OK=['semana','ee','ee_sabado'];
+const S={base:BASES_OK.includes(localStorage.getItem('rotas_base'))?localStorage.getItem('rotas_base'):'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',ord:{mot:'az',cli:'az',cid:'az',bai:'az'},pag:1,lim:100,ult:-1,desfazer:null};
 let usuario=CFG.usuarioPortal();
 if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem identificação';localStorage.setItem('getlog_usuario',usuario)}
 $('usr').textContent=usuario;
@@ -248,12 +255,13 @@ function opcoesDe(k){
   const m=new Map();
   S.linhas.forEach(l=>{if(passa(l,k))valores(k,l).forEach(v=>m.set(v,(m.get(v)||0)+1))});
   S.f[k].forEach(v=>{if(!m.has(v))m.set(v,0)});
-  return [...m.entries()].sort((a,b)=>rotuloV(k,a[0]).localeCompare(rotuloV(k,b[0]),'pt-BR'));
+  const sg=S.ord[k]==='za'?-1:1;
+  return [...m.entries()].sort((a,b)=>sg*rotuloV(k,a[0]).localeCompare(rotuloV(k,b[0]),'pt-BR'));
 }
 function popHTML(k){
   const q=norm(S.pq),todas=opcoesDe(k),lista=q?todas.filter(([v])=>norm(rotuloV(k,v)).includes(q)):todas;
   const itens=lista.map(([v,c])=>'<label><input type="checkbox" data-v="'+esc(v)+'"'+(S.f[k].has(v)?' checked':'')+'><span>'+esc(rotuloV(k,v))+'</span><em>'+c+'</em></label>').join('');
-  return '<div class="pop'+(k==='cid'||k==='bai'?' r':'')+'" role="listbox" aria-multiselectable="true"><div class="ms-s"><input id="msq" type="search" placeholder="Pesquisar" value="'+esc(S.pq)+'" autocomplete="off"></div><div class="ms-a"><button class="lnk" data-ms="all">Selecionar '+(q?'resultados':'todos')+'</button><button class="lnk" data-ms="none">Limpar</button></div><div class="ms-l">'+(itens||'<div class="ms-e">Nenhuma opção encontrada</div>')+'</div></div>';
+  return '<div class="pop'+(k==='cid'||k==='bai'?' r':'')+'" role="listbox" aria-multiselectable="true"><div class="ms-s"><input id="msq" type="search" placeholder="Pesquisar" value="'+esc(S.pq)+'" autocomplete="off"></div><div class="ms-o"><button class="ord'+(S.ord[k]!=='za'?' on':'')+'" data-ord="az">A-Z</button><button class="ord'+(S.ord[k]==='za'?' on':'')+'" data-ord="za">Z-A</button></div><div class="ms-a"><button class="lnk" data-ms="all">Selecionar '+(q?'resultados':'todos')+'</button><button class="lnk" data-ms="none">Limpar</button></div><div class="ms-l">'+(itens||'<div class="ms-e">Nenhuma opção encontrada</div>')+'</div></div>';
 }
 const CV='<svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 function desenharFiltros(){
@@ -277,8 +285,15 @@ function celAlt(l){
   const g=altSug(l);
   return g?'<button class="mot sug" data-ua="1" title="Sugerido pela região. Clique para gravar ou trocar">'+esc(curto(g))+'</button>':'<button class="mot vz" data-ua="1">Definir</button>';
 }
+function ajusta(){
+  // Tudo na tela, sem cortar nem quebrar texto: se não couber em colunas separadas, bairro, cidade, CEP e clientes passam para uma segunda linha
+  const t=$('lista').closest('table'),w=t.parentElement;
+  t.classList.remove('compact');
+  if(w.scrollWidth>w.clientWidth+1)t.classList.add('compact');
+}
+addEventListener('resize',()=>ajusta());
 function desenhar(){
-  $('lista').closest('table').classList.toggle('noalt',S.base==='ee');
+  $('lista').closest('table').classList.toggle('noalt',S.base.startsWith('ee'));
   document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('on',a.dataset.b===S.base));
   const base=S.linhas.filter(l=>passa(l,'st')),nSem=base.filter(l=>!l.motorista).length;
   const rot={todos:'Todos ('+base.length+')',sem:'Sem motorista ('+nSem+')',com:'Com motorista ('+(base.length-nSem)+')'};
@@ -288,7 +303,7 @@ function desenhar(){
   const ini=(S.pag-1)*S.lim,vis=f.slice(ini,ini+S.lim);
   S.vis=vis;
   $('cont').textContent='Exibindo '+vis.length+' de '+f.length+(f.length===1?' resultado':' resultados');
-  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'</td><td class="cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'</td><td class="m">'+esc(l.bairro)+'</td><td class="m">'+esc(l.cidade)+'</td><td class="m">'+esc(l.cep)+'</td><td class="num m">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'<div class="sub2 cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div></td><td class="cls ccl">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -298,8 +313,8 @@ function desenhar(){
   else fx.hidden=true;
   $('pinfo').textContent=f.length?('Mostrando '+(ini+1)+' a '+(ini+vis.length)+' de '+f.length):'';
   $('pn').textContent='Página '+S.pag+' de '+np;$('ant').disabled=S.pag<=1;$('prox').disabled=S.pag>=np;
-  $('m3').textContent='Alternativo dos '+plural(S.sel.size,'selecionado','selecionados');$('m3').disabled=!S.sel.size||S.base==='ee';
-  const nSug=S.base==='ee'?0:S.linhas.filter(l=>!l.alt&&altSug(l)).length;$('gsug').hidden=!nSug;$('gsug').textContent='Gravar alternativos sugeridos ('+nSug+')';
+  $('m3').textContent='Alternativo dos '+plural(S.sel.size,'selecionado','selecionados');$('m3').disabled=!S.sel.size||S.base.startsWith('ee');
+  const nSug=S.base.startsWith('ee')?0:S.linhas.filter(l=>!l.alt&&altSug(l)).length;$('gsug').hidden=!nSug;$('gsug').textContent='Gravar alternativos sugeridos ('+nSug+')';
   $('m1').textContent='Aos '+plural(S.sel.size,'selecionado','selecionados');$('m1').disabled=!S.sel.size;
   $('m2').textContent='A todos os '+f.length+' do filtro';$('m2').disabled=!f.length;
   const pend=S.linhas.filter(l=>!l.motorista).length,sug=pend?sugestoes().length:0;
@@ -308,6 +323,7 @@ function desenhar(){
   $('acao').hidden=!S.sel.size;
   $('nsel').textContent=plural(S.sel.size,'seller selecionado','sellers selecionados');
   $('trocar').textContent='Atribuir motorista';
+  ajusta();
 }
 function abrirTroca(keys,modo){
   S.alvo=keys;S.modo=modo||'mot';
@@ -384,6 +400,8 @@ $('dds').addEventListener('click',e=>{
   e.stopPropagation();
   const b=e.target.closest('[data-pop]');
   if(b){const k=b.dataset.pop;S.pop=S.pop===k?null:k;S.pq='';S.foco=true;desenharFiltros();return}
+  const od=e.target.closest('[data-ord]');
+  if(od&&S.pop){S.ord[S.pop]=od.dataset.ord;S.foco=false;desenharFiltros();return}
   const ms=e.target.closest('[data-ms]');
   if(ms&&S.pop){const k=S.pop,q=norm(S.pq);
     if(ms.dataset.ms==='none')S.f[k].clear();
