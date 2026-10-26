@@ -67,6 +67,7 @@ button:disabled{opacity:.55;cursor:default}
 .menu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(6,24,61,.18);min-width:260px;z-index:5;padding:6px}
 .menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;color:var(--tit);font-weight:600}
 .menu button:hover:not(:disabled){background:#EEF3FC}
+.alerta{background:#FDECEA;border:1px solid #F5C2BE;border-radius:8px;padding:10px 12px;margin:0 0 8px;color:#8E2A22;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .faixa{background:#FFF3EA;border:1px solid #FFD9BD;border-radius:8px;padding:8px 12px;margin:0 0 8px;color:var(--tit)}
 .tw{overflow-x:auto;border:1px solid var(--bd);border-radius:10px}
 table{border-collapse:collapse;width:100%;min-width:980px;background:#fff}
@@ -120,6 +121,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 <div class="menu" id="menu" hidden><button id="m1"></button><button id="m2"></button></div>
 </div>
 </div>
+<div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
 <div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th>Clientes</th><th>Endereço</th><th>Bairro</th><th>Cidade</th><th>CEP</th><th class="num">Média</th><th>Motorista</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
@@ -229,6 +231,15 @@ function desenharFiltros(){
   $('chips').innerHTML=ch.join('');
   const q=$('msq');if(q&&S.foco){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
 }
+// Sugestão por região: o motorista que mais atende o mesmo CEP (5 dígitos), depois o mesmo bairro, depois a mesma cidade
+function sugestoes(){
+  const reg={cep:{},bai:{},cid:{}},kk=l=>({cep:l.cep.replace(/\D/g,'').slice(0,5),bai:norm(l.bairro),cid:norm(l.cidade)});
+  S.linhas.forEach(l=>{if(!l.motorista)return;const k=kk(l);for(const t in reg)if(k[t]){const o=reg[t][k[t]]=reg[t][k[t]]||{};o[l.motorista]=(o[l.motorista]||0)+1}});
+  const top=o=>o?Object.keys(o).sort((a,b)=>o[b]-o[a])[0]:'';
+  const out=[];
+  S.linhas.forEach(l=>{if(l.motorista)return;const k=kk(l),m=(k.cep&&top(reg.cep[k.cep]))||(k.bai&&top(reg.bai[k.bai]))||(k.cid&&top(reg.cid[k.cid]));if(m&&S.mots.includes(m))out.push({k:l.k,motorista:m})});
+  return out;
+}
 const plural=(n,a,b)=>n+' '+(n===1?a:b);
 function desenhar(){
   document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('on',a.dataset.b===S.base));
@@ -252,6 +263,9 @@ function desenhar(){
   $('pn').textContent='Página '+S.pag+' de '+np;$('ant').disabled=S.pag<=1;$('prox').disabled=S.pag>=np;
   $('m1').textContent='Aos '+plural(S.sel.size,'selecionado','selecionados');$('m1').disabled=!S.sel.size;
   $('m2').textContent='A todos os '+f.length+' do filtro';$('m2').disabled=!f.length;
+  const pend=S.linhas.filter(l=>!l.motorista).length,sug=pend?sugestoes().length:0;
+  $('alerta').hidden=!pend;
+  if(pend)$('alerta').innerHTML='<span><b>ATENÇÃO:</b> '+plural(pend,'seller está','sellers estão')+' sem motorista.'+(sug?' Há sugestão pela região para '+sug+'.':' Nenhuma região parecida para sugerir; use Atribuir motoristas.')+'</span>'+(sug?'<button class="btn" id="preencher">Preencher por região ('+sug+')</button>':'');
   $('acao').hidden=!S.sel.size;
   $('nsel').textContent=plural(S.sel.size,'seller selecionado','sellers selecionados');
   $('trocar').textContent='Atribuir motorista';
@@ -313,6 +327,12 @@ $('faixa').addEventListener('click',e=>{
 });
 const limpaTudo=()=>{FILTROS.forEach(([k])=>S.f[k].clear());S.q=S.fcep='';S.st='todos';S.pop=null;S.pq='';S.pag=1;$('q').value=$('fcep').value='';desenharFiltros();desenhar()};
 $('limpar').onclick=limpaTudo;
+$('alerta').addEventListener('click',e=>{
+  if(e.target.id!=='preencher')return;
+  const m=sugestoes();if(!m.length)return;
+  if(!confirm('Atribuir pela região o motorista que mais atende o CEP, bairro ou cidade a '+plural(m.length,'seller','sellers')+' sem motorista? Dá para desfazer logo depois.'))return;
+  salvar(m,plural(m.length,'seller','sellers')+' por região');
+});
 $('lsel').onclick=()=>{S.sel.clear();desenhar()};
 $('trocar').onclick=()=>abrirTroca([...S.sel]);
 const refiltra=()=>{S.pag=1;desenharFiltros();desenhar()};

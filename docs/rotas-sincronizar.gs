@@ -209,6 +209,26 @@ function sincronizarRotas() {
       atualizadas = bloco.length;
     }
 
+    // Nenhum seller fica sem motorista: linha em branco recebe o motorista que mais atende a mesma região
+    // (mesmo CEP de 5 dígitos, depois mesmo bairro, depois mesma cidade). Linha que já tem motorista nunca é alterada.
+    var vM = sh.getDataRange().getValues(), preenchidos = 0, semRegiao = [];
+    var reg = { cep: {}, bai: {}, cid: {} };
+    var chv = function (r) { return { cep: String(r[4] || '').replace(/\D/g, '').slice(0, 5), bai: nrmSync_(r[3]), cid: nrmSync_(r[5]) }; };
+    vM.slice(1).forEach(function (r) {
+      var m = nrmSync_(r[11]);
+      if (!r[0] || !m || !mots[m]) return;
+      var k = chv(r);
+      ['cep', 'bai', 'cid'].forEach(function (t) { if (k[t]) { reg[t][k[t]] = reg[t][k[t]] || {}; reg[t][k[t]][m] = (reg[t][k[t]][m] || 0) + 1; } });
+    });
+    var melhor = function (c) { var b = '', n = 0; for (var m in (c || {})) if (c[m] > n) { n = c[m]; b = m; } return b; };
+    var colL = vM.map(function (r) { return [r[11]]; }), mudouL = false;
+    vM.forEach(function (r, i) {
+      if (!i || !r[0] || String(r[11] || '').trim()) return;
+      var k = chv(r), m = (k.cep && melhor(reg.cep[k.cep])) || (k.bai && melhor(reg.bai[k.bai])) || (k.cid && melhor(reg.cid[k.cid])) || '';
+      if (m) { colL[i][0] = seguroSync_(mots[m]); mudouL = true; preenchidos++; } else semRegiao.push(r[0]);
+    });
+    if (mudouL) sh.getRange(1, 12, colL.length, 1).setValues(colL);
+
     // Conferência final: todo seller + cliente da base precisa estar na relação; linhas sem motorista / com motorista fora da lista
     var v2 = sh.getDataRange().getValues(), tem2 = {}, semMot = 0, motInvalido = 0;
     v2.slice(1).forEach(function (r) {
@@ -223,7 +243,7 @@ function sincronizarRotas() {
       return modo === 'cliente' ? !tem2[nome + '|' + nrmSync_(o.cliente)] : !(tem2['N:' + nome] || (o.sid && tem2['I:' + nrmSync_(o.sid)]));
     }).map(function (o) { return o.seller + ' / ' + o.cliente; });
     var antigo = Number(arqs[0].k) < Number(Utilities.formatDate(new Date(Date.now() - 3 * 86400000), SYNC.tz, 'yyyyMMdd'));
-    var resumo = { ok: faltantes.length === 0, bases: lidos, diasNaMedia: nDias, arquivosConvertidosAgora: convertidos, segundos: Math.round((Date.now() - t0) / 1000), linhasComVolumeAtualizado: atualizadas, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, semMotorista: semMot, motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
+    var resumo = { ok: faltantes.length === 0 && semMot === 0, bases: lidos, diasNaMedia: nDias, arquivosConvertidosAgora: convertidos, segundos: Math.round((Date.now() - t0) / 1000), linhasComVolumeAtualizado: atualizadas, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, motoristasPreenchidos: preenchidos, semMotorista: semMot, semMotoristaLista: semRegiao.slice(0, 20), motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
     try {
       var aud = ss.getSheetByName('_SINCRONIA') || ss.insertSheet('_SINCRONIA');
       if (!aud.getLastRow()) aud.appendRow(['Data', 'Bases lidas', 'Na base', 'Linhas novas', 'Motoristas novos', 'Sem motorista', 'Motorista fora da lista', 'Faltantes', 'Base desatualizada']);
@@ -245,7 +265,7 @@ function sincronizarAgendado() {
   }
   try {
     MailApp.sendEmail(Session.getEffectiveUser().getEmail(), 'GETLOG Rotas: a sincronização precisa de atenção',
-      erro ? 'Erro: ' + erro : 'Sellers que ficaram de fora: ' + JSON.stringify(res.faltantes));
+      erro ? 'Erro: ' + erro : 'Sellers que ficaram de fora: ' + JSON.stringify(res.faltantes) + ' | Sem motorista (sem região parecida para sugerir): ' + JSON.stringify(res.semMotoristaLista));
   } catch (em) { Logger.log('Aviso não enviado: ' + em); }
 }
 
