@@ -90,9 +90,16 @@ td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .mot.alt{font-weight:500}
 .mot.sug{border-style:dashed;color:var(--mut);font-weight:500}
 .mot.vz{color:var(--mut);font-weight:500}
-.noalt .calt{display:none}
+.noalt .calt,.noalt .sub3{display:none!important}
 .sub2{display:none;font-size:11.5px;margin-top:2px}
 .compact .sub2{display:block}
+.sub3{display:none;margin-top:4px;white-space:nowrap}
+.sub3 small{color:var(--mut);font-size:11px;margin-right:4px}
+.compact2 .sub3{display:block}
+.compact2 .calt{display:none}
+.sub4{display:none!important}
+.compact3 .cmd{display:none}
+.compact3 .sub4{display:inline-block!important;background:none!important;color:var(--mut)!important}
 .compact .ccl,.compact .cb,.compact .cc,.compact .cp{display:none}
 .dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .xb{border:0;background:none;font-size:24px;line-height:1;color:var(--mut);padding:0 4px;margin:-4px -4px 0 0}
@@ -121,7 +128,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 <body>
 <header><h1><span>Rotas</span></h1><div id="usr" class="m" style="color:#C9D2E3"></div></header>
 <main>
-<div class="abas"><button class="aba" data-b="semana">GERAL - SEGUNDA A SEXTA</button><button class="aba" data-b="ee">EU ENTREGO - SEGUNDA A SEXTA</button><button class="aba" data-b="ee_sabado">EU ENTREGO - SÁBADO</button></div>
+<div class="abas"><button class="aba" data-b="semana">GERAL - SEGUNDA A SEXTA</button><button class="aba" data-b="sabado">GERAL - SÁBADO</button><button class="aba" data-b="ee">EU ENTREGO - SEGUNDA A SEXTA</button><button class="aba" data-b="ee_sabado">EU ENTREGO - SÁBADO</button></div>
 <div id="msg" class="vazio" hidden></div>
 <div id="painel" hidden>
 
@@ -139,7 +146,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 </div>
 <div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
-<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="num">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="num cmd">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
 </div>
 </main>
@@ -174,7 +181,7 @@ const $=id=>document.getElementById(id);
 const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const curto=m=>m?m.replace(/^GET\s*-\s*/i,''):'Sem motorista';
-const BASES_OK=['semana','ee','ee_sabado'];
+const BASES_OK=['semana','sabado','ee','ee_sabado'];
 const S={base:BASES_OK.includes(localStorage.getItem('rotas_base'))?localStorage.getItem('rotas_base'):'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',ord:{mot:'az',cli:'az',cid:'az',bai:'az'},pag:1,lim:100,ult:-1,desfazer:null};
 let usuario=CFG.usuarioPortal();
 if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem identificação';localStorage.setItem('getlog_usuario',usuario)}
@@ -289,7 +296,11 @@ function ajusta(){
   // Tudo na tela, sem cortar nem quebrar texto: se não couber em colunas separadas, bairro, cidade, CEP e clientes passam para uma segunda linha
   const t=$('lista').closest('table'),w=t.parentElement;
   t.classList.remove('compact');
+  t.classList.remove('compact2');
   if(w.scrollWidth>w.clientWidth+1)t.classList.add('compact');
+  if(w.scrollWidth>w.clientWidth+1)t.classList.add('compact2');
+  t.classList.remove('compact3');
+  if(w.scrollWidth>w.clientWidth+1)t.classList.add('compact3');
 }
 addEventListener('resize',()=>ajusta());
 function desenhar(){
@@ -303,7 +314,7 @@ function desenhar(){
   const ini=(S.pag-1)*S.lim,vis=f.slice(ini,ini+S.lim);
   S.vis=vis;
   $('cont').textContent='Exibindo '+vis.length+' de '+f.length+(f.length===1?' resultado':' resultados');
-  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'<div class="sub2 cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div></td><td class="cls ccl">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'<div class="sub2 cls">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</td><td>'+esc(l.endereco)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
