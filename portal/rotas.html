@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rotas | GETLOG</title>
+<style>
+:root{--nav:#06183D;--lar:#F86800;--bg:#F4F6FA;--tit:#002060;--bd:#E3E8EF;--mut:#6B7790;--ok:#16803C;--er:#C0342B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#0E1F45;font:14px/1.4 Inter,'Segoe UI',Arial,sans-serif;padding-bottom:90px}
+header{background:var(--nav);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+header h1{margin:0;font-size:18px}
+header span{border-left:3px solid var(--lar);padding-left:10px}
+main{max-width:980px;margin:0 auto;padding:12px 16px}
+.abas{display:flex;gap:8px;margin-bottom:10px}
+.aba{flex:1;padding:10px;border:1px solid var(--bd);background:#fff;border-radius:10px;font-weight:600;color:var(--tit);cursor:pointer}
+.aba.on{background:var(--lar);border-color:var(--lar);color:#fff}
+.filtros{display:grid;gap:8px;grid-template-columns:1fr;margin-bottom:8px}
+@media(min-width:700px){.filtros{grid-template-columns:2fr 1fr}}
+input,select{width:100%;height:42px;border:1px solid #CBD3DF;border-radius:10px;padding:0 12px;font:inherit;background:#fff}
+.barra{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0;color:var(--mut)}
+button{font:inherit;cursor:pointer}
+.link{background:none;border:0;color:var(--tit);font-weight:600;text-decoration:underline;padding:6px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:auto 1fr;gap:10px}
+.card.sel{border-color:var(--lar);box-shadow:inset 3px 0 0 var(--lar)}
+.card input[type=checkbox]{width:22px;height:22px;margin-top:2px}
+.s{font-weight:700;color:var(--tit)}
+.e{color:#4A5872}
+.m{color:var(--mut);font-size:12.5px}
+.chips span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 8px;font-size:12px;margin:3px 4px 0 0}
+.mot{margin-top:6px;display:inline-block;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:6px 10px;font-weight:600;color:var(--tit)}
+.vazio{padding:24px;text-align:center;color:var(--mut)}
+.acao{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--bd);padding:12px 16px;display:flex;gap:10px;justify-content:center}
+.btn{height:46px;padding:0 22px;border:0;border-radius:10px;background:var(--lar);color:#fff;font-weight:700}
+.btn.sec{background:#fff;color:var(--tit);border:1px solid var(--bd)}
+dialog{border:0;border-radius:14px;width:min(560px,calc(100vw - 24px));padding:0;max-height:88vh}
+dialog::backdrop{background:rgba(6,24,61,.5)}
+.dl{padding:16px;display:flex;flex-direction:column;gap:10px;max-height:88vh}
+.lista{overflow:auto;flex:1;min-height:260px}
+.op{padding:11px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:8px}
+.op:hover{background:#EEF3FC}
+.op small{color:var(--mut)}
+.gr{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--lar);padding:8px 10px 2px}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--nav);color:#fff;padding:12px 16px;border-radius:10px;display:none;gap:14px;align-items:center;max-width:92vw;z-index:9}
+#toast.er{background:var(--er)}
+#toast button{background:none;border:0;color:#FFB27A;font-weight:700;text-decoration:underline}
+</style>
+</head>
+<body>
+<header><h1><span>Rotas</span></h1><div id="usr" class="m" style="color:#C9D2E3"></div></header>
+<main>
+<div class="abas"><button class="aba" data-b="semana">Segunda a sexta</button><button class="aba" data-b="sabado">Sábado</button><button class="aba" data-b="ee">EU ENTREGO</button></div>
+<div class="filtros">
+<input id="q" type="search" placeholder="Buscar seller, rua, bairro, CEP ou cidade" autocomplete="off">
+<select id="fm"></select>
+</div>
+<div class="barra"><span id="cont"></span><span><button class="link" id="todos"></button><button class="link" id="limpar">Limpar seleção</button></span></div>
+<div id="lista"></div>
+<div id="mais" class="vazio" hidden><button class="btn sec" id="maisb">Mostrar mais</button></div>
+</main>
+<div class="acao" id="acao" hidden><button class="btn" id="trocar"></button></div>
+<dialog id="dlg"><div class="dl">
+<b id="dt"></b>
+<input id="dq" type="search" placeholder="Digite parte do nome do motorista" autocomplete="off">
+<div class="lista" id="dl"></div>
+<button class="btn sec" id="dx">Cancelar</button>
+</div></dialog>
+<div id="toast"><span id="tm"></span><button id="tu">Desfazer</button></div>
+<script>
+const CFG={api:'COLE_AQUI_A_URL_DO_WEB_APP',token:'COLE_AQUI_O_TOKEN',usuarioPortal:()=>window.GETLOG_USUARIO||localStorage.getItem('getlog_usuario')};
+const $=id=>document.getElementById(id);
+const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const curto=m=>m?m.replace(/^GET\s*-\s*/i,''):'Sem motorista';
+const S={base:localStorage.getItem('rotas_base')||'semana',linhas:[],mots:[],sel:new Set(),q:'',fm:'',lim:100,desfazer:null};
+let usuario=CFG.usuarioPortal();
+if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem identificação';localStorage.setItem('getlog_usuario',usuario)}
+$('usr').textContent=usuario;
+const h=location.hash.match(/motorista=([^&]+)/);
+if(h)S.fm=decodeURIComponent(h[1]);
+async function carregar(){
+  $('lista').innerHTML='<div class="vazio">Carregando...</div>';
+  S.sel.clear();
+  try{
+    const r=await fetch(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base).then(x=>x.json());
+    if(r.erro)throw new Error(r.erro);
+    S.linhas=r.linhas.map(l=>({...l,_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+    S.mots=r.motoristas;
+  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a URL e o token.</div>';return}
+  desenharMots();desenhar();
+}
+function desenharMots(){
+  const c={};S.linhas.forEach(l=>c[l.motorista]=(c[l.motorista]||0)+1);
+  $('fm').innerHTML='<option value="">Todos os motoristas</option>'+Object.keys(c).sort().map(m=>'<option value="'+esc(m)+'"'+(m===S.fm?' selected':'')+'>'+esc(curto(m))+' ('+c[m]+')</option>').join('');
+}
+function filtradas(){
+  const t=norm(S.q).split(/\s+/).filter(Boolean);
+  return S.linhas.filter(l=>(!S.fm||l.motorista===S.fm)&&t.every(x=>l._b.includes(x))).sort((a,b)=>a.cep.localeCompare(b.cep)||a.seller.localeCompare(b.seller));
+}
+function desenhar(){
+  document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('on',a.dataset.b===S.base));
+  const f=filtradas();
+  const vis=f.slice(0,S.lim);
+  $('cont').textContent=f.length+' sellers'+(S.sel.size?' | '+S.sel.size+' selecionados':'');
+  const todosSel=f.length&&f.every(l=>S.sel.has(l.k));
+  $('todos').textContent=todosSel?'Desmarcar todos':'Selecionar todos ('+f.length+')';
+  $('lista').innerHTML=vis.map(l=>'<div class="card'+(S.sel.has(l.k)?' sel':'')+'" data-k="'+esc(l.k)+'"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'><div><div class="s">'+esc(l.seller)+'</div><div class="e">'+esc(l.endereco)+'</div><div class="m">'+esc(l.bairro)+' | '+esc(l.cidade)+' | '+esc(l.cep)+''+(l.media?' | média '+l.media.toLocaleString('pt-BR'):'')+'</div><div class="chips">'+l.clientes.map(c=>'<span>'+esc(c)+'</span>').join('')+'</div><button class="mot" data-um="1">'+esc(curto(l.motorista))+'</button></div></div>').join('')||'<div class="vazio">Nenhum seller com esses filtros.</div>';
+  $('mais').hidden=f.length<=S.lim;
+  $('acao').hidden=!S.sel.size;
+  $('trocar').textContent='Trocar motorista de '+S.sel.size+(S.sel.size===1?' seller':' sellers');
+}
+function abrirTroca(keys){
+  S.alvo=keys;
+  const rows=S.linhas.filter(l=>keys.includes(l.k));
+  $('dt').textContent='Novo motorista para '+rows.length+(rows.length===1?' seller':' sellers');
+  const cep=new Set(rows.map(l=>l.cep.slice(0,5)));
+  const c={};S.linhas.forEach(l=>{if(cep.has(l.cep.slice(0,5)))c[l.motorista]=(c[l.motorista]||0)+1});
+  S.ops=Object.keys(c).sort((a,b)=>c[b]-c[a]).map(m=>({m,det:c[m]+' sellers na região',g:'Sugeridos para esta região'})).concat(S.mots.filter(m=>!c[m]).map(m=>({m,det:'',g:'Outros motoristas'})));
+  $('dq').value='';desenharOps();
+  $('dlg').showModal();
+}
+function desenharOps(){
+  const t=norm($('dq').value).split(/\s+/).filter(Boolean);
+  let g='',o='';
+  S.ops.filter(x=>t.every(y=>norm(x.m).includes(y))).slice(0,300).forEach(x=>{
+    if(x.g!==g){g=x.g;o+='<div class="gr">'+g+'</div>'}
+    o+='<div class="op" data-m="'+esc(x.m)+'"><span>'+esc(x.m)+'</span><small>'+esc(x.det)+'</small></div>';
+  });
+  $('dl').innerHTML=o||'<div class="vazio">Nenhum motorista encontrado.</div>';
+}
+async function salvar(mudancas,msg){
+  const toast=(t,er,u)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
+  const ant=mudancas.map(m=>({k:m.k,motorista:S.linhas.find(l=>l.k===m.k).motorista}));
+  const aplicar=lst=>lst.forEach(m=>{S.linhas.find(l=>l.k===m.k).motorista=m.motorista});
+  aplicar(mudancas);desenharMots();desenhar();
+  try{
+    const r=await fetch(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,base:S.base,usuario,mudancas})}).then(x=>x.json());
+    if(!r.ok)throw new Error(r.erro||'falha');
+    if(r.rejeitados.length)toast('Salvo, mas '+r.rejeitados.length+' não foram aceitos. Recarregue a página.',true,false);
+    else toast('Salvo: '+msg,false,true);
+    S.desfazer=ant;
+  }catch(e){
+    aplicar(ant);desenharMots();desenhar();
+    toast('Não foi possível salvar. Nada foi alterado.',true,false);
+  }
+}
+$('lista').addEventListener('click',e=>{
+  const c=e.target.closest('.card');if(!c)return;
+  const k=c.dataset.k;
+  if(e.target.dataset.um){abrirTroca([k]);return}
+  S.sel.has(k)?S.sel.delete(k):S.sel.add(k);
+  desenhar();
+});
+$('todos').onclick=()=>{const f=filtradas();const t=f.every(l=>S.sel.has(l.k));f.forEach(l=>t?S.sel.delete(l.k):S.sel.add(l.k));desenhar()};
+$('limpar').onclick=()=>{S.sel.clear();desenhar()};
+$('trocar').onclick=()=>abrirTroca([...S.sel]);
+$('q').oninput=e=>{S.q=e.target.value;S.lim=100;desenhar()};
+$('fm').onchange=e=>{S.fm=e.target.value;S.lim=100;desenhar()};
+$('maisb').onclick=()=>{S.lim+=100;desenhar()};
+$('dq').oninput=desenharOps;
+$('dx').onclick=()=>$('dlg').close();
+$('dl').addEventListener('click',e=>{
+  const o=e.target.closest('.op');if(!o)return;
+  const m=o.dataset.m,keys=S.alvo;
+  if(keys.length>1&&!confirm('Trocar '+keys.length+' sellers para '+m+'?'))return;
+  $('dlg').close();
+  S.sel.clear();
+  salvar(keys.map(k=>({k,motorista:m})),keys.length+' sellers para '+curto(m));
+});
+$('tu').onclick=()=>{if(S.desfazer){const d=S.desfazer;S.desfazer=null;$('toast').style.display='none';salvar(d,'desfeito')}};
+document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;localStorage.setItem('rotas_base',S.base);S.fm='';S.q='';$('q').value='';carregar()});
+carregar();
+</script>
+</body>
+</html>
