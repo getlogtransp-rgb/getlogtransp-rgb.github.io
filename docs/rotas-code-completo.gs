@@ -258,7 +258,7 @@ function lerColetaSync_(f) {
       if (!o.bairro) o.bairro = limpaSync_(col.bairro[r][0]);
       var h = col.hora[r][0];
       var hm = h instanceof Date ? Utilities.formatDate(h, SYNC.tz, 'HH:mm:ss') : String(h || '').slice(11, 19);
-      var m = limpaSync_(col.motorista[r][0]);
+      var m = String(col.motorista[r][0] == null ? '' : col.motorista[r][0]).trim(); // nome do motorista exatamente como está na base (IMILE)
       if (ehGetSync_(m)) { o.qGet++; o.mots[m] = (o.mots[m] || 0) + 1; } // só coleta de motorista GETLOG entra na média e nos alternativos
       if (ehGetSync_(m) && (!o.mot || hm >= o.motHora)) { o.mot = m; o.motHora = hm; }
     }

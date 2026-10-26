@@ -191,8 +191,8 @@ async function chamar(url,opt,tent,tmo){
 const $=id=>document.getElementById(id);
 const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// Motorista sempre com o nome completo no padrão do sistema da IMILE: "GET - NOME SOBRENOME"
-const curto=m=>m?String(m).replace(/\s+/g,' ').trim().toUpperCase():'Sem motorista';
+// Motorista sempre exatamente como está na IMILE (mesmo texto que vai para a planilha)
+const curto=m=>m?String(m):'Sem motorista';
 const BASES_OK=['semana','sabado','ee','ee_sabado'];
 const S={base:BASES_OK.includes(localStorage.getItem('rotas_base'))?localStorage.getItem('rotas_base'):'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',ord:{mot:'az',cli:'az',cid:'az',bai:'az'},pag:1,lim:100,ult:-1,desfazer:null};
 let usuario=CFG.usuarioPortal();
