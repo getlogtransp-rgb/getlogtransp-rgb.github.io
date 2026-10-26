@@ -96,12 +96,18 @@ if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem id
 $('usr').textContent=usuario;
 const h=location.hash.match(/motorista=([^&]+)/);
 if(h)S.fm=decodeURIComponent(h[1]);
+function aplicar(r){
+  S.linhas=r.linhas.map(l=>({...l,seller:String(l.seller==null?'':l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:l.clientes||[],motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+  S.mots=r.motoristas||[];
+}
+// Cópia só da sessão desta aba (some ao fechar o navegador): a tela abre na hora e atualiza em segundo plano
+const CK=()=>'rotas_cache_'+S.base;
 async function buscar(){
   const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base,{},2,30000);
   if(r.erro||!Array.isArray(r.linhas))throw new Error(r.erro||'resposta inválida');
-  S.linhas=r.linhas.map(l=>({...l,seller:String(l.seller==null?'':l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:l.clientes||[],motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
-  S.mots=r.motoristas||[];
+  aplicar(r);
   S.em=Date.now();
+  try{sessionStorage.setItem(CK(),JSON.stringify({linhas:r.linhas,motoristas:r.motoristas}))}catch(e){}
 }
 // Atualização silenciosa: mantém busca, filtro e seleção; nunca roda durante um salvamento
 async function recarregar(){
@@ -112,12 +118,14 @@ async function recarregar(){
 }
 async function carregar(){
   if(!CONFIGURADO){$('lista').innerHTML='<div class="vazio">A tela Rotas ainda não foi configurada. Peça ao administrador para informar a URL e o token em Usuários e acessos &gt; Configurações do sistema.</div>';$('fm').hidden=$('limpar').hidden=$('sinc').hidden=true;$('cont').textContent='';$('todos').textContent='';return}
-  $('lista').innerHTML='<div class="vazio">Carregando...</div>';
   S.sel.clear();
   $('fm').hidden=$('limpar').hidden=false;
+  let rapido=false;
+  try{const c=JSON.parse(sessionStorage.getItem(CK())||'null');if(c&&Array.isArray(c.linhas)){aplicar(c);rapido=true;desenharMots();desenhar();S.em=Date.now()-240000}}catch(e){}
+  if(!rapido)$('lista').innerHTML='<div class="vazio">Carregando...</div>';
   try{
     await buscar();
-  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a conexão e tente de novo.<br><button class="btn sec" id="tent" style="margin-top:12px">Tentar de novo</button></div>';$('tent').onclick=carregar;$('fm').hidden=$('limpar').hidden=true;$('cont').textContent='';$('todos').textContent='';$('acao').hidden=true;return}
+  }catch(e){if(rapido)return;$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a conexão e tente de novo.<br><button class="btn sec" id="tent" style="margin-top:12px">Tentar de novo</button></div>';$('tent').onclick=carregar;$('fm').hidden=$('limpar').hidden=true;$('cont').textContent='';$('todos').textContent='';$('acao').hidden=true;return}
   desenharMots();desenhar();
 }
 function desenharMots(){
