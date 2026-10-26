@@ -8,6 +8,7 @@
 :root{--nav:#06183D;--lar:#F86800;--bg:#F4F6FA;--tit:#002060;--bd:#E3E8EF;--mut:#6B7790;--ok:#16803C;--er:#C0342B}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+html,body{overflow-x:hidden}
 body{margin:0;background:var(--bg);color:#0E1F45;font:14px/1.4 Inter,'Segoe UI',Arial,sans-serif}
 header{background:var(--nav);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 header h1{margin:0;font-size:18px}
@@ -22,9 +23,11 @@ main{max-width:none;margin:0;padding:0 16px 12px}
 .panel{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px}
 input,select{height:36px;border:1px solid #CBD3DF;border-radius:7px;padding:0 10px;font:inherit;background:#fff;color:#0E1F45}
 input:focus,select:focus{outline:0;border-color:var(--tit)}
-.fbar{display:grid;grid-template-columns:minmax(220px,2.4fr) repeat(4,minmax(0,1fr)) minmax(0,1.1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px}
+.fbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.1fr) auto;gap:8px;align-items:center;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px}
 .fbar #q,.fbar #fcep{width:100%;min-width:0}
-@media(max-width:900px){.fbar{grid-template-columns:1fr 1fr}.fbar #q{grid-column:1/-1}}
+.fbar #q{grid-column:1/-1;height:46px;font-size:15px;padding:0 14px;border-radius:9px}
+@media(max-width:1180px){.fbar{grid-template-columns:repeat(4,minmax(0,1fr))}.fbar #q{grid-column:1/-1}.fbar #fcep{grid-column:span 2}.fbar #limpar{grid-column:span 2;justify-self:end}}
+@media(max-width:700px){.fbar{grid-template-columns:repeat(2,minmax(0,1fr))}.fbar #fcep,.fbar #limpar{grid-column:auto}}
 .dd{position:relative}
 .ddb{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:1px solid #CBD3DF;background:#fff;border-radius:7px;padding:0 10px;height:36px;font-size:13px;color:#2F3F63;white-space:nowrap}
 .ddb>span{flex:1;text-align:left}
@@ -67,7 +70,7 @@ button:disabled{opacity:.55;cursor:default}
 .tool{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:14px 0 8px;flex-wrap:wrap}
 .tool h2{margin:0;font-size:16px;color:var(--tit)}
 .tool h2 small{font-weight:400;color:var(--mut);font-size:13px;margin-left:6px}
-.tool .dir{display:flex;gap:8px;align-items:center;position:relative}
+.tool .dir{display:flex;gap:8px;align-items:center;position:relative;flex-wrap:wrap}
 .menu{position:absolute;right:0;top:46px;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(6,24,61,.18);min-width:260px;z-index:5;padding:6px}
 .menu button{display:block;width:100%;text-align:left;background:none;border:0;padding:10px 12px;border-radius:8px;color:var(--tit);font-weight:600}
 .menu button:hover:not(:disabled){background:#EEF3FC}
@@ -94,13 +97,21 @@ td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .sub2{display:none;font-size:11.5px;margin-top:2px}
 .compact .sub2{display:block}
 .sub3{display:none;margin-top:4px;white-space:nowrap}
-.sub3 small{color:var(--mut);font-size:11px;margin-right:4px}
+.sub3 small{display:block;color:var(--mut);font-size:11px;margin-bottom:2px}
 .compact2 .sub3{display:block}
 .compact2 .calt{display:none}
 .sub4{display:none!important}
 .compact3 .cmd{display:none}
 .compact3 .sub4{display:inline-block!important;background:none!important;color:var(--mut)!important}
 .compact .ccl,.compact .cb,.compact .cc,.compact .cp{display:none}
+.tag{display:inline-block;color:#fff;font-size:12px;font-weight:800;letter-spacing:.06em;padding:4px 10px;border-radius:6px;margin-bottom:8px}
+.tag.o{background:var(--lar)}
+.tag.a{background:var(--tit)}
+#dt{font-size:20px;font-weight:800;color:var(--tit);line-height:1.2}
+#dsub{margin-top:4px;color:#4A5872;font-size:13.5px}
+#dsub b{color:var(--tit)}
+.dl.o{border-top:6px solid var(--lar)}
+.dl.a{border-top:6px solid var(--tit)}
 .dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .xb{border:0;background:none;font-size:24px;line-height:1;color:var(--mut);padding:0 4px;margin:-4px -4px 0 0}
 .xb:hover{color:var(--tit)}
@@ -152,7 +163,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 </main>
 <div class="acao" id="acao" hidden><b id="nsel"></b><button class="btn" id="trocar"></button><button class="btn sec" id="lsel">Limpar seleção</button></div>
 <dialog id="dlg"><div class="dl">
-<div class="dh"><b id="dt"></b><button class="xb" id="dxx" aria-label="Fechar">&times;</button></div>
+<div class="dh"><div><span id="dtag" class="tag"></span><div id="dt"></div><div id="dsub"></div></div><button class="xb" id="dxx" aria-label="Fechar">&times;</button></div>
 <input id="dq" type="search" placeholder="Digite parte do nome do motorista" autocomplete="off">
 <div class="lista" id="dl"></div>
 <button class="btn sec" id="dx">Cancelar</button>
@@ -275,6 +286,8 @@ function desenharFiltros(){
   $('dds').innerHTML=FILTROS.map(([k,r])=>{const n=S.f[k].size;return '<div class="dd"><button class="ddb'+(n?' on':'')+'" data-pop="'+k+'" aria-haspopup="listbox" aria-expanded="'+(S.pop===k)+'"><span>'+r+'</span>'+(n?'<b class="c">'+n+'</b>':'')+CV+'</button>'+(S.pop===k?popHTML(k):'')+'</div>'}).join('');
   const ch=[];FILTROS.forEach(([k,r])=>S.f[k].forEach(v=>ch.push('<span class="chip"><b>'+r+':</b> '+esc(rotuloV(k,v))+'<button data-chip="'+k+'" data-v="'+esc(v)+'" aria-label="Remover filtro">&times;</button></span>')));
   $('chips').innerHTML=ch.join('');
+  const pp=document.querySelector('.pop');
+  if(pp){pp.classList.remove('r');if(pp.getBoundingClientRect().right>innerWidth-8)pp.classList.add('r')}
   const q=$('msq');if(q&&S.foco){q.focus();q.setSelectionRange(q.value.length,q.value.length)}
 }
 // Sugestão por região: o motorista que mais atende o mesmo CEP (5 dígitos), depois o mesmo bairro, depois a mesma cidade
@@ -325,7 +338,7 @@ function desenhar(){
   $('pinfo').textContent=f.length?('Mostrando '+(ini+1)+' a '+(ini+vis.length)+' de '+f.length):'';
   $('pn').textContent='Página '+S.pag+' de '+np;$('ant').disabled=S.pag<=1;$('prox').disabled=S.pag>=np;
   $('m3').textContent='Alternativo dos '+plural(S.sel.size,'selecionado','selecionados');$('m3').disabled=!S.sel.size||S.base.startsWith('ee');
-  const nSug=S.base.startsWith('ee')?0:S.linhas.filter(l=>!l.alt&&altSug(l)).length;$('gsug').hidden=!nSug;$('gsug').textContent='Gravar alternativos sugeridos ('+nSug+')';
+  const nSug=S.base.startsWith('ee')?0:S.linhas.filter(l=>!l.alt&&altSug(l)).length;$('gsug').hidden=!nSug;$('gsug').textContent='Gravar sugeridos ('+nSug+')';$('gsug').title='Gravar na planilha o motorista alternativo sugerido pela região';
   $('m1').textContent='Aos '+plural(S.sel.size,'selecionado','selecionados');$('m1').disabled=!S.sel.size;
   $('m2').textContent='A todos os '+f.length+' do filtro';$('m2').disabled=!f.length;
   const pend=S.linhas.filter(l=>!l.motorista).length,sug=pend?sugestoes().length:0;
@@ -339,11 +352,14 @@ function desenhar(){
 function abrirTroca(keys,modo){
   S.alvo=keys;S.modo=modo||'mot';
   const alt=S.modo==='alt',rows=S.linhas.filter(l=>keys.includes(l.k));
-  $('dt').textContent=(alt?'Motorista alternativo para ':'Novo motorista para ')+rows.length+(rows.length===1?' seller':' sellers');
+  $('dlg').querySelector('.dl').className='dl '+(alt?'a':'o');
+  $('dtag').className='tag '+(alt?'a':'o');$('dtag').textContent=alt?'ESCOLHER MOTORISTA ALTERNATIVO':'ESCOLHER MOTORISTA OFICIAL';
+  if(rows.length===1){const l=rows[0];$('dt').textContent=l.seller;$('dsub').innerHTML=alt?'Motorista oficial: <b>'+esc(curto(l.motorista))+'</b> &middot; Alternativo atual: <b>'+esc(l.alt?curto(l.alt):'nenhum')+'</b>':'Motorista atual: <b>'+esc(curto(l.motorista))+'</b>'}
+  else{$('dt').textContent=rows.length+' SELLERS SELECIONADOS';$('dsub').textContent='A escolha abaixo vale para todos os sellers selecionados.'}
   const cep=new Set(rows.map(l=>l.cep.slice(0,5))),ofi=new Set(rows.map(l=>l.motorista));
   const c={};S.linhas.forEach(l=>{if(l.motorista&&cep.has(l.cep.slice(0,5)))c[l.motorista]=(c[l.motorista]||0)+1});
   const sug=Object.keys(c).filter(m=>!(alt&&rows.length===1&&ofi.has(m))).sort((a,b)=>c[b]-c[a]);
-  S.ops=(alt?[{m:'',det:'',g:'Sem alternativo',rm:1}]:[]).concat(sug.map(m=>({m,det:c[m]+' sellers na região',g:'Sugeridos para esta região'})),S.mots.filter(m=>!c[m]&&!(alt&&rows.length===1&&ofi.has(m))).map(m=>({m,det:'',g:'Outros motoristas'})));
+  S.ops=(alt?[{m:'',det:'',g:'Sem alternativo',rm:1}]:[]).concat(sug.map(m=>({m,det:c[m]+(c[m]===1?' seller':' sellers')+' na região',g:'Sugeridos para esta região'})),S.mots.filter(m=>!c[m]&&!(alt&&rows.length===1&&ofi.has(m))).map(m=>({m,det:'',g:'Outros motoristas'})));
   $('dq').value='';desenharOps();
   $('dlg').showModal();
 }
