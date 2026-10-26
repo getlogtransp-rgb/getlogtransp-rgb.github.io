@@ -244,3 +244,8 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #app input{caret-color:auto;-webkit-user-select:text;user-select:text}
 #map{height:400px}@media (max-width:600px){#map{height:320px}}
 .cal.so{grid-template-columns:200px}.cal.so .cp{border-right:0;background:#fff;padding:8px}[data-theme=dark] .cal.so .cp{background:#121f37}@media (max-width:720px){.cal.so{position:absolute;left:0;right:auto;top:calc(100% + 8px);width:220px}.cal.so .cp{grid-template-columns:1fr}}
+/* Calendário: atalhos + 1 mês */
+.cal{grid-template-columns:170px auto}.cp{gap:4px}.cp button{font-size:.88rem}
+.mo{width:280px}.wd,.gd{grid-template-columns:repeat(7,40px)}.dd{height:38px;border-radius:10px!important;margin:1px 0}.dd.in{border-radius:0!important}.dd.ini{border-radius:10px 0 0 10px!important}.dd.fim{border-radius:0 10px 10px 0!important}.dd.ini.fim{border-radius:10px!important}
+.cn{left:auto;right:14px;top:10px;gap:6px;justify-content:flex-end}.mo>b{text-align:left;margin:8px 0 12px 4px;font-size:1rem}
+@media (max-width:720px){.cal{grid-template-columns:1fr}.mo{width:100%}.wd,.gd{grid-template-columns:repeat(7,1fr)}}

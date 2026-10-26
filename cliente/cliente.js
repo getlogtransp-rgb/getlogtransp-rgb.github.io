@@ -54,7 +54,7 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <div class="prog" id="prog" hidden><i></i></div></section><div class="ld" id="ld" hidden role="status" aria-live="polite"><span class="sp"></span><span id="ldt">Carregando dados…</span></div>
 <div class="kw"><div class="dn" id="dn"></div><div class="kp" id="kp"></div></div><section class="card t45" id="t45" hidden></section>
 <section class="card"><h2>Performance por semana</h2><p class="sub" id="chWs">% de visita por semana (últimas 8, segunda a domingo) · coleta em cinza como referência</p><div class="ch" id="chW"></div></section>
-<div class="g2"><section class="card"><h2>Performance por dia</h2><p class="sub">% de visita por dia da operação inteira (não segue os filtros) · coleta em cinza como referência</p><div class="ch" id="chD"></div></section>
+<div class="g2"><section class="card"><h2 id="chDt">Performance por dia</h2><p class="sub">% de visita e % de coleta da operação inteira (não segue os filtros) · um dia só = por hora</p><div class="ch" id="chD"></div></section>
 <section class="card"><h2>Coletas por hora</h2><p class="sub">Barras: pacotes coletados na hora (número embaixo) · linha: % acumulado do previsto</p><div class="ch" id="chH"></div></section></div>
 <div class="g2"><section class="card"><h2>Performance por região</h2><p class="sub">% de visita (sellers) · coleta em segundo plano · clique para filtrar</p><div class="ch" id="chR"></div></section>
 <section class="card"><h2>Mapa da operação</h2><p class="sub" id="mapS">Bairros atendidos; cor = performance de coleta</p><div id="map"></div></section></div>
@@ -186,8 +186,14 @@ new MutationObserver(()=>{cores();if(ROWS.length)run()}).observe(document.docume
 const pcs=(c,p)=>p?c/p*100:null;
 function tipo(t,a){return `${t}\nPrevisto: ${N(a.p)} pacotes\nColetado: ${N(a.c)} pacotes\nColeta: ${P1(a.p?a.c/a.p*100:0)}\nSellers: ${N(a.n)} · visitados ${N(a.v)} (${P1(a.n?a.v/a.n*100:0)})`}
 // Por dia: sempre a operação inteira do período (não segue os filtros), só as taxas de coleta e de visita.
-function chD(){const A=agr(ROWS,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1);combo($('#chD'),{id:'d',titulo:'Performance por dia',cats:A.map(a=>fmtD(a.k).slice(0,5)),tip:i=>tipo(fmtD(A[i].k),A[i]),
-bars:[],lines:[{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1,w:4},{n:'% coleta (referência)',c:'#b9c3d6',v:A.map(a=>pcs(a.c,a.p))}]})}
+// Por dia (vários dias) ou por hora (um dia só): % de visita e % de coleta juntos, da operação inteira (não segue os filtros).
+function chD(){const dz=new Set(ROWS.map(r=>r.dk));$('#chDt').textContent=dz.size===1?'Performance por hora':'Performance por dia';
+if(dz.size===1){const hs=[...new Set(ROWS.filter(r=>r.h>=0).map(r=>r.h))].sort((a,b)=>a-b);if(!hs.length){$('#chD').innerHTML='<p class="emp">Sem horários no dia.</p>';return}
+const [nS]=sel(ROWS),P=ROWS.reduce((a,r)=>a+r.p,0),pri=new Map();for(const r of ROWS)if(r.vz&&r.p>0&&r.h>=0){const v=pri.get(r.g);if(v==null||r.h<v)pri.set(r.g,r.h)}
+const V=hs.map(h=>{let n=0;for(const v of pri.values())if(v<=h)n++;return nS?Math.min(100,n/nS*100):0}),Cc=hs.map(h=>{let c=0;for(const r of ROWS)if(r.h>=0&&r.h<=h)c+=Math.min(r.t,r.p>0?r.t:r.t);return P?Math.min(100,c/P*100):0});
+combo($('#chD'),{id:'d',titulo:'Performance por hora',cats:hs.map(h=>h+'h'),tip:i=>`Até ${hs[i]}h59\nVisita: ${P1(V[i])} dos sellers\nColeta: ${P1(Cc[i])} do previsto`,bars:[],lines:[{n:'% visita (acumulado)',c:CV,v:V,lbl:1,w:4},{n:'% coleta (acumulado)',c:CO,v:Cc,lbl:1,w:3}]});return}
+const A=agr(ROWS,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1);combo($('#chD'),{id:'d',titulo:'Performance por dia',cats:A.map(a=>fmtD(a.k).slice(0,5)),tip:i=>tipo(fmtD(A[i].k),A[i]),
+bars:[],lines:[{n:'% visita',c:CV,v:A.map(a=>pcs(a.v,a.n)),lbl:1,w:4},{n:'% coleta',c:CO,v:A.map(a=>pcs(a.c,a.p)),lbl:1,w:3}]})}
 function chH(){const H=new Array(24).fill(0),S=new Array(24).fill(0);let P=0;for(const r of F){P+=r.p;if(r.h>=0){H[r.h]+=r.t;S[r.h]++}}const ini=H.findIndex(v=>v>0);if(ini<0){$('#chH').innerHTML='<p class="emp">Sem horários de coleta no período.</p>';return}
 const fim=23-[...H].reverse().findIndex(v=>v>0),hs=[];for(let i=ini;i<=fim;i++)hs.push(i);let ac=0;const AC=hs.map(x=>(ac+=H[x],P?ac/P*100:0));const pk=hs.reduce((a,b)=>H[b]>H[a]?b:a,hs[0]);
 combo($('#chH'),{id:'h',titulo:'Coletas por hora',minLbl:34,under:1,cats:hs.map(x=>x+'h'),tip:i=>`${hs[i]}h às ${hs[i]}h59\nColetados na hora: ${N(H[hs[i]])} pacotes\nSellers com coleta: ${N(S[hs[i]])}\nAcumulado: ${P1(AC[i])} do previsto`,
@@ -259,19 +265,20 @@ $('#t45b').onclick=()=>{const so=SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('
 // Calendário profissional: atalhos + 2 meses, só dias com dados ficam ativos.
 let CAL=null;const fechaCal=()=>{if(CAL){CAL.remove();CAL=null}};document.addEventListener('click',e=>{if(CAL&&!e.target.closest('#dp'))fechaCal()});document.addEventListener('keydown',e=>{if(e.key==='Escape')fechaCal()});
 $('#dpb').onclick=e=>{e.stopPropagation();if(CAL)return fechaCal();fecha();const AV=new Set(LS.map(x=>x.k));const D=dias();let a=D.length?D[D.length-1].k:null,b=D.length?D[0].k:null,hov=null;
-let mes=new Date((b||LS[0].k)+'T12:00:00');mes.setDate(1);if(innerWidth>720)mes.setMonth(mes.getMonth()-1);
+let mes=new Date((b||LS[0].k)+'T12:00:00');mes.setDate(1);
 CAL=document.createElement('div');CAL.className='cal';CAL.setAttribute('role','dialog');CAL.onclick=e=>e.stopPropagation();$('#dp').appendChild(CAL);
 const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const mesH=m=>{const ini=new Date(m),dow=(ini.getDay()+6)%7,ult=new Date(m.getFullYear(),m.getMonth()+1,0).getDate();let c='';for(let i=0;i<dow;i++)c+='<span></span>';
 for(let d=1;d<=ult;d++){const k=iso(new Date(m.getFullYear(),m.getMonth(),d)),e2=b||hov,lo=a&&e2?(a<e2?a:e2):a,hi=a&&e2?(a<e2?e2:a):a;const cl=['dd'];if(!AV.has(k))cl.push('off');if(lo&&k>=lo&&k<=hi)cl.push('in');if(k===lo)cl.push('ini');if(k===hi)cl.push('fim');if(k===LS[0].k)cl.push('hj');
 c+=`<button type="button" class="${cl.join(' ')}" data-k="${k}"${AV.has(k)?'':' disabled'}>${d}</button>`}
 return `<div class="mo"><b>${m.toLocaleDateString(window.GL_LANG&&GL_LANG.lang==='zh'?'zh-CN':'pt-BR',{month:'long',year:'numeric'})}</b><div class="wd">${(window.GL_LANG&&GL_LANG.lang==='zh'?['一','二','三','四','五','六','日']:['S','T','Q','Q','S','S','D']).map(x=>`<span>${x}</span>`).join('')}</div><div class="gd">${c}</div></div>`};
-const desenha=()=>{const m2=new Date(mes);m2.setMonth(m2.getMonth()+1);const dois=innerWidth>720;
-CAL.innerHTML=`<div class="cp">${PRE.map(([v,l])=>`<button type="button" data-p="${v}"${per===v?' class="on"':''}>${l}</button>`).join('')}</div>`;CAL.classList.add('so');
+const desenha=()=>{const m2=new Date(mes);m2.setMonth(m2.getMonth()+1);const dois=false;
+CAL.innerHTML=`<div class="cp">${PRE.map(([v,l])=>`<button type="button" data-p="${v}"${per===v?' class="on"':''}>${l}</button>`).join('')}</div><div class="cm"><div class="cn"><button type="button" data-n="-1" aria-label="Mês anterior">‹</button><button type="button" data-n="1" aria-label="Próximo mês">›</button></div><div class="ms2">${mesH(mes)}${dois?mesH(m2):''}</div>
+<div class="cf"><span>${a?fmtD(a)+(b&&b!==a?' – '+fmtD(b):''):'Escolha o início'}${a&&!b?' · escolha o fim':''}</span><button type="button" class="btn2" data-x="c">Cancelar</button><button type="button" class="btn2 pri" data-x="a"${a?'':' disabled'}>Aplicar</button></div></div>`;
 CAL.querySelectorAll('.cp button').forEach(x=>x.onclick=()=>{fechaCal();setPer(x.dataset.p)});
-if(0)CAL.querySelectorAll('.cn button').forEach(x=>x.onclick=()=>{mes.setMonth(mes.getMonth()+ +x.dataset.n);desenha()});
-if(0)CAL.querySelectorAll('.dd:not(.off)').forEach(x=>{x.onclick=()=>{const k=x.dataset.k;if(!a||b){a=k;b=null}else{if(k<a){b=a;a=k}else b=k}hov=null;desenha()};x.onmouseenter=()=>{if(a&&!b){hov=x.dataset.k;CAL.querySelectorAll('.dd').forEach(y=>{const k=y.dataset.k,lo=a<hov?a:hov,hi=a<hov?hov:a;y.classList.toggle('in',k>=lo&&k<=hi)})}}});
-0};desenha()};
+CAL.querySelectorAll('.cn button').forEach(x=>x.onclick=()=>{mes.setMonth(mes.getMonth()+ +x.dataset.n);desenha()});
+CAL.querySelectorAll('.dd:not(.off)').forEach(x=>{x.onclick=()=>{const k=x.dataset.k;if(!a||b){a=k;b=null}else{if(k<a){b=a;a=k}else b=k}hov=null;desenha()};x.onmouseenter=()=>{if(a&&!b){hov=x.dataset.k;CAL.querySelectorAll('.dd').forEach(y=>{const k=y.dataset.k,lo=a<hov?a:hov,hi=a<hov?hov:a;y.classList.toggle('in',k>=lo&&k<=hi)})}}});
+CAL.querySelector('[data-x="c"]').onclick=fechaCal;CAL.querySelector('[data-x="a"]').onclick=()=>{if(!a)return;$('#d1').value=a;$('#d2').value=b||a;fechaCal();document.querySelectorAll('#per button').forEach(x=>x.classList.remove('on'));per='c';rotPer();load()}};desenha()};
 let qt=0;$('#q').oninput=()=>{clearTimeout(qt);qt=setTimeout(()=>{LIM=50;run()},200)};
 setPer('1');
 // Passo a passo rápido: aparece no 1º acesso de cada dia (e pelo botão "?").

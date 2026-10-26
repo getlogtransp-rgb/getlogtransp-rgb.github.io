@@ -13,7 +13,7 @@ const D={
 'Usuário ou senha incorretos.':'用户名或密码错误。','Mostrar senha':'显示密码','Ocultar senha':'隐藏密码','Crie sua senha':'设置新密码','Nova senha':'新密码','Repita a nova senha':'再次输入新密码','Salvar senha':'保存密码','Salvando...':'保存中…',
 'Primeiro acesso (ou senha redefinida). Crie uma senha pessoal para continuar.':'首次登录（或密码已重置），请设置个人密码后继续。','As duas senhas não são iguais.':'两次输入的密码不一致。',
 'Fale conosco':'联系我们','Sair':'退出','Atualizar':'刷新','Como usar':'使用说明','Conectando ao Drive...':'正在连接数据…',
-'Período':'时间范围','Hoje':'今天','Hoje e ontem':'今天和昨天','Ontem':'昨天','Esta semana':'本周','Semana passada':'上周','Últimos 7 dias':'近 7 天','Últimos 15 dias':'近 15 天','Últimos 30 dias':'近 30 天','Este mês':'本月','Mês passado':'上月','Últimas 8 semanas':'近 8 周','Personalizado':'自定义',
+'Período':'时间范围','Hoje':'今天','Hoje e ontem':'今天和昨天','Ontem':'昨天','Performance por hora':'每小时绩效','% visita (acumulado)':'累计拜访率','% coleta (acumulado)':'累计揽收率','% de visita e % de coleta da operação inteira (não segue os filtros) · um dia só = por hora':'全部作业的拜访率和揽收率（不受筛选影响）· 单日按小时显示','Esta semana':'本周','Semana passada':'上周','Últimos 7 dias':'近 7 天','Últimos 15 dias':'近 15 天','Últimos 30 dias':'近 30 天','Este mês':'本月','Mês passado':'上月','Últimas 8 semanas':'近 8 周','Personalizado':'自定义',
 'Cancelar':'取消','Aplicar':'确定','Escolha o início':'请选择开始日期','Sem dias com dados':'无数据日期',
 'Só T4 e T5':'仅看 T4 和 T5','Buscar seller, motorista, bairro…':'搜索商家、司机、街区…',
 'Cliente':'客户','Região':'区域','Motorista':'司机','Prioridade':'优先级','Status do seller':'商家状态','Visita':'拜访','Todos':'全部','Carregando…':'加载中…',
@@ -59,7 +59,7 @@ const R=[
 // Dica dos gráficos (várias linhas).
 const RT=[[/^Previsto: (.+) pacotes$/,'预计：$1 件'],[/^Coletado: (.+) pacotes$/,'已揽收：$1 件'],[/^Coleta: (.+)$/,'揽收率：$1'],[/^Visita: (.+)$/,'拜访率：$1'],
 [/^Sellers: (.+) · visitados (.+) \((.+)\)$/,'商家：$1 · 已拜访 $2（$3）'],[/^Semana (.+) a (.+)$/,'周 $1 至 $2'],[/^vs\. semana anterior: (.) (.+) p\.p\.$/,'较上周：$1 $2 个百分点'],
-[/^(\d+)h às (\d+)h59$/,'$1:00–$2:59'],[/^Coletados na hora: (.+) pacotes$/,'本小时揽收：$1 件'],[/^Sellers com coleta: (.+)$/,'有揽收的商家：$1'],[/^Acumulado: (.+) do previsto$/,'累计：完成预计的 $1'],
+[/^(\d+)h às (\d+)h59$/,'$1:00–$2:59'],[/^Coletados na hora: (.+) pacotes$/,'本小时揽收：$1 件'],[/^Sellers com coleta: (.+)$/,'有揽收的商家：$1'],[/^Acumulado: (.+) do previsto$/,'累计：完成预计的 $1'],[/^Até (\d+)h59$/,'截至 $1:59'],[/^Visita: (.+) dos sellers$/,'拜访率：$1'],[/^Coleta: (.+) do previsto$/,'揽收率：$1'],
 [/^(.+) de (.+) pacotes$/,'$1 / $2 件'],[/^(.+) de (.+) sellers$/,'$1 / $2 商家']];
 const tr=t=>{const a=t.match(/^(\s*)([\s\S]*?)(\s*)$/),x=a[2];if(!x)return t;if(D[x])return a[1]+D[x]+a[3];for(const [re,to] of R)if(re.test(x))return a[1]+x.replace(re,to)+a[3];return t};
 const trT=t=>t.split('\n').map(l=>{for(const [re,to] of RT)if(re.test(l))return l.replace(re,to);return D[l]||tr(l)}).join('\n');
