@@ -242,6 +242,34 @@ function lerColetaSync_(f) {
   }
 }
 
+/**
+ * RAPIDEZ: converter o .xlsx da coleta é o que demora (~1 min por arquivo). O resumo de cada arquivo fica guardado
+ * na aba oculta _CACHE_COLETA (id do arquivo + data de modificação). Arquivo que não mudou não é convertido de novo:
+ * na rodada diária só o dia novo é lido; o resto vem pronto em segundos.
+ */
+var CACHE_COLS = ['arquivo', 'modificado', 'seller', 'sid', 'cliente', 'bairro', 'qtd', 'qGet', 'mot', 'motHora'];
+function abaCache_(ss) {
+  var sh = ss.getSheetByName('_CACHE_COLETA');
+  if (!sh) { sh = ss.insertSheet('_CACHE_COLETA'); sh.appendRow(CACHE_COLS); sh.hideSheet(); }
+  return sh;
+}
+function lerCache_(sh) {
+  var n = sh.getLastRow() - 1, m = {};
+  if (n < 1) return m;
+  sh.getRange(2, 1, n, CACHE_COLS.length).getValues().forEach(function (r) {
+    var k = String(r[0]) + '@' + String(r[1]);
+    (m[k] = m[k] || []).push({ seller: String(r[2]), sid: String(r[3]), cliente: String(r[4]), bairro: String(r[5]), qtd: Number(r[6]) || 0, qGet: Number(r[7]) || 0, mot: String(r[8]), motHora: String(r[9]) });
+  });
+  return m;
+}
+/** Regrava a aba de cache só com os arquivos em uso (os antigos saem). */
+function gravaCache_(sh, usados) {
+  var linhas = [];
+  usados.forEach(function (u) { u.itens.forEach(function (o) { linhas.push([u.id, u.mod, seguroSync_(o.seller), seguroSync_(o.sid), seguroSync_(o.cliente), seguroSync_(o.bairro), o.qtd, o.qGet, seguroSync_(o.mot), o.motHora]); }); });
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, CACHE_COLS.length).clearContent();
+  if (linhas.length) sh.getRange(2, 1, linhas.length, CACHE_COLS.length).setValues(linhas);
+}
+
 function sincronizarRotas() {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
@@ -249,22 +277,29 @@ function sincronizarRotas() {
     var t0 = Date.now();
     var arqs = arquivosRecentesSync_();
     if (!arqs.length) throw new Error('Nenhuma base "Coleta - dd.mm.aaaa.xlsx" encontrada.');
-    var mapa = {}, ordem = [], lidos = [], somaGet = {};
+    var mapa = {}, ordem = [], lidos = [], somaGet = {}, convertidos = 0;
+    var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('ID_SEMANA'));
+    var shC = abaCache_(ss), cache = lerCache_(shC), usados = [];
     for (var ai = 0; ai < arqs.length; ai++) {
-      if (ai > 0 && Date.now() - t0 > SYNC.orcamentoMs) break; // respeita o limite de tempo do Apps Script
-      lerColetaSync_(arqs[ai].f).forEach(function (o) {
+      var fid = arqs[ai].f.getId(), fmod = String(arqs[ai].f.getLastUpdated().getTime()), itensDia = cache[fid + '@' + fmod];
+      if (!itensDia) {
+        if (convertidos > 0 && Date.now() - t0 > SYNC.orcamentoMs) break; // respeita o limite de tempo do Apps Script
+        itensDia = lerColetaSync_(arqs[ai].f); convertidos++;
+      }
+      usados.push({ id: fid, mod: fmod, itens: itensDia });
+      itensDia.forEach(function (o) {
         var id = nrmSync_(o.seller) + '|' + nrmSync_(o.cliente), x = mapa[id];
         somaGet[id] = (somaGet[id] || 0) + o.qGet;
-        if (!x) { mapa[id] = o; ordem.push(id); return; }
+        if (!x) { mapa[id] = Object.assign({}, o); ordem.push(id); return; } // cópia: o cache do dia não é alterado
         if (!x.mot && o.mot) { x.mot = o.mot; x.motHora = o.motHora; } // motorista GET do dia mais recente que tiver
         if (!x.bairro && o.bairro) x.bairro = o.bairro;
       });
       lidos.push(arqs[ai].dia);
     }
+    try { gravaCache_(shC, usados); } catch (ec) { Logger.log('cache não gravado: ' + ec); }
     var itens = ordem.map(function (id) { return mapa[id]; });
     var nDias = Math.max(1, lidos.length);
     var media = function (seller, cliente) { var t = somaGet[nrmSync_(seller) + '|' + nrmSync_(cliente)] || 0; return Math.round(t / nDias); };
-    var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('ID_SEMANA'));
     var sh = ss.getSheetByName('GERAL');
     var v = sh.getDataRange().getValues();
     var h = v[0].map(String);
@@ -342,7 +377,7 @@ function sincronizarRotas() {
       return modo === 'cliente' ? !tem2[nome + '|' + nrmSync_(o.cliente)] : !(tem2['N:' + nome] || (o.sid && tem2['I:' + nrmSync_(o.sid)]));
     }).map(function (o) { return o.seller + ' / ' + o.cliente; });
     var antigo = Number(arqs[0].k) < Number(Utilities.formatDate(new Date(Date.now() - 3 * 86400000), SYNC.tz, 'yyyyMMdd'));
-    var resumo = { ok: faltantes.length === 0, bases: lidos, diasNaMedia: nDias, linhasComVolumeAtualizado: atualizadas, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, semMotorista: semMot, motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
+    var resumo = { ok: faltantes.length === 0, bases: lidos, diasNaMedia: nDias, arquivosConvertidosAgora: convertidos, segundos: Math.round((Date.now() - t0) / 1000), linhasComVolumeAtualizado: atualizadas, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, semMotorista: semMot, motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
     try {
       var aud = ss.getSheetByName('_SINCRONIA') || ss.insertSheet('_SINCRONIA');
       if (!aud.getLastRow()) aud.appendRow(['Data', 'Bases lidas', 'Na base', 'Linhas novas', 'Motoristas novos', 'Sem motorista', 'Motorista fora da lista', 'Faltantes', 'Base desatualizada']);
