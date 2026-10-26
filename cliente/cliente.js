@@ -106,7 +106,7 @@ const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1'
 let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
 const mesK=(o)=>{const d=new Date(LS[0].k+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()+o);return d.toISOString().slice(0,7)};
-const dias=()=>per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
+const dias=()=>per==='ontem'?LS.slice(1,2):per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
 const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente'});
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;carregando(true);prog.firstChild.style.width='4%';
@@ -252,8 +252,8 @@ if(pts.length===1)MAP.fitBounds(L.latLng(c).toBounds(6000))}
 if(pts.length>1){const q=(arr,f)=>{const v=[...arr].sort((a,b)=>a-b);return v[Math.min(v.length-1,Math.max(0,Math.round(f*(v.length-1))))]};const la=pts.map(p=>p[0]),lo=pts.map(p=>p[1]),c=pts.length>=10?[.1,.9]:[0,1];
 MAP.fitBounds([[q(la,c[0]),q(lo,c[0])],[q(la,c[1]),q(lo,c[1])]],{padding:[18,18],maxZoom:14})}}
 // ---- Filtros ----
-const PRE=[['1','Hoje'],['2','Hoje e ontem'],['sem','Esta semana'],['sp','Semana passada'],['7','Últimos 7 dias'],['15','Últimos 15 dias'],['30','Últimos 30 dias'],['mes','Este mês'],['mp','Mês passado'],['56','Últimas 8 semanas']];
-const rotPer=()=>{const D=dias();const nome=per==='c'?'Personalizado':(PRE.find(x=>x[0]===per)||[,''])[1];$('#dpn').textContent=nome;$('#dpl').textContent=D.length?(D.length===1?fmtD(D[0].k):fmtD(D[D.length-1].k)+' – '+fmtD(D[0].k))+' · '+D.length+(D.length>1?' dias':' dia'):'Sem dias com dados'};
+const PRE=[['1','Hoje'],['ontem','Ontem'],['sem','Esta semana'],['15','Últimos 15 dias'],['mes','Este mês']];
+const rotPer=()=>{const D=dias();const nome=per==='c'?'Personalizado':(PRE.find(x=>x[0]===per)||[,''])[1];$('#dpn').textContent=nome;$('#dpl').textContent=D.length?(D.length===1?fmtD(D[0].k):fmtD(D[D.length-1].k)+' – '+fmtD(D[0].k)):'Sem dias com dados'};
 const setPer=v=>{per=v;document.querySelectorAll('#per button').forEach(b=>b.classList.toggle('on',b.dataset.p===v));rotPer();load()};
 $('#t45b').onclick=()=>{const so=SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('T5');SEL.fp.clear();if(!so){SEL.fp.add('T4');SEL.fp.add('T5')}rotulos();LIM=50;run()};
 // Calendário profissional: atalhos + 2 meses, só dias com dados ficam ativos.
@@ -267,12 +267,11 @@ for(let d=1;d<=ult;d++){const k=iso(new Date(m.getFullYear(),m.getMonth(),d)),e2
 c+=`<button type="button" class="${cl.join(' ')}" data-k="${k}"${AV.has(k)?'':' disabled'}>${d}</button>`}
 return `<div class="mo"><b>${m.toLocaleDateString(window.GL_LANG&&GL_LANG.lang==='zh'?'zh-CN':'pt-BR',{month:'long',year:'numeric'})}</b><div class="wd">${(window.GL_LANG&&GL_LANG.lang==='zh'?['一','二','三','四','五','六','日']:['S','T','Q','Q','S','S','D']).map(x=>`<span>${x}</span>`).join('')}</div><div class="gd">${c}</div></div>`};
 const desenha=()=>{const m2=new Date(mes);m2.setMonth(m2.getMonth()+1);const dois=innerWidth>720;
-CAL.innerHTML=`<div class="cp">${PRE.map(([v,l])=>`<button type="button" data-p="${v}"${per===v?' class="on"':''}>${l}</button>`).join('')}</div><div class="cm"><div class="cn"><button type="button" data-n="-1" aria-label="Mês anterior">‹</button><button type="button" data-n="1" aria-label="Próximo mês">›</button></div><div class="ms2">${mesH(mes)}${dois?mesH(m2):''}</div>
-<div class="cf"><span>${a?fmtD(a)+(b&&b!==a?' – '+fmtD(b):''):'Escolha o início'}${a&&!b?' · escolha o fim':''}</span><button type="button" class="btn2" data-x="c">Cancelar</button><button type="button" class="btn2 pri" data-x="a"${a?'':' disabled'}>Aplicar</button></div></div>`;
+CAL.innerHTML=`<div class="cp">${PRE.map(([v,l])=>`<button type="button" data-p="${v}"${per===v?' class="on"':''}>${l}</button>`).join('')}</div>`;CAL.classList.add('so');
 CAL.querySelectorAll('.cp button').forEach(x=>x.onclick=()=>{fechaCal();setPer(x.dataset.p)});
-CAL.querySelectorAll('.cn button').forEach(x=>x.onclick=()=>{mes.setMonth(mes.getMonth()+ +x.dataset.n);desenha()});
-CAL.querySelectorAll('.dd:not(.off)').forEach(x=>{x.onclick=()=>{const k=x.dataset.k;if(!a||b){a=k;b=null}else{if(k<a){b=a;a=k}else b=k}hov=null;desenha()};x.onmouseenter=()=>{if(a&&!b){hov=x.dataset.k;CAL.querySelectorAll('.dd').forEach(y=>{const k=y.dataset.k,lo=a<hov?a:hov,hi=a<hov?hov:a;y.classList.toggle('in',k>=lo&&k<=hi)})}}});
-CAL.querySelector('[data-x="c"]').onclick=fechaCal;CAL.querySelector('[data-x="a"]').onclick=()=>{if(!a)return;$('#d1').value=a;$('#d2').value=b||a;fechaCal();document.querySelectorAll('#per button').forEach(x=>x.classList.remove('on'));per='c';rotPer();load()}};desenha()};
+if(0)CAL.querySelectorAll('.cn button').forEach(x=>x.onclick=()=>{mes.setMonth(mes.getMonth()+ +x.dataset.n);desenha()});
+if(0)CAL.querySelectorAll('.dd:not(.off)').forEach(x=>{x.onclick=()=>{const k=x.dataset.k;if(!a||b){a=k;b=null}else{if(k<a){b=a;a=k}else b=k}hov=null;desenha()};x.onmouseenter=()=>{if(a&&!b){hov=x.dataset.k;CAL.querySelectorAll('.dd').forEach(y=>{const k=y.dataset.k,lo=a<hov?a:hov,hi=a<hov?hov:a;y.classList.toggle('in',k>=lo&&k<=hi)})}}});
+0};desenha()};
 let qt=0;$('#q').oninput=()=>{clearTimeout(qt);qt=setTimeout(()=>{LIM=50;run()},200)};
 setPer('1');
 // Passo a passo rápido: aparece no 1º acesso de cada dia (e pelo botão "?").
