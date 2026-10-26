@@ -243,3 +243,4 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #app td,#app .sub{-webkit-user-select:text;user-select:text}
 #app input{caret-color:auto;-webkit-user-select:text;user-select:text}
 #map{height:400px}@media (max-width:600px){#map{height:320px}}
+.cal.so{grid-template-columns:200px}.cal.so .cp{border-right:0;background:#fff;padding:8px}[data-theme=dark] .cal.so .cp{background:#121f37}@media (max-width:720px){.cal.so{position:absolute;left:0;right:auto;top:calc(100% + 8px);width:220px}.cal.so .cp{grid-template-columns:1fr}}

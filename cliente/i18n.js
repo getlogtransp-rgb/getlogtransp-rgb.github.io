@@ -13,7 +13,7 @@ const D={
 'Usuário ou senha incorretos.':'用户名或密码错误。','Mostrar senha':'显示密码','Ocultar senha':'隐藏密码','Crie sua senha':'设置新密码','Nova senha':'新密码','Repita a nova senha':'再次输入新密码','Salvar senha':'保存密码','Salvando...':'保存中…',
 'Primeiro acesso (ou senha redefinida). Crie uma senha pessoal para continuar.':'首次登录（或密码已重置），请设置个人密码后继续。','As duas senhas não são iguais.':'两次输入的密码不一致。',
 'Fale conosco':'联系我们','Sair':'退出','Atualizar':'刷新','Como usar':'使用说明','Conectando ao Drive...':'正在连接数据…',
-'Período':'时间范围','Hoje':'今天','Hoje e ontem':'今天和昨天','Esta semana':'本周','Semana passada':'上周','Últimos 7 dias':'近 7 天','Últimos 15 dias':'近 15 天','Últimos 30 dias':'近 30 天','Este mês':'本月','Mês passado':'上月','Últimas 8 semanas':'近 8 周','Personalizado':'自定义',
+'Período':'时间范围','Hoje':'今天','Hoje e ontem':'今天和昨天','Ontem':'昨天','Esta semana':'本周','Semana passada':'上周','Últimos 7 dias':'近 7 天','Últimos 15 dias':'近 15 天','Últimos 30 dias':'近 30 天','Este mês':'本月','Mês passado':'上月','Últimas 8 semanas':'近 8 周','Personalizado':'自定义',
 'Cancelar':'取消','Aplicar':'确定','Escolha o início':'请选择开始日期','Sem dias com dados':'无数据日期',
 'Só T4 e T5':'仅看 T4 和 T5','Buscar seller, motorista, bairro…':'搜索商家、司机、街区…',
 'Cliente':'客户','Região':'区域','Motorista':'司机','Prioridade':'优先级','Status do seller':'商家状态','Visita':'拜访','Todos':'全部','Carregando…':'加载中…',
