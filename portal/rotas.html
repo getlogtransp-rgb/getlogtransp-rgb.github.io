@@ -7,6 +7,7 @@
 <style>
 :root{--nav:#06183D;--lar:#F86800;--bg:#F4F6FA;--tit:#002060;--bd:#E3E8EF;--mut:#6B7790;--ok:#16803C;--er:#C0342B}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:#0E1F45;font:14px/1.4 Inter,'Segoe UI',Arial,sans-serif;padding-bottom:90px}
 header{background:var(--nav);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 header h1{margin:0;font-size:18px}
@@ -81,12 +82,13 @@ if(h)S.fm=decodeURIComponent(h[1]);
 async function carregar(){
   $('lista').innerHTML='<div class="vazio">Carregando...</div>';
   S.sel.clear();
+  $('fm').hidden=$('limpar').hidden=false;
   try{
     const r=await fetch(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base).then(x=>x.json());
     if(r.erro)throw new Error(r.erro);
     S.linhas=r.linhas.map(l=>({...l,_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
     S.mots=r.motoristas;
-  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a URL e o token.</div>';return}
+  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a URL e o token.</div>';$('fm').hidden=$('limpar').hidden=true;$('cont').textContent='';$('todos').textContent='';$('acao').hidden=true;return}
   desenharMots();desenhar();
 }
 function desenharMots(){
