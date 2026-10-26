@@ -165,9 +165,12 @@ $('usr').textContent=usuario;
 const h=location.hash.match(/motorista=([^&]+)/);
 if(h)S.f.mot.add(decodeURIComponent(h[1]));
 function aplicar(r){
-  S.linhas=r.linhas.map(l=>({...l,seller:String(l.seller==null?'':l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:l.clientes||[],motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+  const MA=x=>String(x==null?'':x).trim().toUpperCase();
+  S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
   S.mots=r.motoristas||[];
 }
+// Como nas outras telas: qualquer clique aqui dentro recolhe o menu lateral do portal
+addEventListener('click',()=>{try{parent!==window&&parent.GL_SIDE_HIDE&&parent.GL_SIDE_HIDE()}catch(e){}},true);
 // Cópia só da sessão desta aba (some ao fechar o navegador): a tela abre na hora e atualiza em segundo plano
 const CK=()=>'rotas_cache_'+S.base;
 async function buscar(){

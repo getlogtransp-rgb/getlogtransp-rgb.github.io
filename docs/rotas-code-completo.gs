@@ -334,7 +334,7 @@ function sincronizarRotas() {
       if (chaves.some(function (k) { return tem[k]; })) return;
       chaves.forEach(function (k) { tem[k] = 1; });
       var r = []; for (var z = 0; z < largura; z++) r.push('');
-      r[0] = seguroSync_(o.seller);
+      r[0] = seguroSync_(String(o.seller).toUpperCase()); // nome do seller sempre em caixa alta
       r[1] = seguroSync_(modo === 'cliente' ? o.cliente : o.sid);
       r[3] = seguroSync_(o.bairro);
       var ci = -1;
