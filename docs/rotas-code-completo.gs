@@ -1,58 +1,160 @@
 const P = PropertiesService.getScriptProperties();
 const BASES = {
-  semana: { prop: 'ID_SEMANA', arquivo: 'ROTEIRIZAÇÃO -  COLETA GERAL.xlsx' },
-  sabado: { prop: 'ID_SABADO', arquivo: 'ROTEIRIZAÇÃO -  COLETA GERAL SABADO.xlsx' },
-  ee: { prop: 'ID_EE', arquivo: 'ROTEIRIZAÇÃO - EU ENTREGO.csv' },
-  ee_sabado: { prop: 'ID_EE_SABADO', arquivo: 'ROTEIRIZAÇÃO - EU ENTREGO SABADO.csv' }
+  semana: { prop: 'ID_SEMANA', aba: 'GERAL', arquivo: 'ROTEIRIZAÇÃO -  COLETA GERAL.xlsx' },
+  sabado: { prop: 'ID_SEMANA', aba: 'SÁBADO' },
+  ee: { prop: 'ID_EE', csv: true },
+  ee_sabado: { prop: 'ID_EE_SABADO', csv: true }
 };
-const ehEE = b => b === 'ee' || b === 'ee_sabado'; // as duas bases EU ENTREGO têm o mesmo layout (aba EE)
-const COL_MOT = 12;
-const COL_ALT = 13; // coluna M da aba GERAL: motorista alternativo
-const COLS_VOLUME = [6, 7, 8, 9, 10];
-const CAB_EE = ['SELLER ID', 'CPF DO MOTORISTA', 'PLACA DO VEÍCULO', 'NOME DO MOTORISTA'];
+const CACHE_TTL = 21600;
+const CACHE_PEDACO = 40000;
 function resposta(o) {
   return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
 }
-function abrir(base) {
-  return SpreadsheetApp.openById(P.getProperty(BASES[base].prop));
+function nrm_(s) {
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+}
+function sidKey_(s) {
+  return String(s == null ? '' : s).trim().toUpperCase().replace(/^D/, '');
+}
+function cacheGeracao_(base) {
+  return CacheService.getScriptCache().get('r_gen_' + base) || '0';
+}
+function cacheLimpar_(base) {
+  CacheService.getScriptCache().put('r_gen_' + base, String(Date.now()), CACHE_TTL);
+}
+function versaoBase_(base) {
+  const extra = BASES[base].csv ? DriveApp.getFileById(P.getProperty('ID_SEMANA')).getLastUpdated().getTime() : '';
+  return DriveApp.getFileById(P.getProperty(BASES[base].prop)).getLastUpdated().getTime() + '_' + extra + '_' + cacheGeracao_(base);
+}
+function cacheLer_(base, ver) {
+  const c = CacheService.getScriptCache();
+  const raiz = 'r_' + base + '_' + ver;
+  const n = Number(c.get(raiz) || 0);
+  if (!n) return null;
+  const ks = [];
+  for (let i = 0; i < n; i++) ks.push(raiz + '_' + i);
+  const got = c.getAll(ks);
+  let s = '';
+  for (let i = 0; i < n; i++) { if (got[ks[i]] == null) return null; s += got[ks[i]]; }
+  return s;
+}
+function respostaCache_(base, ver, o) {
+  const s = JSON.stringify(o);
+  try {
+    const raiz = 'r_' + base + '_' + ver;
+    const partes = {};
+    let n = 0;
+    for (let i = 0; i < s.length; i += CACHE_PEDACO) partes[raiz + '_' + (n++)] = s.slice(i, i + CACHE_PEDACO);
+    const c = CacheService.getScriptCache();
+    c.putAll(partes, CACHE_TTL);
+    c.put(raiz, String(n), CACHE_TTL);
+  } catch (e) { Logger.log('Cache não gravado: ' + e); }
+  return ContentService.createTextOutput(s).setMimeType(ContentService.MimeType.JSON);
+}
+function layoutGeral_(h) {
+  const H = h.map(nrm_);
+  const mot = H.indexOf('MOTORISTA');
+  if (mot < 0) throw new Error('Coluna MOTORISTA não encontrada');
+  const cid = H.indexOf('CIDADE');
+  const alt = H.indexOf('MOTORISTA ALTERNATIVO');
+  const vols = [];
+  for (let i = (cid < 0 ? 5 : cid) + 1; i < mot; i++) vols.push(i);
+  return { mot, alt: alt < 0 ? mot + 1 : alt, temAlt: alt >= 0, vols };
 }
 function chaveGeral(r) {
   return [r[0], r[1]].join('|');
 }
-function veiculos(ss, v, ix) {
-  const m = {};
-  v.slice(1).forEach(r => { if (r[ix.nome]) m[r[ix.nome]] = [String(r[ix.cpf]), String(r[ix.placa])]; });
-  const extra = ss.getSheetByName('_VEICULOS');
-  if (extra) extra.getDataRange().getValues().slice(1).forEach(r => { if (r[0]) m[r[0]] = [String(r[1]), String(r[2])]; });
-  return m;
+function lerCsv_(id) {
+  const blob = DriveApp.getFileById(id).getBlob();
+  let enc = 'UTF-8', txt = blob.getDataAsString('UTF-8');
+  if (txt.indexOf('\ufffd') >= 0) { enc = 'windows-1252'; txt = blob.getDataAsString(enc); }
+  txt = txt.replace(/^\ufeff/, '');
+  const l1 = txt.split(/\r?\n/)[0];
+  const delim = [';', '\t', ','].sort((a, b) => l1.split(b).length - l1.split(a).length)[0];
+  const rows = Utilities.parseCsv(txt, delim).filter(r => r.some(c => String(c).trim()));
+  return { rows, enc, delim, bom: blob.getDataAsString('UTF-8').charCodeAt(0) === 0xFEFF };
+}
+function gravarCsv_(id, info) {
+  const q = c => { c = String(c == null ? '' : c); return (c.indexOf(info.delim) >= 0 || /["\r\n]/.test(c)) ? '"' + c.replace(/"/g, '""') + '"' : c; };
+  const txt = (info.bom ? '\ufeff' : '') + info.rows.map(r => r.map(q).join(info.delim)).join('\r\n') + '\r\n';
+  const f = DriveApp.getFileById(id);
+  Drive.Files.update({}, id, Utilities.newBlob('', 'text/csv', f.getName()).setDataFromString(txt, info.enc));
 }
 function indicesEE(h) {
-  const i = n => h.indexOf(n);
-  return { id: i('SELLER ID'), cpf: i('CPF DO MOTORISTA'), placa: i('PLACA DO VEÍCULO'), nome: i('NOME DO MOTORISTA'), seller: i('SELLER NAME'), end: i('ENDEREÇO'), bairro: i('BAIRRO'), cep: i('CEP'), cidade: i('CIDADE') };
+  const H = h.map(nrm_);
+  const i = n => H.indexOf(n);
+  return { id: i('SELLER ID'), cep: i('CEP'), cpf: i('CPF DO MOTORISTA'), placa: i('PLACA DO VEICULO'), nome: i('NOME DO MOTORISTA') };
+}
+function infoSellers_() {
+  const m = {};
+  const sh = SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('_SELLER_ID');
+  if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues().forEach(r => { if (r[0]) m[sidKey_(r[0])] = r; });
+  return m;
+}
+function cepGeral_() {
+  const m = {}, n = {};
+  SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('GERAL').getDataRange().getValues().slice(1).forEach(r => {
+    const c = String(r[4] || '').trim();
+    if (!c || !r[3]) return;
+    const k = c + '|' + r[3] + '|' + r[5];
+    if (!n[c]) { n[c] = k; m[c] = [r[3], r[5]]; } else if (n[c] !== k) m[c] = [];
+  });
+  return m;
+}
+function mesclarSid_(sidM, itens) {
+  itens.forEach(function (o) {
+    if (!o.sid) return;
+    var k = sidKey_(o.sid), a = sidM[k] || [o.sid, '', '', '', '', ''], n = [o.sid, o.seller, o.endereco, o.bairro, o.cep, o.cidade];
+    for (var z = 1; z < 6; z++) if (!String(a[z] == null ? '' : a[z]).trim() && n[z]) a[z] = seguroSync_(n[z]);
+    sidM[k] = a;
+  });
+}
+function completarSellerIds() {
+  var t0 = Date.now(), feitos = JSON.parse(P.getProperty('SID_LIDOS') || '[]');
+  var it = DriveApp.getFolderById(SYNC.pasta).getFiles(), l = [];
+  while (it.hasNext()) { var f = it.next(), mm = SYNC.nome.exec(f.getName()); if (mm && feitos.indexOf(f.getId()) < 0) l.push({ f: f, k: Number(mm[3] + mm[2] + mm[1]) }); }
+  l.sort(function (a, b) { return b.k - a.k; });
+  var sh = SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('_SELLER_ID'), sidM = {}, n = 0;
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 6).getValues().forEach(function (r) { if (r[0]) sidM[sidKey_(r[0])] = r.map(String); });
+  for (var i = 0; i < l.length && Date.now() - t0 < 240000; i++) { try { mesclarSid_(sidM, lerColetaSync_(l[i].f)); } catch (e) { Logger.log(l[i].f.getName() + ': ' + e); } feitos.push(l[i].f.getId()); n++; }
+  var lin = Object.keys(sidM).map(function (k) { return sidM[k].map(String); });
+  if (lin.length) sh.getRange(2, 1, lin.length, 6).setNumberFormat('@').setValues(lin);
+  P.setProperty('SID_LIDOS', JSON.stringify(feitos));
+  cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
+  Logger.log(JSON.stringify({ basesLidas: n, faltam: l.length - n, sellerIds: lin.length }));
+  if (l.length - n <= 0) ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'completarSellerIds') ScriptApp.deleteTrigger(t); });
+}
+function iniciarCompletarSellerIds() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'completarSellerIds') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('completarSellerIds').timeBased().everyMinutes(10).create();
+}
+function veiculos_(rows, ix) {
+  const m = {};
+  rows.slice(1).forEach(r => { const n = String(r[ix.nome] || '').trim(); if (n) m[n] = [String(r[ix.cpf]), String(r[ix.placa])]; });
+  return m;
 }
 function doGet_(e) {
   const q = e.parameter;
   if (q.token !== P.getProperty('TOKEN') || !BASES[q.base]) return resposta({ erro: 'acesso' });
-  const ss = abrir(q.base);
-  if (ehEE(q.base)) {
-    const v = ss.getSheetByName('EE').getDataRange().getValues();
-    const ix = indicesEE(v[0]);
-    const linhas = v.slice(1).filter(r => r[ix.id]).map(r => ({
-      k: String(r[ix.id]),
-      seller: r[ix.seller],
-      endereco: r[ix.end],
-      bairro: r[ix.bairro],
-      cep: String(r[ix.cep]),
-      cidade: r[ix.cidade],
-      clientes: ['SHEIN'],
-      media: 0,
-      motorista: r[ix.nome],
-      alternativo: ''
-    }));
-    return resposta({ linhas, motoristas: Object.keys(veiculos(ss, v, ix)).sort() });
+  if (!P.getProperty(BASES[q.base].prop)) return resposta({ linhas: [], motoristas: [], aviso: 'base ainda não configurada' });
+  const ver = versaoBase_(q.base);
+  const salvo = cacheLer_(q.base, ver);
+  if (salvo) return ContentService.createTextOutput(salvo).setMimeType(ContentService.MimeType.JSON);
+  if (BASES[q.base].csv) {
+    const c = lerCsv_(P.getProperty(BASES[q.base].prop));
+    const ix = indicesEE(c.rows[0]);
+    if (ix.id < 0 || ix.nome < 0) throw new Error('CSV sem SELLER ID ou NOME DO MOTORISTA');
+    const inf = infoSellers_(), porCep = cepGeral_();
+    const vistos = new Set();
+    const linhas = c.rows.slice(1).filter(r => r[ix.id] && !vistos.has(String(r[ix.id]).trim()) && vistos.add(String(r[ix.id]).trim())).map(r => {
+      const id = String(r[ix.id]).trim(), s = inf[sidKey_(id)] || [], cep = String((ix.cep >= 0 && r[ix.cep]) || s[4] || '').trim(), g = porCep[cep] || [];
+      return { k: id, seller: s[1] || id, endereco: s[2] || '', bairro: s[3] || g[0] || '', cep, cidade: s[5] || g[1] || '', clientes: ['SHEIN'], media: 0, motorista: String(r[ix.nome] || '').trim(), alternativo: '' };
+    });
+    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veiculos_(c.rows, ix)).sort() });
   }
-  const v = ss.getSheetByName('GERAL').getDataRange().getValues();
-  const h = v[0];
+  const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
+  const v = ss.getSheetByName(BASES[q.base].aba).getDataRange().getValues();
+  const h = v[0], L = layoutGeral_(h);
   const vistos = new Set();
   const linhas = v.slice(1).filter(r => r[0] && !vistos.has(chaveGeral(r)) && vistos.add(chaveGeral(r))).map(r => ({
     k: chaveGeral(r),
@@ -61,112 +163,97 @@ function doGet_(e) {
     bairro: r[3],
     cep: String(r[4]),
     cidade: r[5],
-    clientes: COLS_VOLUME.filter(i => Number(r[i]) > 0).map(i => h[i]),
-    media: COLS_VOLUME.reduce((a, i) => a + (Number(r[i]) || 0), 0),
-    motorista: r[COL_MOT - 1],
-    alternativo: r[COL_ALT - 1] || ''
+    clientes: L.vols.filter(i => Number(r[i]) > 0).map(i => h[i]),
+    media: L.vols.reduce((a, i) => a + (Number(r[i]) || 0), 0),
+    motorista: r[L.mot],
+    alternativo: (L.temAlt ? r[L.alt] : '') || ''
   }));
   const motoristas = ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]).filter(String);
-  return resposta({ linhas, motoristas });
+  return respostaCache_(q.base, ver, { linhas, motoristas });
 }
 function doPost_(e) {
   const d = JSON.parse(e.postData.contents);
   if (d.token !== P.getProperty('TOKEN') || !BASES[d.base] && d.acao !== 'sincronizar') return resposta({ erro: 'acesso' });
   if (d.acao === 'sincronizar') return resposta(sincronizarRotas());
   if (!Array.isArray(d.mudancas) || d.mudancas.length > 6000) return resposta({ erro: 'dados inválidos' });
+  if (!P.getProperty(BASES[d.base].prop)) return resposta({ erro: 'base ainda não configurada' });
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
   try {
-    const ss = abrir(d.base);
-    const ee = ehEE(d.base);
-    const sh = ss.getSheetByName(ee ? 'EE' : 'GERAL');
+    const rejeitados = [];
+    let salvos = 0;
+    if (BASES[d.base].csv) {
+      const id = P.getProperty(BASES[d.base].prop);
+      const c = lerCsv_(id);
+      const ix = indicesEE(c.rows[0]);
+      const veic = veiculos_(c.rows, ix);
+      d.mudancas.forEach(m => {
+        const novo = veic[m.motorista];
+        let achou = false;
+        if (m.campo === 'alt' || !novo) { rejeitados.push(m.k); return; }
+        c.rows.forEach((r, i) => {
+          if (!i || String(r[ix.id]).trim() !== String(m.k)) return;
+          achou = true;
+          if (String(r[ix.nome]).trim() === m.motorista) return;
+          r[ix.nome] = m.motorista; r[ix.cpf] = novo[0]; r[ix.placa] = novo[1]; salvos++;
+        });
+        if (!achou) rejeitados.push(m.k);
+      });
+      if (salvos) { gravarCsv_(id, c); cacheLimpar_(d.base); }
+      return resposta({ ok: true, salvos, rejeitados });
+    }
+    const ss = SpreadsheetApp.openById(P.getProperty(BASES[d.base].prop));
+    const sh = ss.getSheetByName(BASES[d.base].aba);
     const v = sh.getDataRange().getValues();
-    const ix = ee ? indicesEE(v[0]) : null;
-    const veic = ee ? veiculos(ss, v, ix) : null;
-    const validos = ee ? null : new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]));
+    const L = layoutGeral_(v[0]);
+    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]));
     const idx = new Map();
     v.forEach((r, i) => {
-      if (!i || !r[ee ? ix.id : 0]) return;
-      const k = ee ? String(r[ix.id]) : chaveGeral(r);
+      if (!i || !r[0]) return;
+      const k = chaveGeral(r);
       if (!idx.has(k)) idx.set(k, []);
       idx.get(k).push(i);
     });
-    const colNome = v.map(r => [r[ee ? ix.nome : COL_MOT - 1]]);
-    const colCpf = ee ? v.map(r => [r[ix.cpf]]) : null;
-    const colPlaca = ee ? v.map(r => [r[ix.placa]]) : null;
-    const colAlt = ee ? null : v.map(r => [r[COL_ALT - 1] === undefined ? '' : r[COL_ALT - 1]]);
+    const colNome = v.map(r => [r[L.mot]]);
+    const colAlt = v.map(r => [r[L.alt] === undefined ? '' : r[L.alt]]);
     let nNome = 0, nAlt = 0;
-    const log = [];
-    const rejeitados = [];
     d.mudancas.forEach(m => {
       const is = idx.get(m.k);
-      if (m.campo === 'alt') {
-        if (ee || is === undefined || !(m.motorista === '' || validos.has(m.motorista))) { rejeitados.push(m.k); return; }
-        is.forEach(i => {
-          const ant = colAlt[i][0];
-          if (ant === m.motorista) return;
-          colAlt[i][0] = m.motorista;
-          nAlt++;
-          log.push([new Date(), d.usuario, d.base + ' (alternativo)', v[i][0], v[i][2], v[i][4], ant, m.motorista]);
-        });
-        return;
-      }
-      const ok = ee ? !!veic[m.motorista] : validos.has(m.motorista);
-      if (is === undefined || !ok) { rejeitados.push(m.k); return; }
+      const alt = m.campo === 'alt';
+      if (is === undefined || !(validos.has(m.motorista) || (alt && m.motorista === ''))) { rejeitados.push(m.k); return; }
       is.forEach(i => {
-        const ant = colNome[i][0];
-        if (ant === m.motorista) return;
-        colNome[i][0] = m.motorista;
-        nNome++;
-        if (ee) { colCpf[i][0] = veic[m.motorista][0]; colPlaca[i][0] = veic[m.motorista][1]; }
-        log.push([new Date(), d.usuario, d.base, ee ? v[i][ix.seller] : v[i][0], ee ? v[i][ix.end] : v[i][2], ee ? v[i][ix.cep] : v[i][4], ant, m.motorista]);
+        const col = alt ? colAlt : colNome;
+        if (col[i][0] === m.motorista) return;
+        col[i][0] = m.motorista;
+        if (alt) nAlt++; else nNome++;
       });
     });
     if (nAlt) {
-      if (sh.getMaxColumns() < COL_ALT) sh.insertColumnsAfter(sh.getMaxColumns(), COL_ALT - sh.getMaxColumns());
+      if (sh.getMaxColumns() < L.alt + 1) sh.insertColumnsAfter(sh.getMaxColumns(), L.alt + 1 - sh.getMaxColumns());
       if (!String(colAlt[0][0] || '').trim()) colAlt[0][0] = 'MOTORISTA ALTERNATIVO';
-      sh.getRange(1, COL_ALT, colAlt.length, 1).setValues(colAlt);
+      sh.getRange(1, L.alt + 1, colAlt.length, 1).setValues(colAlt);
     }
-    if (nNome) {
-      const n = colNome.length;
-      sh.getRange(1, (ee ? ix.nome : COL_MOT - 1) + 1, n, 1).setValues(colNome);
-      if (ee) {
-        sh.getRange(1, ix.cpf + 1, n, 1).setNumberFormat('@').setValues(colCpf);
-        sh.getRange(1, ix.placa + 1, n, 1).setValues(colPlaca);
-      }
-    }
-    if (log.length) {
-      const l = SpreadsheetApp.openById(P.getProperty('ID_LOG')).getSheetByName('HISTORICO');
-      l.getRange(l.getLastRow() + 1, 1, log.length, 8).setValues(log);
-    }
-    return resposta({ ok: true, salvos: nNome + nAlt, rejeitados });
+    if (nNome) sh.getRange(1, L.mot + 1, colNome.length, 1).setValues(colNome);
+    salvos = nNome + nAlt;
+    if (salvos) cacheLimpar_(d.base);
+    return resposta({ ok: true, salvos, rejeitados });
   } finally {
     lock.releaseLock();
   }
 }
-/** Qualquer falha vira uma resposta {erro} legível (nunca uma página de erro do Google). */
 function doGet(e) {
   try { return doGet_(e); } catch (err) { return resposta({ erro: String(err) }); }
 }
 function doPost(e) {
   try { return doPost_(e); } catch (err) { return resposta({ erro: String(err) }); }
 }
-function blobEE(ss, nome) {
-  const v = ss.getSheetByName('EE').getDataRange().getValues();
-  const ix = indicesEE(v[0]);
-  const cpf = c => { const s = String(c); return /^\d+$/.test(s) ? s.padStart(11, '0') : s; };
-  const linhas = [CAB_EE].concat(v.slice(1).filter(r => r[ix.id]).map(r => [r[ix.id], cpf(r[ix.cpf]), r[ix.placa], r[ix.nome]]));
-  return Utilities.newBlob('', 'text/csv', nome || BASES.ee.arquivo).setDataFromString(linhas.map(l => l.join(';')).join('\r\n') + '\r\n', 'windows-1252');
-}
 function exportar() {
   const pasta = DriveApp.getFolderById(P.getProperty('ID_PASTA'));
-  Object.keys(BASES).forEach(b => {
+  Object.keys(BASES).filter(b => BASES[b].arquivo).forEach(b => {
     const id = P.getProperty(BASES[b].prop);
     if (!id) return;
     const nome = BASES[b].arquivo;
-    const blob = ehEE(b)
-      ? blobEE(SpreadsheetApp.openById(id), nome)
-      : UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/export?format=xlsx', { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } }).getBlob().setName(nome);
+    const blob = UrlFetchApp.fetch('https://docs.google.com/spreadsheets/d/' + id + '/export?format=xlsx', { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } }).getBlob().setName(nome);
     const it = pasta.getFilesByName(nome);
     if (it.hasNext()) Drive.Files.update({}, it.next().getId(), blob);
     else Drive.Files.create({ name: nome, parents: [pasta.getId()] }, blob);
@@ -177,34 +264,15 @@ function instalarGatilho() {
   ScriptApp.newTrigger('exportar').timeBased().everyDays(1).atHour(6).create();
 }
 
-// ===== Sincronização diária de sellers (docs/rotas-sincronizar.gs) =====
-/**
- * GETLOG — ROTAS: sincronização diária (nenhum seller fora da relação).
- *
- * Cole este arquivo INTEIRO como um arquivo novo no MESMO projeto Apps Script do Code.gs das Rotas.
- * Depois: rode UMA vez "sincronizarRotas" (autorize) e UMA vez "instalarGatilhoSincronia" (agenda todo dia 07h).
- *
- * O que faz, todo dia:
- *  1. Lê as bases de coletados mais recentes (até 5 dias; pasta do Drive "Coleta - dd.mm.aaaa.xlsx"), para nenhum seller ficar de fora.
- *  2. Para cada seller + cliente que NÃO está na aba GERAL, acrescenta uma linha no mesmo layout da planilha
- *     (seller, coluna B, bairro, volume do cliente, motorista). Rua, CEP e cidade ficam em branco para completar.
- *  3. Nunca duplica seller + cliente e nunca altera linhas que já existem (o motorista só muda pela tela Rotas).
- *  4. Motorista = SOMENTE nome que começa com "GET" (o último que coletou aquele seller + cliente).
- *     Motorista GET que não estiver na aba _MOTORISTAS é incluído lá.
- *  5. Volumes das colunas dos clientes (G a K: SHEIN BRA, SHEIN D2D, TIKTOK, KWAI, ARTENY) = MÉDIA DOS ÚLTIMOS 7 DIAS
- *     de pacotes coletados daquele seller + cliente SOMENTE por motoristas GETLOG (nome começa com "GET").
- *     Coleta de terceiros não entra. Média = total GET dos 7 dias ÷ nº de dias lidos (arredondada). Atualiza todas as linhas.
- *
- * Segurança: se a coluna B da aba GERAL não for "cliente" ou "ID do seller" (pelo cabeçalho), nada é gravado.
- * Usa o serviço avançado "Drive API" (o mesmo do exportar()).
- */
+// ===== Sincronização diária de sellers =====
 var SYNC = {
   pasta: '1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A',
   nome: /^Coleta - (\d{2})\.(\d{2})\.(\d{4})\.xlsx?$/i,
   cols: { cliente: 'Client Name', sid: 'Seller ID', seller: 'Seller Name', motorista: 'Collection Driver Name', bairro: 'Shipping Area', hora: 'Scan Time' },
   tz: 'America/Sao_Paulo',
-  dias: 7,
-  orcamentoMs: 300000
+  dias: 5,
+  opc: { endereco: 'Address', cep: 'Sender zipcode', cidade: 'Shipper City' },
+  orcamentoMs: 200000
 };
 
 function nrmSync_(s) {
@@ -217,6 +285,18 @@ function limpaSync_(s) {
 function seguroSync_(s) {
   s = String(s == null ? '' : s);
   return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+var CLIENTES_SYNC = [
+  [/TIK ?TOK/, 'TIKTOK', 'TIKTOK'],
+  [/KWAI/, 'KWAI', 'KWAI'],
+  [/SHEIN.*D2D/, 'SHEIN', 'SHEIN D2D'],
+  [/SHEIN/, 'SHEIN', 'SHEIN BRA'],
+  [/SMART ?ENVIO/, 'SMARTENVIOS', 'SMARTENVIOS']
+];
+function clienteSync_(c) {
+  var bruto = limpaSync_(c) || 'SEM CLIENTE', x = nrmSync_(bruto);
+  for (var i = 0; i < CLIENTES_SYNC.length; i++) if (CLIENTES_SYNC[i][0].test(x)) return { b: CLIENTES_SYNC[i][1], vol: CLIENTES_SYNC[i][2] };
+  return { b: bruto, vol: bruto };
 }
 function ehGetSync_(m) {
   return /^GET\b/i.test(limpaSync_(m));
@@ -243,58 +323,33 @@ function lerColetaSync_(f) {
     var cab = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
     var col = {};
     for (var k in SYNC.cols) {
-      var i = cab.indexOf(SYNC.cols[k]);
-      if (i < 0) throw new Error('Coluna não encontrada na base: ' + SYNC.cols[k]);
+      var nomes = { motorista: ['Collection Driver Name', 'Operator'], bairro: ['Shipping Area'], hora: ['Scan Time'] }[k] || [SYNC.cols[k]], i = -1;
+      for (var a = 0; a < nomes.length && i < 0; a++) i = cab.indexOf(nomes[a]);
+      if (i < 0) { if (k === 'bairro' || k === 'hora') { col[k] = null; continue; } throw new Error('Coluna não encontrada na base: ' + nomes.join(' / ')); }
       col[k] = sh.getRange(2, i + 1, n, 1).getValues();
     }
+    for (var q in SYNC.opc) { var j = cab.indexOf(SYNC.opc[q]); col[q] = j < 0 ? null : sh.getRange(2, j + 1, n, 1).getValues(); }
     var g = {}, ordem = [];
     for (var r = 0; r < n; r++) {
       var seller = limpaSync_(col.seller[r][0]) || limpaSync_(col.sid[r][0]);
       if (!seller) continue;
-      var cliente = limpaSync_(col.cliente[r][0]) || 'SEM CLIENTE';
+      var cc = clienteSync_(col.cliente[r][0]);
+      var cliente = cc.b;
       var id = nrmSync_(seller) + '|' + nrmSync_(cliente), o = g[id];
-      if (!o) { o = g[id] = { seller: seller, sid: limpaSync_(col.sid[r][0]), cliente: cliente, bairro: '', qtd: 0, qGet: 0, mot: '', motHora: '', mots: {} }; ordem.push(id); }
+      if (!o) { o = g[id] = { seller: seller, sid: limpaSync_(col.sid[r][0]), cliente: cliente, bairro: '', endereco: '', cep: '', cidade: '', qtd: 0, vols: {}, mot: '', motHora: '' }; ordem.push(id); }
       o.qtd++;
-      if (!o.bairro) o.bairro = limpaSync_(col.bairro[r][0]);
-      var h = col.hora[r][0];
+      o.vols[cc.vol] = (o.vols[cc.vol] || 0) + 1;
+      if (!o.bairro) o.bairro = limpaSync_((col.bairro ? col.bairro[r][0] : ''));
+      for (var q2 in SYNC.opc) if (!o[q2] && col[q2]) o[q2] = limpaSync_(col[q2][r][0]);
+      var h = (col.hora ? col.hora[r][0] : '');
       var hm = h instanceof Date ? Utilities.formatDate(h, SYNC.tz, 'HH:mm:ss') : String(h || '').slice(11, 19);
-      var m = String(col.motorista[r][0] == null ? '' : col.motorista[r][0]).trim(); // nome do motorista exatamente como está na base (IMILE)
-      if (ehGetSync_(m)) { o.qGet++; o.mots[m] = (o.mots[m] || 0) + 1; } // só coleta de motorista GETLOG entra na média e nos alternativos
+      var m = limpaSync_(col.motorista[r][0]);
       if (ehGetSync_(m) && (!o.mot || hm >= o.motHora)) { o.mot = m; o.motHora = hm; }
     }
     return ordem.map(function (x) { return g[x]; });
   } finally {
     DriveApp.getFileById(tmp.id).setTrashed(true);
   }
-}
-
-/**
- * RAPIDEZ: converter o .xlsx da coleta é o que demora (~1 min por arquivo). O resumo de cada arquivo fica guardado
- * na aba oculta _CACHE_COLETA (id do arquivo + data de modificação). Arquivo que não mudou não é convertido de novo:
- * na rodada diária só o dia novo é lido; o resto vem pronto em segundos.
- */
-var CACHE_COLS = ['arquivo', 'modificado', 'seller', 'sid', 'cliente', 'bairro', 'qtd', 'qGet', 'mot', 'motHora', 'mots'];
-function abaCache_(ss) {
-  var sh = ss.getSheetByName('_CACHE_COLETA');
-  if (!sh) { sh = ss.insertSheet('_CACHE_COLETA'); sh.appendRow(CACHE_COLS); sh.hideSheet(); }
-  return sh;
-}
-function lerCache_(sh) {
-  var n = sh.getLastRow() - 1, m = {};
-  if (n < 1) return m;
-  sh.getRange(2, 1, n, CACHE_COLS.length).getValues().forEach(function (r) {
-    if (!String(r[10] || '')) return; // cache de versão antiga (sem lista de motoristas): reconverte o arquivo
-    var k = String(r[0]) + '@' + String(r[1]);
-    (m[k] = m[k] || []).push({ seller: String(r[2]), sid: String(r[3]), cliente: String(r[4]), bairro: String(r[5]), qtd: Number(r[6]) || 0, qGet: Number(r[7]) || 0, mot: String(r[8]), motHora: String(r[9]), mots: (function () { try { return JSON.parse(String(r[10])); } catch (e) { return {}; } })() });
-  });
-  return m;
-}
-/** Regrava a aba de cache só com os arquivos em uso (os antigos saem). */
-function gravaCache_(sh, usados) {
-  var linhas = [];
-  usados.forEach(function (u) { u.itens.forEach(function (o) { linhas.push([u.id, u.mod, seguroSync_(o.seller), seguroSync_(o.sid), seguroSync_(o.cliente), seguroSync_(o.bairro), o.qtd, o.qGet, seguroSync_(o.mot), o.motHora, JSON.stringify(o.mots || {})]); }); });
-  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, CACHE_COLS.length).clearContent();
-  if (linhas.length) sh.getRange(2, 1, linhas.length, CACHE_COLS.length).setValues(linhas);
 }
 
 function sincronizarRotas() {
@@ -304,34 +359,22 @@ function sincronizarRotas() {
     var t0 = Date.now();
     var arqs = arquivosRecentesSync_();
     if (!arqs.length) throw new Error('Nenhuma base "Coleta - dd.mm.aaaa.xlsx" encontrada.');
-    var mapa = {}, ordem = [], lidos = [], somaGet = {}, somaMots = {}, convertidos = 0;
-    var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('ID_SEMANA'));
-    var shC = abaCache_(ss), cache = lerCache_(shC), usados = [];
+    var mapa = {}, ordem = [], lidos = [];
     for (var ai = 0; ai < arqs.length; ai++) {
-      var fid = arqs[ai].f.getId(), fmod = String(arqs[ai].f.getLastUpdated().getTime()), itensDia = cache[fid + '@' + fmod];
-      if (!itensDia) {
-        if (convertidos > 0 && Date.now() - t0 > SYNC.orcamentoMs) break; // respeita o limite de tempo do Apps Script
-        itensDia = lerColetaSync_(arqs[ai].f); convertidos++;
-      }
-      usados.push({ id: fid, mod: fmod, itens: itensDia });
-      itensDia.forEach(function (o) {
+      if (ai > 0 && Date.now() - t0 > SYNC.orcamentoMs) break; // respeita o limite de tempo do Apps Script
+      lerColetaSync_(arqs[ai].f).forEach(function (o) {
         var id = nrmSync_(o.seller) + '|' + nrmSync_(o.cliente), x = mapa[id];
-        somaGet[id] = (somaGet[id] || 0) + o.qGet;
-        var mm = somaMots[id] = somaMots[id] || {};
-        for (var q in (o.mots || {})) mm[q] = (mm[q] || 0) + o.mots[q];
-        if (!x) { mapa[id] = Object.assign({}, o); ordem.push(id); return; } // cópia: o cache do dia não é alterado
+        if (!x) { mapa[id] = o; ordem.push(id); return; }
         if (!x.mot && o.mot) { x.mot = o.mot; x.motHora = o.motHora; } // motorista GET do dia mais recente que tiver
         if (!x.bairro && o.bairro) x.bairro = o.bairro;
+        ['endereco', 'cep', 'cidade'].forEach(function (f) { if (!x[f] && o[f]) x[f] = o[f]; });
       });
       lidos.push(arqs[ai].dia);
     }
-    try { gravaCache_(shC, usados); } catch (ec) { Logger.log('cache não gravado: ' + ec); }
     var itens = ordem.map(function (id) { return mapa[id]; });
-    var nDias = Math.max(1, lidos.length);
-    var media = function (seller, cliente) { var t = somaGet[nrmSync_(seller) + '|' + nrmSync_(cliente)] || 0; return Math.round(t / nDias); };
+    var ss = SpreadsheetApp.openById(PropertiesService.getScriptProperties().getProperty('ID_SEMANA'));
     var sh = ss.getSheetByName('GERAL');
     var v = sh.getDataRange().getValues();
-    if (sh.getMaxColumns() < 13) sh.insertColumnsAfter(sh.getMaxColumns(), 13 - sh.getMaxColumns()); // coluna M = motorista alternativo
     var h = v[0].map(String);
     var modo = /client/i.test(h[1]) ? 'cliente' : /(^|\W)id(\W|$)|seller/i.test(h[1]) ? 'id' : '';
     if (!modo) throw new Error('A coluna B da aba GERAL não é cliente nem ID do seller (cabeçalho: "' + h[1] + '"). Nada foi gravado.');
@@ -350,16 +393,13 @@ function sincronizarRotas() {
     var mots = {};
     shM.getDataRange().getValues().forEach(function (r) { if (r[0]) mots[nrmSync_(r[0])] = String(r[0]); });
     var novosMot = [];
-    var todosGet = {};
-    itens.forEach(function (o) { if (o.mot) todosGet[o.mot] = 1; });
-    for (var sid_ in somaMots) for (var nm_ in somaMots[sid_]) todosGet[nm_] = 1;
-    Object.keys(todosGet).forEach(function (nm) {
-      if (!mots[nrmSync_(nm)]) { mots[nrmSync_(nm)] = nm; novosMot.push([seguroSync_(nm)]); }
+    itens.forEach(function (o) {
+      if (o.mot && !mots[nrmSync_(o.mot)]) { mots[nrmSync_(o.mot)] = o.mot; novosMot.push([seguroSync_(o.mot)]); }
     });
     if (novosMot.length) shM.getRange(shM.getLastRow() + 1, 1, novosMot.length, 1).setValues(novosMot);
 
     // Linhas novas, no layout da planilha (só o que a base sabe; o resto fica em branco)
-    var linhas = [], semColuna = [], largura = Math.max(h.length, 13);
+    var linhas = [], semColuna = [], largura = Math.max(h.length, 12);
     itens.forEach(function (o) {
       var nome = nrmSync_(o.seller), cli = nrmSync_(o.cliente);
       // coluna B = cliente: um registro por seller + cliente; coluna B = ID: o seller só entra se ainda não existir
@@ -367,70 +407,39 @@ function sincronizarRotas() {
       if (chaves.some(function (k) { return tem[k]; })) return;
       chaves.forEach(function (k) { tem[k] = 1; });
       var r = []; for (var z = 0; z < largura; z++) r.push('');
-      r[0] = seguroSync_(String(o.seller).toUpperCase()); // nome do seller sempre em caixa alta
+      r[0] = seguroSync_(o.seller);
       r[1] = seguroSync_(modo === 'cliente' ? o.cliente : o.sid);
+      r[2] = seguroSync_(o.endereco);
       r[3] = seguroSync_(o.bairro);
-      var ci = -1;
-      for (var c = 6; c <= 10; c++) if (nrmSync_(h[c]) === cli) ci = c;
-      if (ci >= 0) r[ci] = media(o.seller, o.cliente); else semColuna.push(o.seller + ' / ' + o.cliente);
+      r[4] = seguroSync_(o.cep);
+      r[5] = seguroSync_(o.cidade);
+      Object.keys(o.vols).forEach(function (vk) {
+        var ci = -1;
+        for (var c = 6; c <= 10; c++) if (nrmSync_(h[c]) === nrmSync_(vk)) ci = c;
+        if (ci >= 0) r[ci] = o.vols[vk]; else semColuna.push(o.seller + ' / ' + vk);
+      });
       if (o.mot) r[11] = seguroSync_(mots[nrmSync_(o.mot)]);
       linhas.push(r);
     });
-    if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, largura).setValues(linhas);
-
-    // Volumes G a K de TODAS as linhas = média de 7 dias de coleta GETLOG do seller + cliente da coluna (terceiros não entram).
-    // Linha sem coleta GET no período fica 0. Só as colunas cujo cabeçalho é um cliente são escritas.
-    var cliCols = [];
-    for (var cc = 6; cc <= 10; cc++) if (String(h[cc] || '').trim()) cliCols.push(cc);
-    var vAtual = sh.getDataRange().getValues(), atualizadas = 0;
-    if (vAtual.length > 1 && cliCols.length) {
-      var bloco = vAtual.slice(1).map(function (r) {
-        return [6, 7, 8, 9, 10].map(function (c) {
-          if (cliCols.indexOf(c) < 0 || !r[0]) return r[c];
-          // coluna B = cliente: cada linha é um seller + cliente, então só a coluna do próprio cliente recebe volume (sem duplicar)
-          if (modo === 'cliente' && nrmSync_(r[1]) !== nrmSync_(h[c])) return 0;
-          return media(r[0], h[c]);
-        });
+    var preenchidos = 0;
+    if (modo === 'cliente' && v.length > 1) {
+      var blocoCF = v.slice(1).map(function (r) { return [r[2], r[3], r[4], r[5]]; });
+      v.slice(1).forEach(function (r, ix) {
+        if (!r[0]) return;
+        var o = mapa[nrmSync_(r[0]) + '|' + nrmSync_(r[1])];
+        if (!o) return;
+        var b = blocoCF[ix], mud = false;
+        [[0, 'endereco'], [1, 'bairro'], [2, 'cep'], [3, 'cidade']].forEach(function (p) { if (!String(b[p[0]] == null ? '' : b[p[0]]).trim() && o[p[1]]) { b[p[0]] = seguroSync_(o[p[1]]); mud = true; } });
+        if (mud) preenchidos++;
       });
-      sh.getRange(2, 7, bloco.length, 5).setValues(bloco);
-      atualizadas = bloco.length;
+      var cepB = {};
+      blocoCF.forEach(function (b) { var c = String(b[2] == null ? '' : b[2]).trim(), x = String(b[1] == null ? '' : b[1]).trim(); if (c && x) (cepB[c] = cepB[c] || {})[x] = 1; });
+      blocoCF.forEach(function (b, ix) { var c = String(b[2] == null ? '' : b[2]).trim(); if (!v[ix + 1][0] || String(b[1] == null ? '' : b[1]).trim() || !cepB[c]) return; var ops = Object.keys(cepB[c]); if (ops.length === 1) { b[1] = ops[0]; preenchidos++; } });
+      linhas.forEach(function (r) { var c = String(r[4] || '').trim(); if (!r[3] && cepB[c] && Object.keys(cepB[c]).length === 1) r[3] = Object.keys(cepB[c])[0]; });
+      if (preenchidos) sh.getRange(2, 3, blocoCF.length, 4).setValues(blocoCF);
     }
-
-    // Nenhum seller fica sem motorista: linha em branco recebe o motorista que mais atende a mesma região
-    // (mesmo CEP de 5 dígitos, depois mesmo bairro, depois mesma cidade). Linha que já tem motorista nunca é alterada.
-    var vM = sh.getDataRange().getValues(), preenchidos = 0, semRegiao = [];
-    var reg = { cep: {}, bai: {}, cid: {} };
-    var chv = function (r) { return { cep: String(r[4] || '').replace(/\D/g, '').slice(0, 5), bai: nrmSync_(r[3]), cid: nrmSync_(r[5]) }; };
-    vM.slice(1).forEach(function (r) {
-      var m = nrmSync_(r[11]);
-      if (!r[0] || !m || !mots[m]) return;
-      var k = chv(r);
-      ['cep', 'bai', 'cid'].forEach(function (t) { if (k[t]) { reg[t][k[t]] = reg[t][k[t]] || {}; reg[t][k[t]][m] = (reg[t][k[t]][m] || 0) + 1; } });
-    });
-    var melhor = function (c) { var b = '', n = 0; for (var m in (c || {})) if (c[m] > n) { n = c[m]; b = m; } return b; };
-    var colL = vM.map(function (r) { return [r[11]]; }), mudouL = false;
-    vM.forEach(function (r, i) {
-      if (!i || !r[0] || String(r[11] || '').trim()) return;
-      var k = chv(r), m = (k.cep && melhor(reg.cep[k.cep])) || (k.bai && melhor(reg.bai[k.bai])) || (k.cid && melhor(reg.cid[k.cid])) || '';
-      if (m) { colL[i][0] = seguroSync_(mots[m]); mudouL = true; preenchidos++; } else semRegiao.push(r[0]);
-    });
-    if (mudouL) sh.getRange(1, 12, colL.length, 1).setValues(colL);
-
-    // Motorista alternativo (coluna M): outro motorista GETLOG que também coletou naquele seller (o de mais coletas, diferente do oficial).
-    // Só preenche célula vazia; o que foi definido na tela Rotas nunca é sobrescrito aqui.
-    var porChave = {};
-    for (var idm in somaMots) {
-      [idm, idm.split('|')[0]].forEach(function (kk) { var d_ = porChave[kk] = porChave[kk] || {}; for (var nm in somaMots[idm]) d_[nm] = (d_[nm] || 0) + somaMots[idm][nm]; });
-    }
-    var vN = sh.getDataRange().getValues(), altPreenchidos = 0, colM = vN.map(function (r) { return [r[12] === undefined ? '' : r[12]]; }), mudouM = false;
-    vN.forEach(function (r, i) {
-      if (!i || !r[0] || String(colM[i][0] || '').trim()) return;
-      var c = porChave[modo === 'cliente' ? nrmSync_(r[0]) + '|' + nrmSync_(r[1]) : nrmSync_(r[0])] || {}, oficial = nrmSync_(r[11]);
-      var cand = Object.keys(c).filter(function (nm) { return nrmSync_(nm) !== oficial && mots[nrmSync_(nm)]; }).sort(function (a, b) { return c[b] - c[a]; })[0];
-      if (cand) { colM[i][0] = seguroSync_(mots[nrmSync_(cand)]); mudouM = true; altPreenchidos++; }
-    });
-    if (!String(colM[0][0] || '').trim()) { colM[0][0] = 'MOTORISTA ALTERNATIVO'; mudouM = true; }
-    if (mudouM) sh.getRange(1, 13, colM.length, 1).setValues(colM);
+    if (linhas.length) sh.getRange(sh.getLastRow() + 1, 1, linhas.length, largura).setValues(linhas);
+    if (linhas.length || novosMot.length || preenchidos) cacheLimpar_('semana');
 
     // Conferência final: todo seller + cliente da base precisa estar na relação; linhas sem motorista / com motorista fora da lista
     var v2 = sh.getDataRange().getValues(), tem2 = {}, semMot = 0, motInvalido = 0;
@@ -446,7 +455,24 @@ function sincronizarRotas() {
       return modo === 'cliente' ? !tem2[nome + '|' + nrmSync_(o.cliente)] : !(tem2['N:' + nome] || (o.sid && tem2['I:' + nrmSync_(o.sid)]));
     }).map(function (o) { return o.seller + ' / ' + o.cliente; });
     var antigo = Number(arqs[0].k) < Number(Utilities.formatDate(new Date(Date.now() - 3 * 86400000), SYNC.tz, 'yyyyMMdd'));
-    var resumo = { ok: faltantes.length === 0 && semMot === 0, bases: lidos, diasNaMedia: nDias, arquivosConvertidosAgora: convertidos, segundos: Math.round((Date.now() - t0) / 1000), linhasComVolumeAtualizado: atualizadas, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, motoristasNovos: novosMot.length, motoristasPreenchidos: preenchidos, alternativosPreenchidos: altPreenchidos, semMotorista: semMot, semMotoristaLista: semRegiao.slice(0, 20), motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
+    try {
+      var shS = ss.getSheetByName('_SELLER_ID') || ss.insertSheet('_SELLER_ID');
+      var sidM = {};
+      if (shS.getLastRow() > 1) shS.getRange(2, 1, shS.getLastRow() - 1, 6).getValues().forEach(function (r) { if (r[0]) sidM[sidKey_(r[0])] = r; });
+      itens.forEach(function (o) {
+        if (!o.sid) return;
+        var k = sidKey_(o.sid), a = sidM[k] || [o.sid, '', '', '', '', ''], n = [o.sid, o.seller, o.endereco, o.bairro, o.cep, o.cidade];
+        for (var z = 1; z < 6; z++) if (!String(a[z] == null ? '' : a[z]).trim() && n[z]) a[z] = seguroSync_(n[z]);
+        sidM[k] = a;
+      });
+      var linS = Object.keys(sidM).map(function (k) { return sidM[k].map(String); });
+      shS.clearContents();
+      shS.getRange(1, 1, 1, 6).setValues([['SELLER ID', 'SELLER', 'ENDEREÇO', 'BAIRRO', 'CEP', 'CIDADE']]);
+      if (linS.length) shS.getRange(2, 1, linS.length, 6).setNumberFormat('@').setValues(linS);
+      if (!shS.isSheetHidden()) shS.hideSheet();
+      cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
+    } catch (es) { Logger.log('_SELLER_ID: ' + es); }
+    var resumo = { ok: faltantes.length === 0, bases: lidos, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, enderecosPreenchidos: preenchidos, motoristasNovos: novosMot.length, semMotorista: semMot, motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
     try {
       var aud = ss.getSheetByName('_SINCRONIA') || ss.insertSheet('_SINCRONIA');
       if (!aud.getLastRow()) aud.appendRow(['Data', 'Bases lidas', 'Na base', 'Linhas novas', 'Motoristas novos', 'Sem motorista', 'Motorista fora da lista', 'Faltantes', 'Base desatualizada']);
@@ -468,7 +494,7 @@ function sincronizarAgendado() {
   }
   try {
     MailApp.sendEmail(Session.getEffectiveUser().getEmail(), 'GETLOG Rotas: a sincronização precisa de atenção',
-      erro ? 'Erro: ' + erro : 'Sellers que ficaram de fora: ' + JSON.stringify(res.faltantes) + ' | Sem motorista (sem região parecida para sugerir): ' + JSON.stringify(res.semMotoristaLista));
+      erro ? 'Erro: ' + erro : 'Sellers que ficaram de fora: ' + JSON.stringify(res.faltantes));
   } catch (em) { Logger.log('Aviso não enviado: ' + em); }
 }
 
@@ -478,7 +504,3 @@ function instalarGatilhoSincronia() {
   ScriptApp.newTrigger('sincronizarAgendado').timeBased().everyDays(1).atHour(7).create();
 }
 
-/**
- * Botão "Sincronizar com a planilha" da tela Rotas (já ligado no doPost do docs/rotas-code-completo.gs):
- *   if (d.acao === 'sincronizar') return resposta(sincronizarRotas());
- */
