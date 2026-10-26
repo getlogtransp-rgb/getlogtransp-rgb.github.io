@@ -148,3 +148,9 @@ function instalarGatilhoSincronia() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sincronizarRotas') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('sincronizarRotas').timeBased().everyDays(1).atHour(7).create();
 }
+
+/**
+ * Botão "Sincronizar com a planilha" da tela Rotas.
+ * No doPost do Code.gs, logo DEPOIS da linha que confere o token e ANTES de "const lock", acrescente:
+ *   if (d.acao === 'sincronizar') return resposta(sincronizarRotas());
+ */
