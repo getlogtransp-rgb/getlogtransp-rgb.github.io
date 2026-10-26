@@ -68,7 +68,24 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 </div></dialog>
 <div id="toast"><span id="tm"></span><button id="tu">Desfazer</button></div>
 <script>
-const CFG={api:'COLE_AQUI_A_URL_DO_WEB_APP',token:'COLE_AQUI_O_TOKEN',usuarioPortal:()=>window.GETLOG_USUARIO||localStorage.getItem('getlog_usuario')};
+const PP=(()=>{try{return window.parent!==window?window.parent:null}catch(e){return null}})();
+const CP=(PP&&PP.GETLOG_ROTAS)||{};
+const CFG={api:CP.api||'COLE_AQUI_A_URL_DO_WEB_APP',token:CP.token||'COLE_AQUI_O_TOKEN',usuarioPortal:()=>window.GETLOG_USUARIO||(PP&&PP.GETLOG_USUARIO)||localStorage.getItem('getlog_usuario')};
+const CONFIGURADO=/^https:\/\/script\.google(usercontent)?\.com\//.test(CFG.api)&&CFG.token.indexOf('COLE_AQUI')<0;
+// Chamada ao Apps Script com limite de tempo e novas tentativas (só quando é seguro repetir)
+async function chamar(url,opt,tent,tmo){
+  let ult;
+  for(let i=0;i<=tent;i++){
+    const ac=new AbortController(),t=setTimeout(()=>ac.abort(),tmo);
+    try{
+      const x=await fetch(url,{...opt,signal:ac.signal});
+      if(!x.ok)throw new Error('http '+x.status);
+      return await x.json();
+    }catch(e){ult=e;if(i<tent)await new Promise(ok=>setTimeout(ok,800*(i+1)))}
+    finally{clearTimeout(t)}
+  }
+  throw ult;
+}
 const $=id=>document.getElementById(id);
 const norm=s=>String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -79,16 +96,28 @@ if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem id
 $('usr').textContent=usuario;
 const h=location.hash.match(/motorista=([^&]+)/);
 if(h)S.fm=decodeURIComponent(h[1]);
+async function buscar(){
+  const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base,{},2,30000);
+  if(r.erro||!Array.isArray(r.linhas))throw new Error(r.erro||'resposta inválida');
+  S.linhas=r.linhas.map(l=>({...l,seller:String(l.seller==null?'':l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:l.clientes||[],motorista:l.motorista||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+  S.mots=r.motoristas||[];
+  S.em=Date.now();
+}
+// Atualização silenciosa: mantém busca, filtro e seleção; nunca roda durante um salvamento
+async function recarregar(){
+  if(S.ocupado||!CONFIGURADO)return;
+  try{await buscar()}catch(e){return}
+  const ks=new Set(S.linhas.map(l=>l.k));[...S.sel].forEach(k=>ks.has(k)||S.sel.delete(k));
+  desenharMots();desenhar();
+}
 async function carregar(){
+  if(!CONFIGURADO){$('lista').innerHTML='<div class="vazio">A tela Rotas ainda não foi configurada. Peça ao administrador para informar a URL e o token em Usuários e acessos &gt; Configurações do sistema.</div>';$('fm').hidden=$('limpar').hidden=$('sinc').hidden=true;$('cont').textContent='';$('todos').textContent='';return}
   $('lista').innerHTML='<div class="vazio">Carregando...</div>';
   S.sel.clear();
   $('fm').hidden=$('limpar').hidden=false;
   try{
-    const r=await fetch(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base).then(x=>x.json());
-    if(r.erro)throw new Error(r.erro);
-    S.linhas=r.linhas.map(l=>({...l,_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
-    S.mots=r.motoristas;
-  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a URL e o token.</div>';$('fm').hidden=$('limpar').hidden=true;$('cont').textContent='';$('todos').textContent='';$('acao').hidden=true;return}
+    await buscar();
+  }catch(e){$('lista').innerHTML='<div class="vazio">Não foi possível carregar os dados. Confira a conexão e tente de novo.<br><button class="btn sec" id="tent" style="margin-top:12px">Tentar de novo</button></div>';$('tent').onclick=carregar;$('fm').hidden=$('limpar').hidden=true;$('cont').textContent='';$('todos').textContent='';$('acao').hidden=true;return}
   desenharMots();desenhar();
 }
 function desenharMots(){
@@ -135,16 +164,19 @@ async function salvar(mudancas,msg){
   const ant=mudancas.map(m=>({k:m.k,motorista:S.linhas.find(l=>l.k===m.k).motorista}));
   const aplicar=lst=>lst.forEach(m=>{S.linhas.find(l=>l.k===m.k).motorista=m.motorista});
   aplicar(mudancas);desenharMots();desenhar();
+  S.ocupado=true;
   try{
-    const r=await fetch(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,base:S.base,usuario,mudancas})}).then(x=>x.json());
+    // gravar o mesmo motorista duas vezes não muda nada, então repetir uma vez é seguro
+    const r=await chamar(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,base:S.base,usuario,mudancas})},1,40000);
     if(!r.ok)throw new Error(r.erro||'falha');
-    if(r.rejeitados.length)toast('Salvo, mas '+r.rejeitados.length+' não foram aceitos. Recarregue a página.',true,false);
+    if(r.rejeitados.length){toast('Salvo, mas '+r.rejeitados.length+(r.rejeitados.length===1?' não foi aceito':' não foram aceitos')+'. Lista atualizada.',true,false);S.ocupado=false;await recarregar()}
     else toast('Salvo: '+msg,false,true);
     S.desfazer=ant;
   }catch(e){
     aplicar(ant);desenharMots();desenhar();
     toast('Não foi possível salvar. Nada foi alterado.',true,false);
   }
+  S.ocupado=false;
 }
 $('lista').addEventListener('click',e=>{
   const c=e.target.closest('.card');if(!c)return;
@@ -175,13 +207,20 @@ $('sinc').onclick=async()=>{
   const b=$('sinc'),aviso=(t,er)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=true;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
   b.disabled=true;b.textContent='Sincronizando...';
   try{
-    const r=await fetch(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,acao:'sincronizar',usuario})}).then(x=>x.json());
+    S.ocupado=true;
+    const r=await chamar(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,acao:'sincronizar',usuario})},0,330000);
     if(r.erro)throw new Error(r.erro);
+    S.ocupado=false;
     await carregar();
-    aviso('Sincronizado: '+r.linhasNovas+(r.linhasNovas===1?' seller novo':' sellers novos')+', '+r.motoristasNovos+(r.motoristasNovos===1?' motorista novo':' motoristas novos'),false);
+    const f=(r.faltantes||[]).length,sm=r.semMotorista||0;
+    aviso('Sincronizado: '+r.linhasNovas+(r.linhasNovas===1?' seller novo':' sellers novos')+', '+r.motoristasNovos+(r.motoristasNovos===1?' motorista novo':' motoristas novos')+(sm?' | '+sm+' sem motorista':'')+(f?' | ATENÇÃO: '+f+' seller(s) ficaram de fora':'')+(r.baseDesatualizada?' | base de coletados desatualizada':''),f>0||!!r.baseDesatualizada);
   }catch(e){aviso('Não foi possível sincronizar. Nada foi alterado.',true)}
+  S.ocupado=false;
   b.disabled=false;b.textContent='Sincronizar com a planilha';
 };
+// Mantém a lista em dia para quem deixa a tela aberta: ao voltar para a aba e a cada 5 minutos
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-(S.em||0)>120000&&!$('dlg').open)recarregar()});
+setInterval(()=>{if(!document.hidden&&!S.sel.size&&!$('dlg').open)recarregar()},300000);
 carregar();
 </script>
 </body>
