@@ -28,6 +28,10 @@ input:focus,select:focus{outline:0;border-color:var(--tit)}
 .fbar #q{grid-column:1/-1;height:46px;font-size:15px;padding:0 14px;border-radius:9px}
 @media(max-width:1180px){.fbar{grid-template-columns:repeat(4,minmax(0,1fr))}.fbar #q{grid-column:1/-1}.fbar #fcep{grid-column:span 2}.fbar #limpar{grid-column:span 2;justify-self:end}}
 @media(max-width:700px){.fbar{grid-template-columns:repeat(2,minmax(0,1fr))}.fbar #fcep,.fbar #limpar{grid-column:auto}}
+.modoee .fbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto}
+.modoee .fbar #fcep{grid-column:auto}
+.modoee .fbar #limpar{grid-column:auto;justify-self:end}
+@media(max-width:700px){.modoee .fbar{grid-template-columns:repeat(2,minmax(0,1fr))}.modoee .fbar #limpar{grid-column:1/-1}}
 .dd{position:relative}
 .ddb{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;border:1px solid #CBD3DF;background:#fff;border-radius:7px;padding:0 10px;height:36px;font-size:13px;color:#2F3F63;white-space:nowrap}
 .ddb>span{flex:1;text-align:left}
