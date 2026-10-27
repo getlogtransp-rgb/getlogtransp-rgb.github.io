@@ -145,21 +145,21 @@ function doGet_(e) {
   if (BASES[q.base].csv) {
     const c = lerCsv_(P.getProperty(BASES[q.base].prop));
     const ix = indicesEE(c.rows[0]);
-    if (ix.id < 0 || ix.nome < 0) throw new Error('CSV sem SELLER ID ou NOME DO MOTORISTA');
-    const vistos = new Set(), cpfP = s => { s = String(s || '').trim(); return /^\d+$/.test(s) ? s.padStart(11, '0') : s; };
-    let incompletas = 0;
-    const incompletasIds = [];
+    if (ix.id < 0 || ix.nome < 0 || ix.cpf < 0 || ix.placa < 0 || ix.cep < 0) throw new Error('CSV fora do formato: ' + c.rows[0].join('|'));
+    const vistos = new Set();
     const linhas = [];
     c.rows.slice(1).forEach(r => {
-      const id = String(r[ix.id] || '').trim(), cep = String(ix.cep >= 0 ? r[ix.cep] || '' : '').trim(), cpf = cpfP(r[ix.cpf]), placa = String(r[ix.placa] || '').trim(), nome = String(r[ix.nome] || '').trim();
-      if (!id || vistos.has(id)) return;
-      if (!cep || !/^\d{11}$/.test(cpf) || !placa || !nome) { incompletas++; incompletasIds.push(id); return; }
-      vistos.add(id);
-      linhas.push({ k: id, sid: id, seller: id, endereco: '', bairro: '', cep, cidade: '', cpf, placa, clientes: ['SHEIN'], media: 0, motorista: nome, alternativo: '' });
+      const id = String(r[ix.id] || '').trim();
+      if (!id) return;
+      const cel = i => String(r[i] == null ? '' : r[i]).trim();
+      const l = { k: id, sid: id, seller: id, endereco: '', bairro: '', cep: cel(ix.cep), cidade: '', cpf: cel(ix.cpf), placa: cel(ix.placa), clientes: ['SHEIN'], media: 0, motorista: cel(ix.nome), alternativo: '' };
+      const chave = [l.k, l.cep, l.cpf, l.placa, l.motorista].join('|');
+      if (vistos.has(chave)) return;
+      vistos.add(chave);
+      linhas.push(l);
     });
     const veic = veiculos_(c.rows, ix);
-    Object.keys(veic).forEach(n => { veic[n] = [cpfP(veic[n][0]), veic[n][1]]; });
-    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veic).sort(), veiculos: veic, incompletas, incompletasIds });
+    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veic).sort(), veiculos: veic });
   }
   const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
   const v = ss.getSheetByName(BASES[q.base].aba).getDataRange().getValues();
