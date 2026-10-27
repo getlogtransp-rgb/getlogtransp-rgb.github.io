@@ -28,7 +28,7 @@ function versaoBase_(base) {
 }
 function cacheLer_(base, ver) {
   const c = CacheService.getScriptCache();
-  const raiz = 'r10_' + base + '_' + ver;
+  const raiz = 'r13_' + base + '_' + ver;
   const n = Number(c.get(raiz) || 0);
   if (!n) return null;
   const ks = [];
@@ -41,7 +41,7 @@ function cacheLer_(base, ver) {
 function respostaCache_(base, ver, o) {
   const s = JSON.stringify(o);
   try {
-    const raiz = 'r10_' + base + '_' + ver;
+    const raiz = 'r13_' + base + '_' + ver;
     const partes = {};
     let n = 0;
     for (let i = 0; i < s.length; i += CACHE_PEDACO) partes[raiz + '_' + (n++)] = s.slice(i, i + CACHE_PEDACO);
@@ -132,7 +132,7 @@ function iniciarCompletarSellerIds() {
 }
 function veiculos_(rows, ix) {
   const m = {};
-  rows.slice(1).forEach(r => { const n = String(r[ix.nome] || '').trim(); if (n) m[n] = [String(r[ix.cpf]), String(r[ix.placa])]; });
+  rows.slice(1).forEach(r => { const n = String(r[ix.nome] || '').trim(), c = String(r[ix.cpf] || '').trim(), p = String(r[ix.placa] || '').trim(); if (n && p && /^\d{11}$/.test(/^\d+$/.test(c) ? c.padStart(11, '0') : c)) m[n] = [c, p]; });
   return m;
 }
 function doGet_(e) {
@@ -146,17 +146,20 @@ function doGet_(e) {
     const c = lerCsv_(P.getProperty(BASES[q.base].prop));
     const ix = indicesEE(c.rows[0]);
     if (ix.id < 0 || ix.nome < 0) throw new Error('CSV sem SELLER ID ou NOME DO MOTORISTA');
-    const inf = infoSellers_(), cg = cepGeral_();
-    const grupos = new Map();
-    c.rows.slice(1).forEach(r => { const id = String(r[ix.id] || '').trim(); if (!id) return; const k = sidKey_(id); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(r); });
-    const linhas = [...grupos.entries()].map(([k, rs]) => {
-      const ids = [...new Set(rs.map(r => String(r[ix.id]).trim()))];
-      const cep = String((ix.cep >= 0 && rs[0][ix.cep]) || '').trim();
-      const s = inf[k] || [], z = cg.shein[cep] || [], g = cg.loc[cep] || [];
-      const mots = [...new Set(rs.map(r => String(r[ix.nome] || '').trim()).filter(String))];
-      return { k, sid: ids.join(' / '), seller: s[1] || z[0] || ids[0], endereco: s[2] || z[1] || '', bairro: s[3] || z[2] || g[0] || '', cep: cep || String(s[4] || ''), cidade: s[5] || z[3] || g[1] || '', clientes: ['SHEIN'], media: 0, motorista: mots[0] || '', motoristasDivergentes: mots.length > 1 ? mots : undefined, alternativo: '' };
+    const vistos = new Set(), cpfP = s => { s = String(s || '').trim(); return /^\d+$/.test(s) ? s.padStart(11, '0') : s; };
+    let incompletas = 0;
+    const incompletasIds = [];
+    const linhas = [];
+    c.rows.slice(1).forEach(r => {
+      const id = String(r[ix.id] || '').trim(), cep = String(ix.cep >= 0 ? r[ix.cep] || '' : '').trim(), cpf = cpfP(r[ix.cpf]), placa = String(r[ix.placa] || '').trim(), nome = String(r[ix.nome] || '').trim();
+      if (!id || vistos.has(id)) return;
+      if (!cep || !/^\d{11}$/.test(cpf) || !placa || !nome) { incompletas++; incompletasIds.push(id); return; }
+      vistos.add(id);
+      linhas.push({ k: id, sid: id, seller: id, endereco: '', bairro: '', cep, cidade: '', cpf, placa, clientes: ['SHEIN'], media: 0, motorista: nome, alternativo: '' });
     });
-    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veiculos_(c.rows, ix)).sort() });
+    const veic = veiculos_(c.rows, ix);
+    Object.keys(veic).forEach(n => { veic[n] = [cpfP(veic[n][0]), veic[n][1]]; });
+    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veic).sort(), veiculos: veic, incompletas, incompletasIds });
   }
   const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
   const v = ss.getSheetByName(BASES[q.base].aba).getDataRange().getValues();
@@ -194,7 +197,7 @@ function doPost_(e) {
         let achou = false;
         if (m.campo === 'alt' || !novo) { rejeitados.push(m.k); return; }
         c.rows.forEach((r, i) => {
-          if (!i || sidKey_(r[ix.id]) !== sidKey_(m.k)) return;
+          if (!i || String(r[ix.id]).trim() !== String(m.k)) return;
           achou = true;
           if (String(r[ix.nome]).trim() === m.motorista) return;
           r[ix.nome] = m.motorista; r[ix.cpf] = novo[0]; r[ix.placa] = novo[1]; salvos++;
