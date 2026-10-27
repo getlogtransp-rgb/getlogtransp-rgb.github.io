@@ -203,7 +203,7 @@ const h=location.hash.match(/motorista=([^&]+)/);
 if(h)S.f.mot.add(decodeURIComponent(h[1]));
 function aplicar(r){
   const MA=x=>String(x==null?'':x).trim().toUpperCase();
-  S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',alt:l.alternativo||'',_b:norm([l.seller,l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
+  S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',alt:l.alternativo||'',_b:norm([l.seller,l.sid||'',l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
   S.mots=r.motoristas||[];
   // Ranking de motoristas por região (CEP de 5 dígitos, bairro, cidade): base das sugestões
   const reg={cep:{},bai:{},cid:{}};
@@ -346,7 +346,7 @@ function desenhar(){
   const ini=(S.pag-1)*S.lim,vis=f.slice(ini,ini+S.lim);
   S.vis=vis;
   $('cont').textContent='Exibindo '+vis.length+' de '+f.length+(f.length===1?' resultado':' resultados');
-  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -480,7 +480,7 @@ $('m2').onclick=()=>abrirTroca(filtradas().map(l=>l.k));
 $('exportar').onclick=()=>{
   const cel=v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
   const f=filtradas();
-  const linhas=[['Seller','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista','Motorista alternativo']].concat(f.map(l=>[l.seller,l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'',l.alt||'']));
+  const linhas=[['Seller','Seller ID','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista','Motorista alternativo']].concat(f.map(l=>[l.seller,l.sid||'',l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'',l.alt||'']));
   const blob=new Blob(['﻿'+linhas.map(r=>r.map(cel).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rotas-'+S.base+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 };
