@@ -28,7 +28,7 @@ function versaoBase_(base) {
 }
 function cacheLer_(base, ver) {
   const c = CacheService.getScriptCache();
-  const raiz = 'r_' + base + '_' + ver;
+  const raiz = 'r10_' + base + '_' + ver;
   const n = Number(c.get(raiz) || 0);
   if (!n) return null;
   const ks = [];
@@ -41,7 +41,7 @@ function cacheLer_(base, ver) {
 function respostaCache_(base, ver, o) {
   const s = JSON.stringify(o);
   try {
-    const raiz = 'r_' + base + '_' + ver;
+    const raiz = 'r10_' + base + '_' + ver;
     const partes = {};
     let n = 0;
     for (let i = 0; i < s.length; i += CACHE_PEDACO) partes[raiz + '_' + (n++)] = s.slice(i, i + CACHE_PEDACO);
@@ -92,14 +92,16 @@ function infoSellers_() {
   return m;
 }
 function cepGeral_() {
-  const m = {}, n = {};
+  const m = {}, n = {}, sh = {};
   SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('GERAL').getDataRange().getValues().slice(1).forEach(r => {
     const c = String(r[4] || '').trim();
-    if (!c || !r[3]) return;
-    const k = c + '|' + r[3] + '|' + r[5];
-    if (!n[c]) { n[c] = k; m[c] = [r[3], r[5]]; } else if (n[c] !== k) m[c] = [];
+    if (!c || !r[0]) return;
+    if (r[3]) { const k = c + '|' + r[3] + '|' + r[5]; if (!n[c]) { n[c] = k; m[c] = [r[3], r[5]]; } else if (n[c] !== k) m[c] = []; }
+    if (/SHEIN/i.test(String(r[1])) || Number(r[6]) > 0 || Number(r[7]) > 0) { const s = nrm_(r[0]); if (!sh[c]) sh[c] = { s, d: [r[0], r[2], r[3], r[5]] }; else if (sh[c].s !== s) sh[c].d = null; }
   });
-  return m;
+  const shein = {};
+  Object.keys(sh).forEach(c => { if (sh[c].d) shein[c] = sh[c].d; });
+  return { loc: m, shein };
 }
 function mesclarSid_(sidM, itens) {
   itens.forEach(function (o) {
@@ -144,31 +146,31 @@ function doGet_(e) {
     const c = lerCsv_(P.getProperty(BASES[q.base].prop));
     const ix = indicesEE(c.rows[0]);
     if (ix.id < 0 || ix.nome < 0) throw new Error('CSV sem SELLER ID ou NOME DO MOTORISTA');
-    const inf = infoSellers_(), porCep = cepGeral_();
-    const vistos = new Set();
-    const linhas = c.rows.slice(1).filter(r => r[ix.id] && !vistos.has(String(r[ix.id]).trim()) && vistos.add(String(r[ix.id]).trim())).map(r => {
-      const id = String(r[ix.id]).trim(), s = inf[sidKey_(id)] || [], cep = String((ix.cep >= 0 && r[ix.cep]) || s[4] || '').trim(), g = porCep[cep] || [];
-      return { k: id, seller: s[1] || id, endereco: s[2] || '', bairro: s[3] || g[0] || '', cep, cidade: s[5] || g[1] || '', clientes: ['SHEIN'], media: 0, motorista: String(r[ix.nome] || '').trim(), alternativo: '' };
+    const inf = infoSellers_(), cg = cepGeral_();
+    const grupos = new Map();
+    c.rows.slice(1).forEach(r => { const id = String(r[ix.id] || '').trim(); if (!id) return; const k = sidKey_(id); if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(r); });
+    const linhas = [...grupos.entries()].map(([k, rs]) => {
+      const ids = [...new Set(rs.map(r => String(r[ix.id]).trim()))];
+      const cep = String((ix.cep >= 0 && rs[0][ix.cep]) || '').trim();
+      const s = inf[k] || [], z = cg.shein[cep] || [], g = cg.loc[cep] || [];
+      const mots = [...new Set(rs.map(r => String(r[ix.nome] || '').trim()).filter(String))];
+      return { k, sid: ids.join(' / '), seller: s[1] || z[0] || ids[0], endereco: s[2] || z[1] || '', bairro: s[3] || z[2] || g[0] || '', cep: cep || String(s[4] || ''), cidade: s[5] || z[3] || g[1] || '', clientes: ['SHEIN'], media: 0, motorista: mots[0] || '', motoristasDivergentes: mots.length > 1 ? mots : undefined, alternativo: '' };
     });
     return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veiculos_(c.rows, ix)).sort() });
   }
   const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
   const v = ss.getSheetByName(BASES[q.base].aba).getDataRange().getValues();
   const h = v[0], L = layoutGeral_(h);
-  const vistos = new Set();
-  const linhas = v.slice(1).filter(r => r[0] && !vistos.has(chaveGeral(r)) && vistos.add(chaveGeral(r))).map(r => ({
-    k: chaveGeral(r),
-    seller: r[0],
-    endereco: r[2],
-    bairro: r[3],
-    cep: String(r[4]),
-    cidade: r[5],
-    clientes: L.vols.filter(i => Number(r[i]) > 0).map(i => h[i]),
-    media: L.vols.reduce((a, i) => a + (Number(r[i]) || 0), 0),
-    motorista: r[L.mot],
-    alternativo: (L.temAlt ? r[L.alt] : '') || ''
-  }));
-  const motoristas = ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]).filter(String);
+  const porK = new Map();
+  v.slice(1).forEach(r => {
+    if (!r[0]) return;
+    const k = chaveGeral(r), cl = L.vols.filter(i => Number(r[i]) > 0).map(i => h[i]), md = L.vols.reduce((a, i) => a + (Number(r[i]) || 0), 0);
+    const x = porK.get(k);
+    if (x) { cl.forEach(c => { if (x.clientes.indexOf(c) < 0) x.clientes.push(c); }); x.media += md; return; }
+    porK.set(k, { k, seller: r[0], endereco: r[2], bairro: r[3], cep: String(r[4]), cidade: r[5], clientes: cl, media: md, motorista: r[L.mot], alternativo: (L.temAlt ? r[L.alt] : '') || '' });
+  });
+  const linhas = [...porK.values()];
+  const motoristas = [...new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(linhas.map(l => String(l.motorista || '').trim())).filter(String))].sort();
   return respostaCache_(q.base, ver, { linhas, motoristas });
 }
 function doPost_(e) {
@@ -192,7 +194,7 @@ function doPost_(e) {
         let achou = false;
         if (m.campo === 'alt' || !novo) { rejeitados.push(m.k); return; }
         c.rows.forEach((r, i) => {
-          if (!i || String(r[ix.id]).trim() !== String(m.k)) return;
+          if (!i || sidKey_(r[ix.id]) !== sidKey_(m.k)) return;
           achou = true;
           if (String(r[ix.nome]).trim() === m.motorista) return;
           r[ix.nome] = m.motorista; r[ix.cpf] = novo[0]; r[ix.placa] = novo[1]; salvos++;
@@ -206,7 +208,7 @@ function doPost_(e) {
     const sh = ss.getSheetByName(BASES[d.base].aba);
     const v = sh.getDataRange().getValues();
     const L = layoutGeral_(v[0]);
-    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]));
+    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(v.slice(1).map(r => String(r[L.mot] || '').trim())).filter(String));
     const idx = new Map();
     v.forEach((r, i) => {
       if (!i || !r[0]) return;
@@ -384,7 +386,7 @@ function sincronizarRotas() {
     v.slice(1).forEach(function (r) {
       if (!r[0]) return;
       var nome = nrmSync_(r[0]), b = nrmSync_(r[1]);
-      if (modo === 'cliente') { tem[nome + '|' + b] = 1; for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) tem[nome + '|' + nrmSync_(h[c])] = 1; }
+      if (modo === 'cliente') { tem[nome + '|' + b] = 1; for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) { tem[nome + '|' + nrmSync_(h[c])] = 1; tem[nome + '|' + nrmSync_(clienteSync_(h[c]).b)] = 1; } }
       else { tem['N:' + nome] = 1; tem['I:' + b] = 1; }
     });
 
@@ -447,7 +449,7 @@ function sincronizarRotas() {
       if (!r[0]) return;
       var nome = nrmSync_(r[0]);
       tem2['N:' + nome] = 1; tem2['I:' + nrmSync_(r[1])] = 1; tem2[nome + '|' + nrmSync_(r[1])] = 1;
-      for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) tem2[nome + '|' + nrmSync_(h[c])] = 1;
+      for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) { tem2[nome + '|' + nrmSync_(h[c])] = 1; tem2[nome + '|' + nrmSync_(clienteSync_(h[c]).b)] = 1; }
       if (!String(r[11] || '').trim()) semMot++; else if (!mots[nrmSync_(r[11])]) motInvalido++;
     });
     var faltantes = itens.filter(function (o) {
