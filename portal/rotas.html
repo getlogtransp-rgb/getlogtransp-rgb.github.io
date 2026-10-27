@@ -88,6 +88,9 @@ td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .s{font-weight:700;color:var(--tit)}
 .m{color:var(--mut)}
 .num{text-align:right;white-space:nowrap}
+.ce{text-align:center;white-space:nowrap}
+th.cmd,td.cmd{text-align:center;min-width:72px;padding-left:14px;padding-right:14px}
+.modoee #dds .dd:not(:first-child){display:none}
 .endr{background:#DCE8FB;color:#0B2A63;border-radius:5px;padding:2px 7px;font-weight:600}
 .cls span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 7px;font-size:11px;margin:1px 4px 1px 0;white-space:nowrap}
 .mot{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:600;color:var(--tit);white-space:nowrap}
@@ -158,7 +161,7 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 </div>
 <div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
-<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="num cmd">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="ce cmd">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
 </div>
 </main>
@@ -204,7 +207,7 @@ if(h)S.f.mot.add(decodeURIComponent(h[1]));
 function aplicar(r){
   const MA=x=>String(x==null?'':x).trim().toUpperCase();
   S.linhas=r.linhas.map(l=>({...l,seller:MA(l.seller),cep:String(l.cep==null?'':l.cep),endereco:l.endereco==null?'':l.endereco,bairro:l.bairro==null?'':l.bairro,cidade:l.cidade==null?'':l.cidade,clientes:(l.clientes||[]).map(MA),motorista:l.motorista||'',alt:l.alternativo||'',_b:norm([l.seller,l.sid||'',l.endereco,l.bairro,l.cep,l.cidade].join(' '))}));
-  S.mots=r.motoristas||[];S.veic=r.veiculos||null;
+  S.mots=r.motoristas||[];S.veic=r.veiculos||null;S.cols=Array.isArray(r.colunas)?r.colunas:null;
   // Ranking de motoristas por região (CEP de 5 dígitos, bairro, cidade): base das sugestões
   const reg={cep:{},bai:{},cid:{}};
   S.linhas.forEach(l=>{if(!l.motorista)return;const k=chaveReg(l);for(const t in reg)if(k[t]){const o=reg[t][k[t]]=reg[t][k[t]]||{};o[l.motorista]=(o[l.motorista]||0)+1}});
@@ -228,13 +231,13 @@ const altSug=l=>l.alt?'':(rankRegiao(l)[0]||'');
 // Como nas outras telas: qualquer clique aqui dentro recolhe o menu lateral do portal
 addEventListener('click',()=>{try{parent!==window&&parent.GL_SIDE_HIDE&&parent.GL_SIDE_HIDE()}catch(e){}},true);
 // Cópia só da sessão desta aba (some ao fechar o navegador): a tela abre na hora e atualiza em segundo plano
-const CK=()=>'rotas_cache2_'+S.base;
+const CK=()=>'rotas_cache3_'+S.base;
 async function buscar(){
   const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base,{},2,30000);
   if(r.erro||!Array.isArray(r.linhas))throw new Error(r.erro||'resposta inválida');
   aplicar(r);
   S.em=Date.now();
-  try{sessionStorage.setItem(CK(),JSON.stringify({linhas:r.linhas,motoristas:r.motoristas,veiculos:r.veiculos||null}))}catch(e){}
+  try{sessionStorage.setItem(CK(),JSON.stringify({colunas:r.colunas||null,linhas:r.linhas,motoristas:r.motoristas,veiculos:r.veiculos||null}))}catch(e){}
 }
 // Atualização silenciosa: mantém busca, filtro e seleção; nunca roda durante um salvamento
 async function recarregar(){
@@ -335,7 +338,20 @@ function ajusta(){
   if(w.scrollWidth>w.clientWidth+1)t.classList.add('compact3');
 }
 addEventListener('resize',()=>ajusta());
+const EE_PAD=['SELLER ID','CEP','CPF DO MOTORISTA','PLACA DO VEÍCULO','NOME DO MOTORISTA'];
+const EE_CE=['SELLER ID','CEP','CPF DO MOTORISTA','PLACA DO VEICULO'];
+function eeCols(){
+  const cab=S.cols&&S.cols.length?S.cols:EE_PAD,N=cab.map(norm),i=n=>N.indexOf(norm(n));
+  return {cab,ce:N.map(n=>EE_CE.some(x=>norm(x)===n)),ix:{id:i('SELLER ID'),cep:i('CEP'),cpf:i('CPF DO MOTORISTA'),placa:i('PLACA DO VEICULO'),nome:i('NOME DO MOTORISTA')}};
+}
+function eeVals(l,ec){
+  const v=Array.isArray(l.v)&&l.v.length===ec.cab.length?l.v.slice():ec.cab.map(()=>'');
+  const put=(i,x)=>{if(i>=0)v[i]=x==null?'':String(x)};
+  put(ec.ix.id,l.k);put(ec.ix.cep,l.cep);put(ec.ix.cpf,l.cpf);put(ec.ix.placa,l.placa);put(ec.ix.nome,l.motorista);
+  return v;
+}
 function desenhar(){
+  document.body.classList.toggle('modoee',S.base.startsWith('ee'));
   $('lista').closest('table').classList.toggle('noalt',S.base.startsWith('ee'));
   document.querySelectorAll('.aba').forEach(a=>a.classList.toggle('on',a.dataset.b===S.base));
   const base=S.linhas.filter(l=>passa(l,'st')),nSem=base.filter(l=>!l.motorista).length;
@@ -348,9 +364,10 @@ function desenhar(){
   $('cont').textContent='Exibindo '+vis.length+' de '+f.length+(f.length===1?' resultado':' resultados');
   const tb=$('lista').closest('table'),hr=tb.tHead.rows[0],ee=S.base.startsWith('ee');
   if(!S.thG)S.thG=[...hr.cells].slice(1).map(c=>c.outerHTML).join('');
-  if(hr.dataset.m!==(ee?'ee':'g')){while(hr.cells.length>1)hr.deleteCell(1);hr.insertAdjacentHTML('beforeend',ee?'<th>Seller ID</th><th>CEP</th><th>CPF do motorista</th><th>Placa do veículo</th><th>Nome do motorista</th>':S.thG);hr.dataset.m=ee?'ee':'g'}
-  if(ee)$('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.k)+'</td><td class="m">'+esc(l.cep)+'</td><td class="m">'+esc(l.cpf||'')+'</td><td class="m">'+esc(l.placa||'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(l.motorista)+'</button></td></tr>').join('')||'<tr><td colspan="6" class="vazio">Nenhum seller com esses filtros.</td></tr>';
-  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="num m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  const ec=ee?eeCols():null,mk=ee?'ee:'+ec.cab.join('|'):'g';
+  if(hr.dataset.m!==mk){while(hr.cells.length>1)hr.deleteCell(1);hr.insertAdjacentHTML('beforeend',ee?ec.cab.map((c,i)=>'<th'+(ec.ce[i]?' class="ce"':'')+'>'+esc(c)+'</th>').join(''):S.thG);hr.dataset.m=mk}
+  if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button></td>':'<td class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -484,7 +501,7 @@ $('m2').onclick=()=>abrirTroca(filtradas().map(l=>l.k));
 $('exportar').onclick=()=>{
   const cel=v=>{v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"'};
   const f=filtradas();
-  const linhas=S.base.startsWith('ee')?[['SELLER ID','CEP','CPF DO MOTORISTA','PLACA DO VEÍCULO','NOME DO MOTORISTA']].concat(f.map(l=>[l.k,l.cep,l.cpf||'',l.placa||'',l.motorista||''])):[['Seller','Seller ID','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista','Motorista alternativo']].concat(f.map(l=>[l.seller,l.sid||'',l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'',l.alt||'']));
+  const ec=eeCols(),linhas=S.base.startsWith('ee')?[ec.cab].concat(f.map(l=>eeVals(l,ec))):[['Seller','Seller ID','Clientes','Endereço','Bairro','Cidade','CEP','Média','Motorista','Motorista alternativo']].concat(f.map(l=>[l.seller,l.sid||'',l.clientes.join(', '),l.endereco,l.bairro,l.cidade,l.cep,l.media||'',l.motorista||'',l.alt||'']));
   const blob=new Blob(['﻿'+linhas.map(r=>r.map(cel).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rotas-'+S.base+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
 };
@@ -501,7 +518,8 @@ $('dl').addEventListener('click',e=>{
   salvar(keys.map(k=>alt?{k,motorista:m,campo:'alt'}:{k,motorista:m}),plural(keys.length,'seller','sellers')+(alt?' (alternativo)':'')+(m?' para '+curto(m):': alternativo removido'));
 });
 $('tu').onclick=()=>{if(S.desfazer){const d=S.desfazer;S.desfazer=null;$('toast').style.display='none';salvar(d,'desfeito')}};
-document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;S.linhas=[];S.mots=[];S.veic=null;S.vis=[];$('lista').innerHTML='';localStorage.setItem('rotas_base',S.base);limpaTudo();carregar()});
+document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;S.linhas=[];S.mots=[];S.veic=null;S.vis=[];$('lista').innerHTML='';localStorage.setItem('rotas_base',S.base);limaBase();limpaTudo();carregar()});
+function limaBase(){const v=S.base.startsWith('ee')?500:100;S.lim=v;$('tam').value=String(v);S.pag=1}
 $('sinc').onclick=async()=>{
   const b=$('sinc'),aviso=(t,er)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=true;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
   b.disabled=true;b.textContent='Sincronizando...';
@@ -520,6 +538,7 @@ $('sinc').onclick=async()=>{
 // Mantém a lista em dia para quem deixa a tela aberta: ao voltar para a aba e a cada 5 minutos
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-(S.em||0)>120000&&!$('dlg').open)recarregar()});
 setInterval(()=>{if(!document.hidden&&!S.sel.size&&!$('dlg').open)recarregar()},300000);
+limaBase();
 carregar();
 </script>
 </body>
