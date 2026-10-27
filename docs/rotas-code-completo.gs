@@ -318,40 +318,57 @@ function arquivosRecentesSync_() {
   return l.slice(0, SYNC.dias);
 }
 
-/** Um item por seller + cliente do dia: {seller, sid, cliente, bairro, qtd, mot}. Cada linha da base entra em um item. */
+/** Um item por seller + cliente do dia: {seller, sid, cliente, bairro, qtd, mot}. Cada linha da base entra em um item. Resultado guardado em cache por arquivo + última atualização. */
+function cacheBaseSync_(f) { return 'sy14_' + f.getId() + '_' + f.getLastUpdated().getTime(); }
 function lerColetaSync_(f) {
+  var C = CacheService.getScriptCache(), ck = cacheBaseSync_(f), n0 = C.get(ck + '_n');
+  if (n0) {
+    var keys = [], i0;
+    for (i0 = 0; i0 < Number(n0); i0++) keys.push(ck + '_' + i0);
+    var got = C.getAll(keys), txt = '';
+    for (i0 = 0; i0 < keys.length; i0++) { if (got[keys[i0]] == null) { txt = null; break; } txt += got[keys[i0]]; }
+    if (txt !== null) return JSON.parse(txt);
+  }
   var tmp = Drive.Files.create({ name: 'tmp rotas ' + f.getName(), mimeType: MimeType.GOOGLE_SHEETS }, f.getBlob());
   try {
     var sh = SpreadsheetApp.openById(tmp.id).getSheets()[0];
-    var n = sh.getLastRow() - 1;
-    if (n < 1) return [];
-    var cab = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var tudo = sh.getDataRange().getValues();
+    if (tudo.length < 2) return [];
+    var cab = tudo[0].map(String);
     var col = {};
     for (var k in SYNC.cols) {
       var nomes = { motorista: ['Collection Driver Name', 'Operator'], bairro: ['Shipping Area'], hora: ['Scan Time'] }[k] || [SYNC.cols[k]], i = -1;
       for (var a = 0; a < nomes.length && i < 0; a++) i = cab.indexOf(nomes[a]);
-      if (i < 0) { if (k === 'bairro' || k === 'hora') { col[k] = null; continue; } throw new Error('Coluna não encontrada na base: ' + nomes.join(' / ')); }
-      col[k] = sh.getRange(2, i + 1, n, 1).getValues();
+      if (i < 0) { if (k === 'bairro' || k === 'hora') { col[k] = -1; continue; } throw new Error('Coluna não encontrada na base: ' + nomes.join(' / ')); }
+      col[k] = i;
     }
-    for (var q in SYNC.opc) { var j = cab.indexOf(SYNC.opc[q]); col[q] = j < 0 ? null : sh.getRange(2, j + 1, n, 1).getValues(); }
+    for (var q in SYNC.opc) col[q] = cab.indexOf(SYNC.opc[q]);
     var g = {}, ordem = [];
-    for (var r = 0; r < n; r++) {
-      var seller = limpaSync_(col.seller[r][0]) || limpaSync_(col.sid[r][0]);
+    for (var r = 1; r < tudo.length; r++) {
+      var L = tudo[r];
+      var seller = limpaSync_(L[col.seller]) || limpaSync_(L[col.sid]);
       if (!seller) continue;
-      var cc = clienteSync_(col.cliente[r][0]);
+      var cc = clienteSync_(L[col.cliente]);
       var cliente = cc.b;
       var id = nrmSync_(seller) + '|' + nrmSync_(cliente), o = g[id];
-      if (!o) { o = g[id] = { seller: seller, sid: limpaSync_(col.sid[r][0]), cliente: cliente, bairro: '', endereco: '', cep: '', cidade: '', qtd: 0, vols: {}, mot: '', motHora: '' }; ordem.push(id); }
+      if (!o) { o = g[id] = { seller: seller, sid: limpaSync_(L[col.sid]), cliente: cliente, bairro: '', endereco: '', cep: '', cidade: '', qtd: 0, vols: {}, mot: '', motHora: '' }; ordem.push(id); }
       o.qtd++;
       o.vols[cc.vol] = (o.vols[cc.vol] || 0) + 1;
-      if (!o.bairro) o.bairro = limpaSync_((col.bairro ? col.bairro[r][0] : ''));
-      for (var q2 in SYNC.opc) if (!o[q2] && col[q2]) o[q2] = limpaSync_(col[q2][r][0]);
-      var h = (col.hora ? col.hora[r][0] : '');
+      if (!o.bairro) o.bairro = col.bairro < 0 ? '' : limpaSync_(L[col.bairro]);
+      for (var q2 in SYNC.opc) if (!o[q2] && col[q2] >= 0) o[q2] = limpaSync_(L[col[q2]]);
+      var h = col.hora < 0 ? '' : L[col.hora];
       var hm = h instanceof Date ? Utilities.formatDate(h, SYNC.tz, 'HH:mm:ss') : String(h || '').slice(11, 19);
-      var m = limpaSync_(col.motorista[r][0]);
+      var m = limpaSync_(L[col.motorista]);
       if (ehGetSync_(m) && (!o.mot || hm >= o.motHora)) { o.mot = m; o.motHora = hm; }
     }
-    return ordem.map(function (x) { return g[x]; });
+    var res = ordem.map(function (x) { return g[x]; });
+    try {
+      var s = JSON.stringify(res), pcs = {}, np = 0;
+      for (var p = 0; p < s.length; p += 40000) { pcs[ck + '_' + np] = s.substr(p, 40000); np++; }
+      pcs[ck + '_n'] = String(np);
+      C.putAll(pcs, 21600);
+    } catch (ec) { Logger.log('cache base: ' + ec); }
+    return res;
   } finally {
     DriveApp.getFileById(tmp.id).setTrashed(true);
   }
@@ -503,9 +520,9 @@ function sincronizarAgendado() {
   } catch (em) { Logger.log('Aviso não enviado: ' + em); }
 }
 
-/** Agenda a sincronização todo dia às 07h, sem apagar os outros gatilhos (o exportar() continua). */
+/** Agenda a sincronização todo dia às 06:30, sem apagar os outros gatilhos (o exportar() continua). */
 function instalarGatilhoSincronia() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sincronizarAgendado' || t.getHandlerFunction() === 'sincronizarRotas') ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('sincronizarAgendado').timeBased().everyDays(1).atHour(7).create();
+  ScriptApp.newTrigger('sincronizarAgendado').timeBased().everyDays(1).atHour(6).nearMinute(30).create();
 }
 
