@@ -388,13 +388,15 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rotasUrl||'',token:CFG.rotasToken||''};try{localStorage.setItem('getlog_usuario',ME.name)}catch(e){}M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/rotas.html?v=31" title="Rotas" id="rt"></iframe></div>`;
+VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rotasUrl||'',token:CFG.rotasToken||''};try{localStorage.setItem('getlog_usuario',ME.name)}catch(e){}M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/rotas.html?v=32" title="Rotas" id="rt"></iframe></div>`;
   // Altura exata da área visível deste aparelho (descontando topo e menu de baixo), para a barra de ações nunca ficar escondida
-  const fit=()=>{const f=document.getElementById('rt');if(!f){removeEventListener('resize',fit);return}
+  let fw=0;const fit=()=>{const f=document.getElementById('rt');if(!f){removeEventListener('resize',fit);return}
+    // teclado aberto muda só a altura: não encolher a tela
+    if(fw===innerWidth&&(document.activeElement===f||/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))return;fw=innerWidth;
     const nav=document.querySelector('.bnav'),nh=nav&&getComputedStyle(nav).display!=='none'?nav.offsetHeight:0,
-      vh=(window.visualViewport&&visualViewport.height)||innerHeight,top=f.getBoundingClientRect().top+scrollY;
+      vh=innerHeight,top=f.getBoundingClientRect().top+scrollY;
     f.style.height=Math.max(320,Math.floor(vh-top-nh))+'px'};
-  fit();setTimeout(fit,150);addEventListener('resize',fit);addEventListener('orientationchange',fit);if(window.visualViewport)visualViewport.addEventListener('resize',fit)};
+  fit();setTimeout(fit,150);addEventListener('resize',fit);addEventListener('orientationchange',fit);};
 VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=44" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();

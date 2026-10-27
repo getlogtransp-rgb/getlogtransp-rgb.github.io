@@ -63,7 +63,7 @@ input:focus,select:focus{outline:0;border-color:var(--tit)}
 .chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--bd);background:#fff;border-radius:999px;padding:4px 8px 4px 10px;font-size:12px;color:#2F3F63}
 .chip button{border:0;background:transparent;color:var(--mut);font-weight:700;padding:0;line-height:1}
 .chip button:hover{color:var(--er)}
-@media(max-width:560px){.pop{position:fixed;left:12px!important;right:12px!important;top:auto;bottom:12px;width:auto;max-height:70vh}}
+@media(max-width:700px){.dd{position:static}.pop,.pop.r{position:fixed;left:0!important;right:0!important;top:auto;bottom:0;width:auto;min-width:0;height:72%;max-height:none;display:flex;flex-direction:column;border-radius:18px 18px 0 0;border:0;box-shadow:0 0 0 100vmax rgba(6,24,61,.45);z-index:70}.pop .ms-l{max-height:none;flex:1;overflow:auto;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}.ms-l label{padding:12px 10px;font-size:15px}.ms-l input{width:20px;height:20px}.ms-l label span{white-space:normal}.ms-a{padding:10px 14px}.ms-s input{height:42px;font-size:16px}.ord{padding:10px 0}}
 button{font:inherit;cursor:pointer}
 button:disabled{opacity:.55;cursor:default}
 .link{background:none;border:0;color:var(--tit);font-weight:600;padding:6px}
@@ -552,7 +552,7 @@ document.querySelectorAll('.stb').forEach(b=>b.onclick=()=>{S.st=b.dataset.st;re
 $('dds').addEventListener('click',e=>{
   e.stopPropagation();
   const b=e.target.closest('[data-pop]');
-  if(b){const k=b.dataset.pop;S.pop=S.pop===k?null:k;S.pq='';S.foco=true;desenharFiltros();return}
+  if(b){const k=b.dataset.pop;S.pop=S.pop===k?null:k;S.pq='';S.foco=!matchMedia('(pointer:coarse)').matches;desenharFiltros();return}
   const od=e.target.closest('[data-ord]');
   if(od&&S.pop){S.ord[S.pop]=od.dataset.ord;S.foco=false;desenharFiltros();return}
   const ms=e.target.closest('[data-ms]');
