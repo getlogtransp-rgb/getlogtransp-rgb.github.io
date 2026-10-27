@@ -231,18 +231,21 @@ const altSug=l=>l.alt?'':(rankRegiao(l)[0]||'');
 // Como nas outras telas: qualquer clique aqui dentro recolhe o menu lateral do portal
 addEventListener('click',()=>{try{parent!==window&&parent.GL_SIDE_HIDE&&parent.GL_SIDE_HIDE()}catch(e){}},true);
 // Cópia só da sessão desta aba (some ao fechar o navegador): a tela abre na hora e atualiza em segundo plano
-const CK=()=>'rotas_cache3_'+S.base;
+const CK=(b=S.base)=>'rotas_cache4_'+b;
 async function buscar(){
-  const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+S.base,{},2,30000);
+  const b=S.base;
+  const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+b,{},2,30000);
   if(r.erro||!Array.isArray(r.linhas))throw new Error(r.erro||'resposta inválida');
+  if(b!==S.base)return false;
   aplicar(r);
   S.em=Date.now();
-  try{sessionStorage.setItem(CK(),JSON.stringify({colunas:r.colunas||null,linhas:r.linhas,motoristas:r.motoristas,veiculos:r.veiculos||null}))}catch(e){}
+  try{sessionStorage.setItem(CK(b),JSON.stringify({colunas:r.colunas||null,linhas:r.linhas,motoristas:r.motoristas,veiculos:r.veiculos||null}))}catch(e){}
+  return true;
 }
 // Atualização silenciosa: mantém busca, filtro e seleção; nunca roda durante um salvamento
 async function recarregar(){
   if(S.ocupado||!CONFIGURADO)return;
-  try{await buscar()}catch(e){return}
+  try{if(!await buscar())return}catch(e){return}
   const ks=new Set(S.linhas.map(l=>l.k));[...S.sel].forEach(k=>ks.has(k)||S.sel.delete(k));
   desenharFiltros();desenhar();
 }
@@ -256,7 +259,7 @@ async function carregar(){
   try{const c=JSON.parse(sessionStorage.getItem(CK())||'null');if(c&&Array.isArray(c.linhas)){aplicar(c);rapido=true;mostrar('');desenharFiltros();desenhar();S.em=Date.now()-240000}}catch(e){}
   if(!rapido)mostrar('Carregando...');
   try{
-    await buscar();
+    if(!await buscar())return;
   }catch(e){if(rapido)return;mostrar('Não foi possível carregar os dados. Confira a conexão e tente de novo.<br><button class="btn sec" id="tent" style="margin-top:12px">Tentar de novo</button>');$('tent').onclick=carregar;return}
   mostrar('');desenharFiltros();desenhar();
 }
