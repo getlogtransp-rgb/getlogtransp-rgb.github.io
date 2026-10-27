@@ -501,7 +501,7 @@ $('dl').addEventListener('click',e=>{
   salvar(keys.map(k=>alt?{k,motorista:m,campo:'alt'}:{k,motorista:m}),plural(keys.length,'seller','sellers')+(alt?' (alternativo)':'')+(m?' para '+curto(m):': alternativo removido'));
 });
 $('tu').onclick=()=>{if(S.desfazer){const d=S.desfazer;S.desfazer=null;$('toast').style.display='none';salvar(d,'desfeito')}};
-document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;localStorage.setItem('rotas_base',S.base);limpaTudo();S.linhas=[];S.mots=[];S.veic=null;S.vis=[];carregar()});
+document.querySelectorAll('.aba').forEach(a=>a.onclick=()=>{S.base=a.dataset.b;S.linhas=[];S.mots=[];S.veic=null;S.vis=[];$('lista').innerHTML='';localStorage.setItem('rotas_base',S.base);limpaTudo();carregar()});
 $('sinc').onclick=async()=>{
   const b=$('sinc'),aviso=(t,er)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=true;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
   b.disabled=true;b.textContent='Sincronizando...';
