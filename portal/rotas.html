@@ -86,7 +86,8 @@ th{position:sticky;top:0;background:#F4F6FA;text-align:left;font-size:12.5px;col
 td{padding:7px 6px;border-bottom:1px solid var(--bd);vertical-align:middle;white-space:normal;overflow-wrap:anywhere}
 tbody tr{cursor:pointer}
 tbody tr:hover{background:#F8FAFD}
-tbody tr.sel{background:#FFF3EA;box-shadow:inset 3px 0 0 var(--lar)}
+tbody tr.sel{background:#EAF1FD}
+tbody tr.sel td.c{box-shadow:inset 4px 0 0 var(--tit)}
 td.c,th.c{width:44px;text-align:center}
 td.c input,th.c input{width:18px;height:18px;padding:0;accent-color:var(--lar)}
 .s{font-weight:700;color:var(--tit)}
@@ -97,7 +98,7 @@ th.cmd,td.cmd{text-align:center;min-width:72px;padding-left:14px;padding-right:1
 .modoee #dds .dd:not(:first-child){display:none}
 .endr{background:#DCE8FB;color:#0B2A63;border-radius:5px;padding:2px 7px;font-weight:600}
 .cls span{display:inline-block;background:#EEF3FC;border-radius:999px;padding:1px 7px;font-size:11px;margin:1px 4px 1px 0;white-space:nowrap}
-.mot{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:600;color:var(--tit);white-space:nowrap}
+.mot{background:var(--bg);border:1px solid var(--bd);border-radius:7px;padding:4px 8px;font-size:12px;font-weight:600;color:var(--tit)}
 .mot.alt{font-weight:500}
 .mot.sug{border-style:dashed;color:var(--mut);font-weight:500}
 .mot.vz{color:var(--mut);font-weight:500}
@@ -152,7 +153,11 @@ dialog::backdrop{background:rgba(6,24,61,.5)}
 table,tbody{display:block;background:transparent}
 thead{display:none}
 tbody tr{display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px 6px;background:#fff;border:1px solid var(--bd);border-radius:12px;margin:0 0 10px;padding:12px 10px}
-tbody tr.sel{border-color:var(--lar);box-shadow:none}
+tbody tr.sel{background:#EAF1FD;border-color:var(--tit);box-shadow:0 0 0 1px var(--tit)}
+tbody tr.sel td.c{box-shadow:none}
+.mot{white-space:normal;text-align:left;overflow-wrap:anywhere;line-height:1.25}
+.modoee td[data-l].nm{flex-direction:column;gap:4px}
+.modoee td[data-l].nm .mot{width:100%}
 td{display:block;border:0;padding:0;grid-column:2;min-width:0}
 td.c{grid-column:1;grid-row:1/span 6;text-align:left;width:auto;padding-top:2px}
 td.c input{width:24px;height:24px}
@@ -190,7 +195,7 @@ td .mot{width:100%;min-height:42px;text-align:left;font-size:14px}
 </div>
 <div class="alerta" id="alerta" hidden></div>
 <div class="faixa" id="faixa" hidden></div>
-<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="ce cmd">Média</th><th>Motorista</th><th class="calt">Motorista alternativo</th></tr></thead><tbody id="lista"></tbody></table></div>
+<div class="tw"><table><thead><tr><th class="c"><input type="checkbox" id="tudo" title="Selecionar os sellers desta página"></th><th>Seller</th><th class="ccl">Clientes</th><th>Endereço</th><th class="cb">Bairro</th><th class="cc">Cidade</th><th class="cp">CEP</th><th class="ce cmd">Média</th><th>Motorista</th></tr></thead><tbody id="lista"></tbody></table></div>
 <div class="pag"><span id="pinfo"></span><span class="dir"><label for="tam">Por página</label><select id="tam"><option>50</option><option selected>100</option><option>200</option><option>500</option></select><button class="btn sec" id="ant">Anterior</button><span id="pn"></span><button class="btn sec" id="prox">Próxima</button></span></div>
 </div>
 </main>
@@ -198,6 +203,7 @@ td .mot{width:100%;min-height:42px;text-align:left;font-size:14px}
 <dialog id="dlg"><div class="dl">
 <div class="dh"><div><span id="dtag" class="tag"></span><div id="dt"></div><div id="dsub"></div></div><button class="xb" id="dxx" aria-label="Fechar">&times;</button></div>
 <input id="dq" type="search" placeholder="Digite parte do nome do motorista" autocomplete="off">
+<button class="btn sec" id="dalt" hidden></button>
 <div class="lista" id="dl"></div>
 <button class="btn sec" id="dx">Cancelar</button>
 </div></dialog>
@@ -239,6 +245,9 @@ function endPadrao(end,bairro,cidade){
   const seg=s.split(/\s*(?:,|;|\s[-–—]\s)\s*/).map(x=>x.trim()).filter(Boolean).filter((x,i)=>!i||!(n1(x)===nb||n1(x)===nc||UFS.includes(n1(x))));
   if(!seg.length)return '';
   let tok=seg.join(' ').split(' ').filter(Boolean);
+  for(let r=0;r<3;r++)for(const nm of [nc,nb]){const nt=nm.split(' ').filter(Boolean);if(!nt.length||tok.length<=nt.length+1)continue;
+    const fim=tok.slice(-nt.length).map(x=>n1(x));if(fim.join(' ')===nt.join(' ')&&!/\d/.test(nm))tok=tok.slice(0,-nt.length)}
+  while(tok.length>2&&UFS.includes(n1(tok[tok.length-1]))&&/^[A-Z]{2}$/.test(tok[tok.length-1]))tok.pop();
   // número: 1º número (ou s/n) depois do nome da rua que não seja km
   let i=tok.findIndex((x,k)=>k>0&&/^(\d+[a-z]?|s\/?n|n[º°o]\.?\d*)$/i.test(x)&&!/^km\.?$/i.test(tok[k-1]));
   let rua=tok,num='',resto=[];
@@ -414,6 +423,9 @@ function eeCols(){
 function eeVals(l,ec){
   const v=Array.isArray(l.v)&&l.v.length===ec.cab.length?l.v.slice():ec.cab.map(()=>'');
   const put=(i,x)=>{if(i>=0)v[i]=x==null?'':String(x)};
+  const nm=ec.cab.map(norm),ix=n=>nm.indexOf(n),ie=ix('endereco'),ib=ix('bairro'),ic=ix('cidade'),is=ix('seller name');
+  if(ie>=0)v[ie]=endPadrao(v[ie],ib>=0?v[ib]:l.bairro,ic>=0?v[ic]:l.cidade);
+  if(ib>=0)v[ib]=titulo(v[ib]);if(ic>=0)v[ic]=titulo(v[ic]);if(is>=0)v[is]=String(v[is]).trim().toUpperCase();
   put(ec.ix.id,l.k);put(ec.ix.cep,l.cep);put(ec.ix.cpf,l.cpf);put(ec.ix.placa,l.placa);put(ec.ix.nome,l.motorista);
   return v;
 }
@@ -433,8 +445,8 @@ function desenhar(){
   if(!S.thG)S.thG=[...hr.cells].slice(1).map(c=>c.outerHTML).join('');
   const ec=ee?eeCols():null,mk=ee?'ee:'+ec.cab.join('|'):'g';
   if(hr.dataset.m!==mk){while(hr.cells.length>1)hr.deleteCell(1);hr.insertAdjacentHTML('beforeend',ee?ec.cab.map((c,i)=>'<th'+(ec.ce[i]?' class="ce"':'')+'>'+esc(c)+'</th>').join(''):S.thG);hr.dataset.m=mk}
-  if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td data-l="'+esc(ec.cab[i])+'"><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button></td>':'<td data-l="'+esc(ec.cab[i])+'" class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
-  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button><div class="sub3"><small>Alternativo</small> '+celAlt(l)+'</div></td><td class="calt">'+celAlt(l)+'</td></tr>').join('')||'<tr><td colspan="10" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td data-l="'+esc(ec.cab[i])+'" class="nm"><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button></td>':'<td data-l="'+esc(ec.cab[i])+'" class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td></tr>').join('')||'<tr><td colspan="9" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -467,6 +479,8 @@ function abrirTroca(keys,modo){
   const c={};S.linhas.forEach(l=>{if(l.motorista&&cep.has(l.cep.slice(0,5)))c[l.motorista]=(c[l.motorista]||0)+1});
   const sug=Object.keys(c).filter(m=>!(alt&&rows.length===1&&ofi.has(m))).sort((a,b)=>c[b]-c[a]);
   S.ops=(alt?[{m:'',det:'',g:'Sem alternativo',rm:1}]:[]).concat(sug.map(m=>({m,det:c[m]+(c[m]===1?' seller':' sellers')+' na região',g:'Sugeridos para esta região'})),S.mots.filter(m=>!c[m]&&!(alt&&rows.length===1&&ofi.has(m))).map(m=>({m,det:'',g:'Outros motoristas'})));
+  const da=$('dalt');da.hidden=S.base.startsWith('ee')||rows.length!==1;
+  if(!da.hidden)da.textContent=alt?'← Voltar ao motorista oficial':'Definir motorista alternativo'+(rows[0].alt?' (atual: '+curto(rows[0].alt)+')':'');
   $('dq').value='';desenharOps();
   $('dlg').showModal();
 }
@@ -525,6 +539,7 @@ $('alerta').addEventListener('click',e=>{
   salvar(m,plural(m.length,'seller','sellers')+' por região');
 });
 $('lsel').onclick=()=>{S.sel.clear();desenhar()};
+$('dalt').onclick=()=>abrirTroca(S.alvo,S.modo==='alt'?'mot':'alt');
 $('trocar').onclick=()=>abrirTroca([...S.sel]);
 const refiltra=()=>{S.pag=1;desenharFiltros();desenhar()};
 $('q').oninput=e=>{S.q=e.target.value;S.foco=false;refiltra()};
