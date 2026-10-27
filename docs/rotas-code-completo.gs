@@ -28,7 +28,7 @@ function versaoBase_(base) {
 }
 function cacheLer_(base, ver) {
   const c = CacheService.getScriptCache();
-  const raiz = 'r13_' + base + '_' + ver;
+  const raiz = 'r_' + base + '_' + ver;
   const n = Number(c.get(raiz) || 0);
   if (!n) return null;
   const ks = [];
@@ -41,7 +41,7 @@ function cacheLer_(base, ver) {
 function respostaCache_(base, ver, o) {
   const s = JSON.stringify(o);
   try {
-    const raiz = 'r13_' + base + '_' + ver;
+    const raiz = 'r_' + base + '_' + ver;
     const partes = {};
     let n = 0;
     for (let i = 0; i < s.length; i += CACHE_PEDACO) partes[raiz + '_' + (n++)] = s.slice(i, i + CACHE_PEDACO);
@@ -83,7 +83,7 @@ function gravarCsv_(id, info) {
 function indicesEE(h) {
   const H = h.map(nrm_);
   const i = n => H.indexOf(n);
-  return { id: i('SELLER ID'), cep: i('CEP'), cpf: i('CPF DO MOTORISTA'), placa: i('PLACA DO VEICULO'), nome: i('NOME DO MOTORISTA') };
+  return { id: i('SELLER ID'), sn: i('SELLER NAME'), cid: i('CIDADE'), bai: i('BAIRRO'), end: i('ENDERECO'), cep: i('CEP'), cpf: i('CPF DO MOTORISTA'), placa: i('PLACA DO VEICULO'), nome: i('NOME DO MOTORISTA') };
 }
 function infoSellers_() {
   const m = {};
@@ -92,16 +92,14 @@ function infoSellers_() {
   return m;
 }
 function cepGeral_() {
-  const m = {}, n = {}, sh = {};
+  const m = {}, n = {};
   SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('GERAL').getDataRange().getValues().slice(1).forEach(r => {
     const c = String(r[4] || '').trim();
-    if (!c || !r[0]) return;
-    if (r[3]) { const k = c + '|' + r[3] + '|' + r[5]; if (!n[c]) { n[c] = k; m[c] = [r[3], r[5]]; } else if (n[c] !== k) m[c] = []; }
-    if (/SHEIN/i.test(String(r[1])) || Number(r[6]) > 0 || Number(r[7]) > 0) { const s = nrm_(r[0]); if (!sh[c]) sh[c] = { s, d: [r[0], r[2], r[3], r[5]] }; else if (sh[c].s !== s) sh[c].d = null; }
+    if (!c || !r[3]) return;
+    const k = c + '|' + r[3] + '|' + r[5];
+    if (!n[c]) { n[c] = k; m[c] = [r[3], r[5]]; } else if (n[c] !== k) m[c] = [];
   });
-  const shein = {};
-  Object.keys(sh).forEach(c => { if (sh[c].d) shein[c] = sh[c].d; });
-  return { loc: m, shein };
+  return m;
 }
 function mesclarSid_(sidM, itens) {
   itens.forEach(function (o) {
@@ -122,7 +120,7 @@ function completarSellerIds() {
   var lin = Object.keys(sidM).map(function (k) { return sidM[k].map(String); });
   if (lin.length) sh.getRange(2, 1, lin.length, 6).setNumberFormat('@').setValues(lin);
   P.setProperty('SID_LIDOS', JSON.stringify(feitos));
-  cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
+  cacheLimpar_('semana'); cacheLimpar_('sabado'); cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
   Logger.log(JSON.stringify({ basesLidas: n, faltam: l.length - n, sellerIds: lin.length }));
   if (l.length - n <= 0) ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'completarSellerIds') ScriptApp.deleteTrigger(t); });
 }
@@ -132,8 +130,21 @@ function iniciarCompletarSellerIds() {
 }
 function veiculos_(rows, ix) {
   const m = {};
-  rows.slice(1).forEach(r => { const n = String(r[ix.nome] || '').trim(), c = String(r[ix.cpf] || '').trim(), p = String(r[ix.placa] || '').trim(); if (n && p && /^\d{11}$/.test(/^\d+$/.test(c) ? c.padStart(11, '0') : c)) m[n] = [c, p]; });
+  rows.slice(1).forEach(r => { const n = String(r[ix.nome] || '').trim(); if (n) m[n] = [String(r[ix.cpf]), String(r[ix.placa])]; });
   return m;
+}
+function sidDe_(nome) {
+  if (!sidDe_.m) {
+    sidDe_.m = {};
+    const sh = SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('_SELLER_ID');
+    if (sh && sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(r => {
+      const id = String(r[0]).trim(), n = nrm_(r[1]);
+      if (!id || !n) return;
+      const a = sidDe_.m[n] = sidDe_.m[n] || [];
+      if (!a.some(x => sidKey_(x) === sidKey_(id))) a.push(id);
+    });
+  }
+  return (sidDe_.m[nrm_(nome)] || []).join(' / ');
 }
 function doGet_(e) {
   const q = e.parameter;
@@ -146,33 +157,33 @@ function doGet_(e) {
     const c = lerCsv_(P.getProperty(BASES[q.base].prop));
     const ix = indicesEE(c.rows[0]);
     if (ix.id < 0 || ix.nome < 0 || ix.cpf < 0 || ix.placa < 0 || ix.cep < 0) throw new Error('CSV fora do formato: ' + c.rows[0].join('|'));
+    const colunas = c.rows[0].map(x => String(x == null ? '' : x).trim());
+    const cel = (r, i) => String(r[i] == null ? '' : r[i]).trim();
     const vistos = new Set();
     const linhas = [];
     c.rows.slice(1).forEach(r => {
-      const id = String(r[ix.id] || '').trim();
-      if (!id) return;
-      const cel = i => String(r[i] == null ? '' : r[i]).trim();
-      const l = { k: id, sid: id, seller: id, endereco: '', bairro: '', cep: cel(ix.cep), cidade: '', cpf: cel(ix.cpf), placa: cel(ix.placa), clientes: ['SHEIN'], media: 0, motorista: cel(ix.nome), alternativo: '' };
-      const chave = [l.k, l.cep, l.cpf, l.placa, l.motorista].join('|');
+      const valores = colunas.map((_, i) => cel(r, i));
+      if (valores.some(x => !x)) return;
+      const chave = valores.join('|');
       if (vistos.has(chave)) return;
       vistos.add(chave);
-      linhas.push(l);
+      const id = cel(r, ix.id);
+      linhas.push({ k: id, sid: id, seller: ix.sn >= 0 ? cel(r, ix.sn) : id, endereco: ix.end >= 0 ? cel(r, ix.end) : '', bairro: ix.bai >= 0 ? cel(r, ix.bai) : '', cep: cel(r, ix.cep), cidade: ix.cid >= 0 ? cel(r, ix.cid) : '', cpf: cel(r, ix.cpf), placa: cel(r, ix.placa), clientes: ['SHEIN'], media: 0, motorista: cel(r, ix.nome), alternativo: '', v: valores });
     });
     const veic = veiculos_(c.rows, ix);
-    return respostaCache_(q.base, ver, { linhas, motoristas: Object.keys(veic).sort(), veiculos: veic });
+    return respostaCache_(q.base, ver, { colunas, linhas, motoristas: Object.keys(veic).sort(), veiculos: veic });
   }
   const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
   const v = ss.getSheetByName(BASES[q.base].aba).getDataRange().getValues();
   const h = v[0], L = layoutGeral_(h);
   const porK = new Map();
   v.slice(1).forEach(r => {
-    if (!r[0]) return;
-    const k = chaveGeral(r), cl = L.vols.filter(i => Number(r[i]) > 0).map(i => h[i]), md = L.vols.reduce((a, i) => a + (Number(r[i]) || 0), 0);
-    const x = porK.get(k);
-    if (x) { cl.forEach(c => { if (x.clientes.indexOf(c) < 0) x.clientes.push(c); }); x.media += md; return; }
-    porK.set(k, { k, seller: r[0], endereco: r[2], bairro: r[3], cep: String(r[4]), cidade: r[5], clientes: cl, media: md, motorista: r[L.mot], alternativo: (L.temAlt ? r[L.alt] : '') || '' });
+    if (!String(r[0]).trim()) return;
+    const k = chaveGeral(r), cl0 = L.vols.filter(i => Number(r[i]) > 0).map(i => h[i]), cl = cl0.length ? cl0 : (String(r[1]).trim() ? [String(r[1]).trim()] : []), md = L.vols.reduce((a, i) => a + (Number(r[i]) || 0), 0), x = porK.get(k);
+    if (x) { cl.forEach(c => { if (x.clientes.indexOf(c) < 0) x.clientes.push(c); }); x.media += md; ['endereco', 'bairro', 'cep', 'cidade'].forEach((f, j) => { const n = [r[2], r[3], String(r[4]), r[5]][j]; if (!String(x[f] || '').trim() && String(n || '').trim()) x[f] = n; }); if (!String(x.motorista || '').trim()) x.motorista = r[L.mot]; return; }
+    porK.set(k, { k, sid: sidDe_(r[0]), seller: r[0], endereco: r[2], bairro: r[3], cep: String(r[4]), cidade: r[5], clientes: cl, media: md, motorista: r[L.mot], alternativo: (L.temAlt ? r[L.alt] : '') || '' });
   });
-  const linhas = [...porK.values()];
+  const linhas = [...porK.values()].filter(l => String(l.endereco || '').trim() && String(l.cep || '').trim() && String(l.motorista || '').trim());
   const motoristas = [...new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(linhas.map(l => String(l.motorista || '').trim())).filter(String))].sort();
   return respostaCache_(q.base, ver, { linhas, motoristas });
 }
@@ -211,7 +222,7 @@ function doPost_(e) {
     const sh = ss.getSheetByName(BASES[d.base].aba);
     const v = sh.getDataRange().getValues();
     const L = layoutGeral_(v[0]);
-    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(v.slice(1).map(r => String(r[L.mot] || '').trim())).filter(String));
+    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]));
     const idx = new Map();
     v.forEach((r, i) => {
       if (!i || !r[0]) return;
@@ -406,7 +417,7 @@ function sincronizarRotas() {
     v.slice(1).forEach(function (r) {
       if (!r[0]) return;
       var nome = nrmSync_(r[0]), b = nrmSync_(r[1]);
-      if (modo === 'cliente') { tem[nome + '|' + b] = 1; for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) { tem[nome + '|' + nrmSync_(h[c])] = 1; tem[nome + '|' + nrmSync_(clienteSync_(h[c]).b)] = 1; } }
+      if (modo === 'cliente') { tem[nome + '|' + b] = 1; for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) tem[nome + '|' + nrmSync_(h[c])] = 1; }
       else { tem['N:' + nome] = 1; tem['I:' + b] = 1; }
     });
 
@@ -469,7 +480,7 @@ function sincronizarRotas() {
       if (!r[0]) return;
       var nome = nrmSync_(r[0]);
       tem2['N:' + nome] = 1; tem2['I:' + nrmSync_(r[1])] = 1; tem2[nome + '|' + nrmSync_(r[1])] = 1;
-      for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) { tem2[nome + '|' + nrmSync_(h[c])] = 1; tem2[nome + '|' + nrmSync_(clienteSync_(h[c]).b)] = 1; }
+      for (var c = 6; c <= 10; c++) if (Number(r[c]) > 0) tem2[nome + '|' + nrmSync_(h[c])] = 1;
       if (!String(r[11] || '').trim()) semMot++; else if (!mots[nrmSync_(r[11])]) motInvalido++;
     });
     var faltantes = itens.filter(function (o) {
@@ -492,7 +503,7 @@ function sincronizarRotas() {
       shS.getRange(1, 1, 1, 6).setValues([['SELLER ID', 'SELLER', 'ENDEREÇO', 'BAIRRO', 'CEP', 'CIDADE']]);
       if (linS.length) shS.getRange(2, 1, linS.length, 6).setNumberFormat('@').setValues(linS);
       if (!shS.isSheetHidden()) shS.hideSheet();
-      cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
+      cacheLimpar_('semana'); cacheLimpar_('sabado'); cacheLimpar_('ee'); cacheLimpar_('ee_sabado');
     } catch (es) { Logger.log('_SELLER_ID: ' + es); }
     var resumo = { ok: faltantes.length === 0, bases: lidos, sellersClientesNaBase: itens.length, linhasNovas: linhas.length, enderecosPreenchidos: preenchidos, motoristasNovos: novosMot.length, semMotorista: semMot, motoristaForaDaLista: motInvalido, faltantes: faltantes.slice(0, 20), semColunaDoCliente: semColuna.slice(0, 20), baseDesatualizada: antigo };
     try {
@@ -525,4 +536,5 @@ function instalarGatilhoSincronia() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sincronizarAgendado' || t.getHandlerFunction() === 'sincronizarRotas') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('sincronizarAgendado').timeBased().everyDays(1).atHour(6).nearMinute(30).create();
 }
+
 
