@@ -172,7 +172,7 @@ td .mot{width:100%;min-height:42px;text-align:left;font-size:14px}
 .vazio{display:block;grid-column:1/-1}
 .pag .btn{height:44px}
 body{padding-bottom:140px}
-.acao{left:10px;right:10px;bottom:12px;border:1px solid var(--bd);border-radius:14px;box-shadow:0 8px 28px rgba(6,24,61,.28);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.acao{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));border:1px solid var(--bd);border-radius:14px;box-shadow:0 8px 28px rgba(6,24,61,.28);padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .acao b{grid-column:1/-1;text-align:center;color:var(--tit);font-size:14px}
 .acao .btn{width:100%;height:44px;padding:0 8px;font-size:14px;white-space:nowrap}
 }
