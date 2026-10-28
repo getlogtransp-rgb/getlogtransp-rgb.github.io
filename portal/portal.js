@@ -481,6 +481,17 @@ let CLK=null,MARCANDO=false,SRV_HOJE=[];
 const marcasHoje=()=>{const loc=pontoAll().filter(p=>p.login===ME.login&&p.dia===today());const m=new Map();
 for(const p of SRV_HOJE)if(p.dia===today())m.set(p.tipo,{...p,sent:true,foto:loc.find(x=>x.id===p.id)?.foto||''});for(const p of loc)if(!m.has(p.tipo))m.set(p.tipo,p);return m};
 VIEWS.ponto=()=>{const g=GEN;pontoTela();syncPonto().then(async()=>{if(await v2())try{SRV_HOJE=(await api('listar',{desde:today()})).itens.filter(p=>p.login===ME.login)}catch(e){}if(vivo(g)&&!MARCANDO)pontoTela()})};
+// Histórico das minhas marcações (últimos 60 dias): filtra por dia e por texto (tipo ou endereço).
+let HIST=null;
+async function histPonto(){const box=$('#hist');if(!box)return;const g=GEN;
+box.innerHTML='<div class="box-head"><div><h3>Minhas marcações</h3><p>Dia, horário e local de cada ponto batido</p></div></div><div class="uform two"><div class="field"><label for="h-d">Dia</label><input id="h-d" type="date"></div><div class="field"><label for="h-q">Buscar por endereço ou tipo</label><input id="h-q" type="search" autocomplete="off" placeholder="Ex.: Osasco, almoço"></div></div><div class="table-wrap" style="margin-top:14px"><table><thead><tr><th>Dia</th><th>Hora</th><th>Marcação</th><th>Local</th></tr></thead><tbody id="h-b"><tr><td colspan="4">Carregando…</td></tr></tbody></table></div>';
+const norm_=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const itens=()=>{const m=new Map();for(const p of (HIST||[]))m.set(p.id,p);for(const p of pontoAll())if(p.login===ME.login)m.set(p.id,{...m.get(p.id),...p});return [...m.values()].filter(p=>p.login===ME.login&&p.ts).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)))};
+const draw=()=>{const b=$('#h-b');if(!b||!vivo(g))return;const d=$('#h-d').value,q=norm_($('#h-q').value);
+const l=itens().filter(p=>(!d||p.dia===d)&&(!q||norm_((TIPO_LBL[p.tipo]||p.tipo)+' '+(p.end||'')).includes(q)));
+b.innerHTML=l.length?l.map(p=>`<tr><td>${esc(String(p.dia||'').split('-').reverse().join('/'))}</td><td>${hm(p.ts)}</td><td>${esc(TIPO_LBL[p.tipo]||p.tipo)}${p.sent===false?' <small>(aguardando envio)</small>':''}</td><td>${esc(p.end||'')}</td></tr>`).join(''):'<tr><td colspan="4">Nenhuma marcação encontrada.</td></tr>'};
+$('#h-d').oninput=draw;$('#h-q').oninput=draw;draw();
+if(!HIST&&await v2()){try{const d=new Date();d.setDate(d.getDate()-60);HIST=(await api('listar',{desde:keyD(d)})).itens.filter(p=>p.login===ME.login);draw()}catch(e){const b=$('#h-b');if(b&&!itens().length)b.innerHTML='<tr><td colspan="4">Não foi possível carregar o histórico agora.</td></tr>'}}else draw()}
 function pontoTela(){const consent=localStorage.getItem(CONS_KEY+'_'+ME.login);const mine=marcasHoje();const next=TIPOS.find(([t])=>!mine.has(t));
 const esc_=ESCALAS.find(e=>e.id===(DB.users.find(u=>u.login===ME.login)?._p?.escala));
 M().innerHTML=top('Bater ponto',new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))+`${PLAN()?'':'<div class="banner">A planilha do ponto ainda não foi configurada: as marcações ficam guardadas neste aparelho e serão enviadas quando ela for ligada.</div>'}
@@ -489,10 +500,11 @@ ${consent?'':`<div class="box consent"><h3>Antes de começar</h3><p>Para registr
 ${next?`<button class="btn btn-primary big" id="mark"${consent?'':' disabled'}>${IC.cam}Registrar ${next[1].toLowerCase()}</button><p class="hint">Exige foto do rosto e localização ativada.</p>`:'<p class="done">Jornada de hoje concluída.</p>'}
 <button class="btn btn-ghost btn-sm" id="ajb" type="button">Esqueceu ou errou uma marcação? Solicitar ajuste</button></div>
 <div class="box"><div class="box-head"><div><h3>Marcações de hoje</h3><p>${mine.size} de 4</p></div></div><ol class="marks">${TIPOS.map(([t,l])=>{const p=mine.get(t);return `<li class="${p?(p.sent?'ok':'wait'):''}">${p&&p.foto?`<img src="${imgSeg(p.foto)}" alt="Foto da marcação">`:'<span class="ph"></span>'}<div><b>${l}</b><small>${p?hm(p.ts)+' · '+esc(p.end):'Pendente'}</small>${p&&!p.sent?'<small class="sending">Enviando para a planilha…</small>':''}</div></li>`}).join('')}</ol></div></div>
-<div id="ajx"></div>`;
+<div id="ajx"></div>
+<div class="box mt" id="hist"></div>`;
 clearInterval(CLK);const tick=()=>{const c=$('#clk');if(!c)return clearInterval(CLK);c.textContent=new Date().toLocaleTimeString('pt-BR')};CLK=setInterval(tick,1000);tick();onLeave(()=>clearInterval(CLK));
 if(!consent){$('#cs').onchange=e=>$('#csb').disabled=!e.target.checked;$('#csb').onclick=()=>{localStorage.setItem(CONS_KEY+'_'+ME.login,new Date().toISOString());pontoTela()}}
-$('#ajb').onclick=solicitarAjuste;minhasSolicitacoes();
+$('#ajb').onclick=solicitarAjuste;minhasSolicitacoes();histPonto();
 if(next&&consent)$('#mark').onclick=async e=>{if(MARCANDO)return;MARCANDO=true;const b=e.currentTarget,t0=b.innerHTML;b.disabled=true;b.textContent='Abrindo câmera…';let salvo=false;
 try{const acc=conferirAcesso(true);const cap=await capturar(next[1]);if(!cap||!await acc)return;
 if(marcasHoje().has(next[0])){toast('Essa marcação já foi registrada.');return}
