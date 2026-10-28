@@ -18,15 +18,15 @@
     },
     {
       "login": "d21049861101",
-      "role": "colaborador",
+      "role": "ajudante",
       "active": true,
       "salt": "zX2GC7Rd5v89tx56LDBFCg==",
       "iv": "TlEmAqFjKckUhXg9",
       "key": "7FcWL4BAvnef5ZxoTBRKQBd/fojsXWU/DucZHNzS6CbFE31Vqed6ytE9C3hfSTbO",
       "pwEm": "2026-10-05T23:45:08.453Z",
       "p": {
-        "iv": "RkXDkUVIbQbdcsY1",
-        "ct": "41vJrIZIzoujHpXB+jzBSk02m/aAdLVUGkGd0jE4NZGyKpVqUBXOW64gdC3GQ1rAgVwh4YQvhOXE+pGBHhRrasmkf6tiNseiGFgxTokQorSNgO4sOfLWPyAH7OIerYPUaByM2UQ9t+B6aZ/mnkpDLSCBssv75cLxqLcM59nSg8C8rVwoKpYZeQ=="
+        "iv": "IW605LLIfQbFVfMF",
+        "ct": "jXs0633+aSXH5cOYUMuu2EzN+oy3A0FrfZ7StetKZ3nNtg6UStUHnnQ3VpVXDBgIqwSVCiTwKuus2NOzLKggpZ6UgS/Ml7ayU9fnLfzkhKcy2WXRoQOXOSg0LQub+or+SVyel0upg5wRF6OqLNtFSL24bYxOuEBS7JIhYctpZOzHzmsBzLjTFcQZ0JdkcXOsKlLYPUc4TQqMqafORfTw3ct6F3KZCS6q"
       },
       "created": "2026-10-05T17:03:18.667Z",
       "ah": "3f056df04617d0f2990b212bf6d03d781877b9c6f88e2f34929ac781ead7e75b"
