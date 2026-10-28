@@ -502,12 +502,16 @@ MARCANDO=false;if(CUR==='ponto')pontoTela();
 const n=await syncPonto();if(CUR==='ponto')VIEWS.ponto();toast(!PLAN()?'Marcação guardada neste aparelho.':n?'Sem conexão: a marcação será enviada assim que a internet voltar.':'Marcação registrada.')}
 finally{MARCANDO=false;if(!salvo&&b.isConnected){b.disabled=false;b.innerHTML=t0}}}}
 // Câmera + localização. Devolve {foto,ts,lat,lon,acc,end} ou null se a pessoa cancelar.
+// Detector de rosto (hospedado no próprio site). Sem rosto na foto, o ponto não é registrado.
+let FACE=null;const faceLoad=()=>FACE||(FACE=new Promise((ok,no)=>{const go=()=>faceapi.nets.tinyFaceDetector.loadFromUri('/assets/vendor/faceapi').then(ok,no);if(window.faceapi)return go();const s=document.createElement('script');s.src='/assets/vendor/faceapi/face-api.js?v=1';s.onload=go;s.onerror=()=>no(new Error('face'));document.head.appendChild(s)}).catch(e=>{FACE=null;throw e}));
+const temRosto=async c=>{const r=await faceapi.detectSingleFace(c,new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.5}));return !!r&&r.box.width>=c.width*.18};
 function capturar(label){return new Promise(done=>{
 const d=document.createElement('div');d.className='modal';d.innerHTML=`<div class="mbox cam" role="dialog" aria-modal="true" aria-label="${esc(label)}"><div class="mhead"><h3>${esc(label)}</h3><button class="icon-x" id="cx" aria-label="Cancelar">${IC.x}</button></div>
 <div class="vid"><video id="cv" playsinline muted autoplay></video><div class="oval"></div></div><div class="geo-st" id="gs">Obtendo localização...</div><div class="msg err" id="cm"></div><div class="mfoot"><button class="btn btn-primary" id="shot" disabled>Tirar foto e confirmar</button></div></div>`;
 document.body.appendChild(d);let stream=null,pos=null,end='',geoEnd=0,gW=null,gT=0;
 const close=v=>{stream&&stream.getTracks().forEach(t=>t.stop());if(gW!=null)navigator.geolocation.clearWatch(gW);gW=null;clearTimeout(gT);d.remove();done(v)};$('#cx').onclick=()=>close(null);
-const fail=t=>{$('#cm').textContent=t};const ready=()=>{$('#shot').disabled=!(stream&&pos)};
+let faceOk=false;const fail=t=>{$('#cm').textContent=t};const ready=()=>{$('#shot').disabled=!(stream&&pos&&faceOk)};
+const faceIni=()=>{$('#cm').textContent='';faceLoad().then(()=>{faceOk=true;ready()}).catch(()=>{$('#cm').innerHTML='Não foi possível preparar o reconhecimento de rosto. Confira a internet. <button type="button" class="btn btn-ghost btn-sm" id="face-again">Tentar de novo</button>';$('#face-again').onclick=faceIni})};faceIni();
 navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}},audio:false}).then(s=>{if(!d.isConnected){s.getTracks().forEach(t=>t.stop());return}stream=s;$('#cv').srcObject=s;ready()}).catch(()=>fail('Câmera bloqueada. Libere o acesso à câmera nas permissões do navegador.'));
 const gotPos=async c=>{if(!d.isConnected)return;if(pos&&c.accuracy>=pos.accuracy)return;pos=c;$('#gs').textContent=`Localização: ${pos.latitude.toFixed(5)}, ${pos.longitude.toFixed(5)} (±${Math.round(pos.accuracy)} m)`;ready();
 if(c.accuracy<=50&&gW!=null){navigator.geolocation.clearWatch(gW);gW=null}
@@ -517,8 +521,9 @@ const geoErr=e=>{if(pos||!d.isConnected)return;if(e&&e.code===1)fail('Localizaç
 const startGeo=()=>{if(!window.isSecureContext){fail('Conexão não segura: o celular só libera a localização em página com cadeado (https). Avise o administrador.');return}$('#gs').textContent='Obtendo localização…';navigator.geolocation.getCurrentPosition(p=>gotPos(p.coords),()=>{},{enableHighAccuracy:false,timeout:8000,maximumAge:120000});
 if(gW!=null)navigator.geolocation.clearWatch(gW);gW=navigator.geolocation.watchPosition(p=>gotPos(p.coords),geoErr,{enableHighAccuracy:true,timeout:30000,maximumAge:0});
 clearTimeout(gT);gT=setTimeout(()=>{if(gW!=null){navigator.geolocation.clearWatch(gW);gW=null}if(!pos)geoErr()},30000)};startGeo();
-$('#shot').onclick=e=>{const v=$('#cv');if(!v.videoWidth){fail('A câmera ainda está iniciando. Tente de novo em um instante.');return}e.currentTarget.disabled=true;const W=320,H=Math.round(W*v.videoHeight/v.videoWidth);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.translate(W,0);x.scale(-1,1);x.drawImage(v,0,0,W,H);
-close({foto:c.toDataURL('image/jpeg',.72),ts:new Date().toISOString(),lat:pos.latitude,lon:pos.longitude,acc:pos.accuracy,end:end||'Endereço não identificado'})}})}
+$('#shot').onclick=e=>{const v=$('#cv');if(!v.videoWidth){fail('A câmera ainda está iniciando. Tente de novo em um instante.');return}const sb=e.currentTarget;sb.disabled=true;const W=320,H=Math.round(W*v.videoHeight/v.videoWidth);const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.translate(W,0);x.scale(-1,1);x.drawImage(v,0,0,W,H);
+temRosto(c).then(okf=>{if(!d.isConnected)return;if(!okf){fail('Não identificamos o seu rosto. Aproxime o rosto da câmera, com boa luz e sem cobrir, e tente de novo.');sb.disabled=false;return}
+close({foto:c.toDataURL('image/jpeg',.72),ts:new Date().toISOString(),lat:pos.latitude,lon:pos.longitude,acc:pos.accuracy,end:end||'Endereço não identificado'})}).catch(()=>{fail('Não foi possível verificar o rosto. Tente de novo.');sb.disabled=false})}})}
 // Formulário em janela. Resolve com os valores dos campos (por id) ou null se fechar.
 function pedir(title,html,botao='Confirmar'){return new Promise(done=>{const d=modal(title,`<form class="uform" id="pdf">${html}<p class="msg" id="pd-msg"></p><button class="btn btn-primary">${botao}</button></form>`);
 const fim=v=>{d.remove();done(v)};d.querySelector('.icon-x').onclick=()=>fim(null);
