@@ -18,15 +18,15 @@
     },
     {
       "login": "d21049861101",
-      "role": "colaborador",
+      "role": "ajudante",
       "active": true,
       "salt": "zX2GC7Rd5v89tx56LDBFCg==",
       "iv": "TlEmAqFjKckUhXg9",
       "key": "7FcWL4BAvnef5ZxoTBRKQBd/fojsXWU/DucZHNzS6CbFE31Vqed6ytE9C3hfSTbO",
       "pwEm": "2026-10-05T23:45:08.453Z",
       "p": {
-        "iv": "RkXDkUVIbQbdcsY1",
-        "ct": "41vJrIZIzoujHpXB+jzBSk02m/aAdLVUGkGd0jE4NZGyKpVqUBXOW64gdC3GQ1rAgVwh4YQvhOXE+pGBHhRrasmkf6tiNseiGFgxTokQorSNgO4sOfLWPyAH7OIerYPUaByM2UQ9t+B6aZ/mnkpDLSCBssv75cLxqLcM59nSg8C8rVwoKpYZeQ=="
+        "iv": "IW605LLIfQbFVfMF",
+        "ct": "jXs0633+aSXH5cOYUMuu2EzN+oy3A0FrfZ7StetKZ3nNtg6UStUHnnQ3VpVXDBgIqwSVCiTwKuus2NOzLKggpZ6UgS/Ml7ayU9fnLfzkhKcy2WXRoQOXOSg0LQub+or+SVyel0upg5wRF6OqLNtFSL24bYxOuEBS7JIhYctpZOzHzmsBzLjTFcQZ0JdkcXOsKlLYPUc4TQqMqafORfTw3ct6F3KZCS6q"
       },
       "created": "2026-10-05T17:03:18.667Z",
       "ah": "3f056df04617d0f2990b212bf6d03d781877b9c6f88e2f34929ac781ead7e75b"
@@ -344,6 +344,1086 @@
       },
       "created": "2026-10-22T15:39:48.294Z",
       "ck": 1
+    },
+    {
+      "login": "d21049937901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "0X7bWV1fd1YHsFLJa5h2Ww==",
+      "iv": "1yS0HQ3yeoTg9zrW",
+      "key": "qgEeoLD0jwkUZNcBPggXHO/9iKSvLxO3WBf+1TvcA7M59lsUg07BtjvwOQofjg05",
+      "pwEm": "2026-10-28T15:03:39.613Z",
+      "ah": "26b81e7ebff9aee0230d77ae4e9911c3c24355459977df5dd02da5f1fa52948a",
+      "p": {
+        "iv": "lALtZI26CEoVbOQa",
+        "ct": "yau9NHtvhuqPHySpVNE27i8rtu8WYabKVKRxPZrgXhPKYKsM1GEXWkHfFHn/gXf986R+iojoDGh31ddv2Lolti0/bEcbfnjHiIBjSZb4Prre1bsXjM/YD/bTJiZR5lxM1y+ENzaphUYiXySnNyq3JbMCSczyjUuDfhL58PFPGF2LRwKAc+W20u44eddAzsSpfRGP1k2isrwJ5KUp7NX4UdJo+n6H8NM+8hk0CWPB"
+      },
+      "created": "2026-10-28T15:03:39.642Z"
+    },
+    {
+      "login": "d21046195501",
+      "role": "ajudante",
+      "active": true,
+      "salt": "7vGeu4IXmsWfmIr8dTMHyg==",
+      "iv": "PvH0+0J4lmuxu6tK",
+      "key": "yAv8oYY1CPbFcBnjq/8kf9WFSSA+MFwsmRNHPUIKgAi5r+Zo4t9aTqo6J0HK9gnD",
+      "pwEm": "2026-10-28T15:03:39.751Z",
+      "ah": "bd9572555f8bb4379f4511a0c2809dd8bbb2916e569e07bcb862985dc262c1fa",
+      "p": {
+        "iv": "L8u01gaLrdS54oYY",
+        "ct": "4juhgOCwWnAIErkRLSIsVsIOEEcHtKiSuF+6+71CKeq8wy6UfVNSQgQdU7dmWmmaxAPsuZvbQCIdOWdK25R533zY8HyRg8KHruYLs5tu5jVuApQB886FG9dT+Wm9IausaWlROAi0QK7a+vSIfk0qgZ+X6/o7aaNKiX8/nB3w3yTzrom7BSsPCaj1T2Bn8zVvQs2q4/Byn/yfPhEaJ81jER9HSc7J8XE7rvDDBp1zcCmReZpESnPtRg=="
+      },
+      "created": "2026-10-28T15:03:39.785Z"
+    },
+    {
+      "login": "d21048125801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "TBgTcnRGFl88Guc+QvXP+w==",
+      "iv": "Ub0I/JIHxAsgca63",
+      "key": "kPlaQXw0R7+fr7HpmH9poFCrrSMO7pLAsp7SR2dwMVIMExFLMjfHeNbLUhJTNVmB",
+      "pwEm": "2026-10-28T15:03:39.855Z",
+      "ah": "1b049b8682d0082b1a4b685071be254fed34353320461aba963654a078e43a4d",
+      "p": {
+        "iv": "OJBD6PMzuY8tqwRK",
+        "ct": "CHPpGRwI62Xj0/UP5dlfHYcqhF538c6BeF5GM6yLmQBJub7pHEn2/WMWFLwNff6fE/HKwKW8/QEerzt7mUgwlkhGluMdnRjkogtO5A42Vhcpe3Ry2PJmm5E8w1GVQYdPVLhErZ2MqcqzOWa4502gMrM8WlLzWnqmMMPOXztWgeOySmDPTL7aimLsO78Xq/664Bx9FeAlo/pBsQg+lXD6njGpQQt2FHJF2dYU3UJ5gMv+nFJm"
+      },
+      "created": "2026-10-28T15:03:39.885Z"
+    },
+    {
+      "login": "d21050234301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "QU8XdPUiZlS7c5s7pvLzdQ==",
+      "iv": "6wsOMOP43nu87YEu",
+      "key": "p4bUowKj+V0WGakJl3VRyMGrnOtONUwG+u/sARl9E0sn67MTUofwOqRbo192l0Ey",
+      "pwEm": "2026-10-28T15:03:39.967Z",
+      "ah": "b42862f525de9b49688ed01f745ec37ab968096cbe76d7372c0319295537c624",
+      "p": {
+        "iv": "nOLmT6pQNEy+tGEl",
+        "ct": "ttxjW4bbnOJTuN/OSiFhSe+f0DeD25YJtHR8/zFyDkJRu8SHjk0cF55ZuTh55iwMW7Sm0FtxjnrnX1LbYOW5GZOueDqq///VWbrv8Ggawptrj0+Al3ddsSriqjGx4wuX7sZuZzfY3cCKj6bksD0MnW/53DGwYvVAXw/UNNJuaIUhyx6ya8yYYHFON5IsLnqW21shpyEQtwVUR2uNLeCqs5oQx0emALy7Xh9xX8TYeXD5Gg=="
+      },
+      "created": "2026-10-28T15:03:39.999Z"
+    },
+    {
+      "login": "d21026559701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Cuh/dWtPtAvA0XrBh2wEdA==",
+      "iv": "PdMSym4uShT1jUSt",
+      "key": "jiaEyZpOKcRej6xmIQ/+NlCTGuhTETlcDhWopLTbnQb0D2Jrb812fCTjX3j4Trde",
+      "pwEm": "2026-10-28T15:03:40.074Z",
+      "ah": "1bb0fb610a703b891ca152c408b9c3f199e511db45308f2665fc1b80deed3158",
+      "p": {
+        "iv": "nD4D7N7O0Mib+nYy",
+        "ct": "xUx5A8vmFjE1z66lB5TU/Tf8arIrAj7nWv6NhsAR8NMtcOstRXAc0U+UNoHX/lXugxy3GCX87ZOI4plPsDi55Qe10tca5rUdxDdD/F1dxomqNa2msI5T8npKdL9l0B0l2UY7cdzVm/Ywu6c80G4c1+mEFyaSQ6CEPDladWrAoX7USmzTPzQkqLsKqcBLyKs3JRpaI5XBDZfv2MmAPtEMoTGH+boPI/uavqzhYMd3E50gZLuCUkw="
+      },
+      "created": "2026-10-28T15:03:40.103Z"
+    },
+    {
+      "login": "d21041129901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Gh/ofisO9Zrqz4eas7+R/g==",
+      "iv": "lpY1ILlJXc/m+IBV",
+      "key": "vlcuqnbjEtmd/SZ7CgNLIz6546TLnQLYcgafls7c22IsH6XVRjM1PQZqIyimRybL",
+      "pwEm": "2026-10-28T15:03:40.182Z",
+      "ah": "5bf2c55137f3b04e35c3004b7ba265e767191e316562fd46324ec2883eb02028",
+      "p": {
+        "iv": "BxhgRhIq+tDmlBZ9",
+        "ct": "YJdR5C0MHQVPvQwNcJYWbZuHeMePNtxmwMWy0CuwlIY6axfhttG5Je0hBoBJcRcvN/cUq6gDqppe1Rbmrv13c49mstNsTr3hyDwAPxD6nZc5WRqGjI8lXkm4//iQ3RoE4nOOArvGfgdvcoLGCVh911tITnBj57YEvY4fNNLFYUSALdxSqY4mju9HAPsKrx2N3J2i8OnvL0tnBl6emZuNVEo43XWRqIOZ+REBTrpnGHGJVBPZd3A="
+      },
+      "created": "2026-10-28T15:03:40.206Z"
+    },
+    {
+      "login": "d21046663201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "ryIXmlkHMQSC//jzPol3AQ==",
+      "iv": "gmrl4LMeiS4YSW0t",
+      "key": "7bNSCMbCOeUgi0i5g1PhWB1us387pGCahMu2UP6N9a3tHJZWcLLjX5gM6Fnm/FLq",
+      "pwEm": "2026-10-28T15:03:40.292Z",
+      "ah": "fe252e0530b99c56cd25cc6677f35310878346ea0a16fca46c508d84398d9bdb",
+      "p": {
+        "iv": "/TkQEO81v9rKLt7z",
+        "ct": "CpPf+a6U80mtl72XEyUtDVJiSGH1HV0eYxuZ729YtJHxyLxxypvD2+wBVKoKZOHa9oMMyso8esAwCgcX0FlTr6B/zDbGZxlihOCNOm4iU98rYyKSCcpS+zkQ40WXMI8GNYIlGcrdts/vQqh63I+sB8rEPkYsJ+a8/ysKNqboze9RXOzPLPPIKRmXag6nCQ7h44oI+suvVSwyMzaifvq+xN8SOTNjEIBqI/b/yxCZJRe3Xrwy"
+      },
+      "created": "2026-10-28T15:03:40.314Z"
+    },
+    {
+      "login": "d21043740801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "dU27TOltHQYuNS7XYoq/ZA==",
+      "iv": "TE6uhNzwgt2LKaSO",
+      "key": "UkT6XHU73dWsnOpSlFNW6C5TXIyqgIcw8DXKkkqHQADje6j8fXFK14mYHqJxGtzv",
+      "pwEm": "2026-10-28T15:03:40.406Z",
+      "ah": "806a5ebf525a79f2ae22226d45b5f4096b79cdad04ded15624f34d773dcfd6ca",
+      "p": {
+        "iv": "LNUuKmS4Vn5gtHOM",
+        "ct": "IP/Wu4jcwewYhE3wwnsSDOsB7Ze2UqJgZ9b41AAHdzwvVji9ZH8Ss+f6nYwEF4Og6ULjUi/rttJAHszTX/HSGyfUFH+ik/IdSCFHwXD4b7ofbof08kq+jgdRQRECIUkvb7G2ezfggWOXhqtNdFIgbymBFEddgjouBLQCEMtzbUtfe/mnkt3I6+zoL5FY9wIx+Mt/TpbPvbLsroyyHINA2DhD87+wGqwX6K5QH994FYrquLBUppGF/tRS94r/S8ux"
+      },
+      "created": "2026-10-28T15:03:40.438Z"
+    },
+    {
+      "login": "d21041213901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "YAO5pq+HvhMzwAhd52kJUA==",
+      "iv": "Wa+OZAJ5DCSDuK5A",
+      "key": "hqQRm0wCFW6y3iGJx6zcZaRZU1NBaFpg82d3iFYWZ3Z2isDT5vTkr+fPYQHc40Oj",
+      "pwEm": "2026-10-28T15:03:40.513Z",
+      "ah": "7ade652456ada9e522ff7c6e3fe295f56b5b4994dc2edf912add0c0c19e262f7",
+      "p": {
+        "iv": "kWxkim294HaArGdi",
+        "ct": "21+Qb1aY2dKRH2vVo1Mr8yIz7JqSXx+ex67DiFWt1eb4FlwkRKmFb7FD3bRpst0Ww61+dkEk5kEn9IMb4garvIsfixVfkGN4V1pFYwXbQMpKJcwcGiWA6tBiF4Yz/3cqm2/nGmepMXMwgrTaXpF7IRDhOFAdBXl+1cpgv6SZ0QkpHmCtyR0yPQ3/EYEGdrRD6I9WPg6Z69ZMNkHlseQupBz4xlPe7DESUV8RKxMtT7U+DkF6jnVhQaKUXKhZag=="
+      },
+      "created": "2026-10-28T15:03:40.538Z"
+    },
+    {
+      "login": "d21051201901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "WRPn3bcaYDSEj2g6I3YqCQ==",
+      "iv": "iZu64ldZGJ5tF0gf",
+      "key": "3vIerRFw1vDu5++TycjmuYQXbA6o0weCp+cnzTLccBRBnX/zmGs8Nb3ISim3aiUP",
+      "pwEm": "2026-10-28T15:03:40.618Z",
+      "ah": "ed9a06523ada87d00e70944bed09ed1cd1af032ad63ce32403cdfb2a3d1d6d53",
+      "p": {
+        "iv": "pSOKc8gdVnUk0Cvp",
+        "ct": "nvs/ffu9vJ90tYjhrKLnzN7q4LM3SIN8KxtLHSKJznEr1at/sKCmEyyg3lZIShQa4TtY3sw3c64vAK2fMTc1gO79fES0gy2kUx94tQZ3IuKN3OXRN8CxhM7VRxd7Zs6BopfwVuefXT+Xix7sECwBrgePocQidLSd+6gMVSUAcfyMFaBEC1iQ/bos9tCPUmdvoNsMRqSyb5RiM9+O/uUDjw/52zQQS9irG2BDtNb2GNbDLxoWgsMaxaWk"
+      },
+      "created": "2026-10-28T15:03:40.646Z"
+    },
+    {
+      "login": "d21047948601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "+q5plVU5Dr03mplXq6doNA==",
+      "iv": "g+ga7Qur8koE4U4D",
+      "key": "bqBqSJHpOdQd8FLT3R4pnrfddOidFX0XPgdhLVqhpRtnLeIxxkkS0RvUOMmAcOwk",
+      "pwEm": "2026-10-28T15:03:40.725Z",
+      "ah": "4b8e913c918b5191277e9dc3997b563aaaeb77eec4662db261c65cb905538966",
+      "p": {
+        "iv": "QUufRJH3KdCO9bEr",
+        "ct": "aoa9Ox+pjHpVIiKHPo6Pvfvmznky7YH52PNncasJVUkyxgsKtOzF0gEUEegSa1acdhcvfvOjPwkK7uMi1enDdCHrytfC0zEAnFMqdHZXVs6xgxfZuSV6pmqAh/urgPK4z+hazZ/EMlvNqR5x9I9GEslle7IX2fUhFuaMabK11+/WhjoJUotaj0WCMPqlWjSSmmaQa7+iZMMlRt3MG+6qeNDKYr9bhDBCMIKy+vT0nOINjwe52/6BDUNVi6A="
+      },
+      "created": "2026-10-28T15:03:40.747Z"
+    },
+    {
+      "login": "d21046851201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "scsuun0ocBmPH2885o2ZAA==",
+      "iv": "aQPWmdTQ98LSYkLb",
+      "key": "CELPKv9/50WEr8w3GaGrUv/hNZUfU7yQrxGea3zEWDtLGpPv13/3Fr+Ut06EAH2A",
+      "pwEm": "2026-10-28T15:03:40.831Z",
+      "ah": "eee854f286eca659e353496b7a54fda2dfb4e20f4b0391a0e7018ea45a859b79",
+      "p": {
+        "iv": "vuOXfQbG81K/K3Np",
+        "ct": "0MJxk5oNQ4hXurXnQrZ+nlshlcN6pz9041BYFMbGHCgJAI2zuvUsGgRkkN4V1lfmkTJIiKiq1inyvUzgoJLPee/W2VCL0rU8Cjmfp3aYxG7FspexjA8Ts7pdz8yK7IcWEV/EXOMfulviep2+GJvUr43JaAttFZ+LQBEaLU1PdvIDhMrwHPyMSqYBK9zvLt/cNd6KnZhyAw90WVL+EXlUkaex6i8NojhglufoMQMfu27Auyw4swqt22+y"
+      },
+      "created": "2026-10-28T15:03:40.864Z"
+    },
+    {
+      "login": "d21051407301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "5rm6/RSVT+c2npmo0SZCsA==",
+      "iv": "HZOz7Ej7TFtOP4GE",
+      "key": "XUElJMUTTRKKKvEABbaescra8P9NS/X0NNXaGRxfG8cRj6unZah6FIK60BFAU38S",
+      "pwEm": "2026-10-28T15:03:40.975Z",
+      "ah": "56960068e1cf3967f5fc30ee490a11eda65c12e0ca8171ea5ff6e377c22d4190",
+      "p": {
+        "iv": "4sAz3a6qUC2tpxvo",
+        "ct": "lSbNY1OnFGWgHpCpddEE0CQ/5PrGwPeYlXNXexznz7HuAHoi2mvGmjgiD5TFNMRi4Gmbgp22mszKAgMkxXlvhfVFv1R0VRKep1VPoRcdr6sh/JOq923GWwOt2IWD4a9O3Y1L7WhIrfitWLQS68O9IfdLAGMsnMCnf6fhM7PeTantOPV0Qota3eg0QdgAB69rmF4ir4fq9FK7KXabJYP7hMCbO0MNoXY2Y/IvMKUrpL2DVw=="
+      },
+      "created": "2026-10-28T15:03:41.012Z"
+    },
+    {
+      "login": "d21048468101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "HamyLW3oob9y/kplcFAEQg==",
+      "iv": "CpB6eayZtWcPhCZG",
+      "key": "AwwZB1S2pN6wXfJWfQaj4DofLOW87tWLbwcjt4P5RMqO3M14le5d4AQRGiEjBf6S",
+      "pwEm": "2026-10-28T15:03:41.122Z",
+      "ah": "f6de3ebeffce5d3c1e564f802a06594571ebf0ba31b49b5a8a7776dc7a010345",
+      "p": {
+        "iv": "0jXkcJLtOvy8K/nV",
+        "ct": "DCYHzEvvDf/Bpy51qdlfa4vNoqWaf6zQ7m66yEjq7hm1ytpd+xKXYPc+VwMIwcX3SAtcdHRYb30Bg5MHQpi4Jp36dIomfAY9Xucyg3ETogyY7kTVlEV+jGz0Yz31NV9qlQ5qArJF/0PjdvnH4sYQZgfxYuMUJhRO0uW8NaDjbPaKBh4Iz7mGxnhUV7XT91PZh+RG7RHIkRggdeYLdY5wxbIRMEFiwvPmihreX+D2m1YcUvrSY5gPUp5LJGpr3Q=="
+      },
+      "created": "2026-10-28T15:03:41.161Z"
+    },
+    {
+      "login": "d21017117401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "g5dYIOYRMVaSn0wXISAVUQ==",
+      "iv": "g8LqKpMcr8WTvp3F",
+      "key": "pnGJpp0O5d6MyeNwQ3aYRGK0c7uo1bBfK9uar0DYFkMapdgJ+ZsBoUmRYPCoU6/N",
+      "pwEm": "2026-10-28T15:03:41.259Z",
+      "ah": "a9a8d9357a68d4865bed70b6d8ce7e437e802f8cd5e8bc8b5fb3efbac0845b36",
+      "p": {
+        "iv": "hFSPPRhGnkGQFqrj",
+        "ct": "2k6eN/5Vhmr+faNZ8b/UQDLSEff0bydToxZkObFuxZeGehg52+UIxdjxWSYpa7rNZNFGECOfqX02BATb4Nu5NyU3SBPiED5eO8fW0Zf7uQ6NweoSNd3hpihUAKyaxZBcSmMvo5K2F+cE0Pdo9rNQSmjrG3D5iOrgw6zZAozuprsAQN3SS65fqx4xj+UGBTdppiiEKuFMhVsIcBMuU3ta/bBcIbxlkPesg+Ir9qHsL9isjWpv"
+      },
+      "created": "2026-10-28T15:03:41.294Z"
+    },
+    {
+      "login": "d21030048101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "PIPeywHWFxQRZBqM7F1mXQ==",
+      "iv": "Zv2lt7MnBc+SDWoV",
+      "key": "f24nRR3YbiKJCeVZqrvpN5xnaNjEyCTZbN6M4bRiC6+MGJ2hr2hua5R67ZTGXLj5",
+      "pwEm": "2026-10-28T15:03:41.366Z",
+      "ah": "6429645b377050f830b824f6713157615596f294c7ef39d5664505671c21b892",
+      "p": {
+        "iv": "m0iC+GYXxAZFP6/Z",
+        "ct": "pLFuqQPHxYTNnlocTQWZdbI5gnV2ZHJ395CrM+7curK1SCqi2KDUGYjiiJL+DWUrCr21+Zt7PhO0abuz+rMxb1BxODJkv0mh0F5ufiV6poVTIUvFUYkQ88N/tz6/ob1BFTwR/GpQBoOnPN/woXvaz18ALwVTSgn9ooTiMF16zDhMk/WPP3fYCFY7CxBgWfV0StgqYm1Ac4SyEV7Rt2T3EcjyaHAnGAOSVNp8l78QRWBd5BckKqKNDE/HB2oxgoiY"
+      },
+      "created": "2026-10-28T15:03:41.397Z"
+    },
+    {
+      "login": "d21037135201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "3QBqvac61dZYQY+7dcnJ7g==",
+      "iv": "EZHUka3IDczY/epy",
+      "key": "xocSqeIkHgPG7Ki1PCQNtnEHtqcc2wOcnGEJPaDp9bIDfiwsXJV0tqkn4BndKu2O",
+      "pwEm": "2026-10-28T15:03:41.487Z",
+      "ah": "b745078092f1b4ac49b4bc756cc5e277894cca7e468675b6ccddaff271929983",
+      "p": {
+        "iv": "pnXFf/fw97phQwKA",
+        "ct": "NpBn2eDhj8mUWp044oN9de1dOGUQZspTG42K442IstfH+khEQ4IGsjTOu0E1uThPmCYlcrMpWDk2JKQ+36PL5VibTZ3xWsVBwiZFyyuErEMX7m8Or0Bw2GcWS4Hd45IihnpXoQ/86AuUD9Qfl2soHBnTn6Hx2XCEA/KRapt1tkiwNM4q7OUZe/ITV5WN3wdUkNGlQzw2ApxVSYDUxiNJ2c9duKWj3TgjLFtZ1LPDhS8OhQ2/Uws="
+      },
+      "created": "2026-10-28T15:03:41.516Z"
+    },
+    {
+      "login": "d21051109701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "gpaWQGHtXCINOCo5Aq5NmQ==",
+      "iv": "C+itM273dhjhfWD+",
+      "key": "m6RAef6f589zip/CrY6NPs0HvQSeTO4HQYHZfJ/mt546DpO1LIpgVgYLrgTpYRc7",
+      "pwEm": "2026-10-28T15:03:41.616Z",
+      "ah": "be7f119e8cdc302c873d72f6730dcdb08879ccca068e19908929aa321ac00909",
+      "p": {
+        "iv": "l5E4vJojnE487dOL",
+        "ct": "x4R7n2EYi9BhTWDVV+o6XrBarBSW9kKmF/seNX7L1oYArPl6A3bZNCjOmPS7haShNEuWzm7iUbp9l2BaVxR53favMxLdT+9xmmKBtXHLqn0EXc1vUTJhs+vju7pD1Ye8BSBIWPUVPDWDxixNbR6jy4iJCapacmgjx3KSSoTihV6RY6NjCGzexX9E5FUIXYl/pwg/BIVC9GXtuPW3XuBGEuRdtEqONh3EOa4nuCeyjDh6Nw=="
+      },
+      "created": "2026-10-28T15:03:41.653Z"
+    },
+    {
+      "login": "d21051604101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "J8X3WRwfQ5v0n4ZoADfweg==",
+      "iv": "pHasvhE8je+NBjMJ",
+      "key": "K/iI2//1oJpXhfm6Bg6F9sok92Uxc0c8TssdbFeqU95cjSU9NdXQ71MkhOcTgGym",
+      "pwEm": "2026-10-28T15:03:41.741Z",
+      "ah": "e1210399a9bac22adb104e9951c2bb937a2854ee0956b841a2df8c7c6c792b11",
+      "p": {
+        "iv": "rVXdPI4DUY9RmqYN",
+        "ct": "KDTOz0PsrdrdYf0eImDQyh2rSFU55aA/muxmOYGjGkieTHLGp2a4kNO2Rmo/WJKBFlYegjOqaGOgxjGRnNoVit4EJ4s6ExnjgZNSck5A7N60fLd5RQaTGdv++fw6HgHN4EiBaQSKssl94zISdhhryalMqfaSHRqyjk+i5hQpmwFF20Rdf3iwYKd4I3V+mzCPIVqefIh4MlkIGNErB064/H6axlP+qtQ71WL8N6mhEIP9n7czK2U="
+      },
+      "created": "2026-10-28T15:03:41.772Z"
+    },
+    {
+      "login": "d21048219601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "4Tue1jVfuhbuMd44AQUypg==",
+      "iv": "2TzbROloYtLC6r4A",
+      "key": "oJCEZy698OdpvwNAml8u9lBG+ZMoQa3s2t04nFgY9fQOUqcy0B431KfGH800VUd6",
+      "pwEm": "2026-10-28T15:03:41.870Z",
+      "ah": "0c3e9e03fbc23d1cdfa2cf56bb05566e4fa7f3811248868cc090207302b440dd",
+      "p": {
+        "iv": "GcNG7dkC1xgqVgFh",
+        "ct": "QtL4q295X83jiys/vRwFq7PAEz1yKbLh51xkwpIowgy1GpKl35WuQA5gOZqqyLZ/CnOIw23fe3Tgtg9oB1560wqZEK8TzOQxsbjXxtGCDLlYi8dIyxdxWTr71lhGt5KSlnIjh6+ZNpdBWQiQ0z+nQea9HZZGvK3Xk+uyZaUjDr2ejo8B5BEt6nn6//sN1Cp3d/suDzAAzMZVEGftavWyQ3tpRs4f3efcjl/GVYtK7PsF6b7rty+90XsYMADWQIGp"
+      },
+      "created": "2026-10-28T15:03:41.901Z"
+    },
+    {
+      "login": "d21050993801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "+orxUi1dZFIclh6KIEyG0g==",
+      "iv": "c/VQyBOpTRnX6Mfm",
+      "key": "kf7PVxiskO16EQWOxT05Ac7z5homSOVqWWFY5/toUPDlz4q271VoiGH/rlHfTqB9",
+      "pwEm": "2026-10-28T15:03:42.017Z",
+      "ah": "3a620abee73219b170673fb54f1957c156ea9a0ad55a1bf4a70f977fcc2fe937",
+      "p": {
+        "iv": "Nff77kYJRyhAfBXT",
+        "ct": "ogKwjXe/GmYRFZoVl9gxKXlXEaM71nlQbU5knPcNfWg0CShBbMYMkVHax5Yfpc4yxGFO1xaYH8JWbt2VkPhvABG4QnPK8s65HOOaCSvaXlcchcoNwbT0qHT7RcX+x6/Yb7BP28Au+/MYHd99VkO+5tCFnWZGMScsfudj15YyJpGwc+sdhAInz/2mL2cfFz/HwelzbvyQGdvUvmWHdh8cuvW+VfhTyTDzoGs="
+      },
+      "created": "2026-10-28T15:03:42.048Z"
+    },
+    {
+      "login": "d21035941601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "OLGlr54dnkt7Ilql5PAQIA==",
+      "iv": "AzOmt5qWmWkcBeFU",
+      "key": "cLuOMH7TSdOxiA56NmKgCNOdSqdPhkKkkFAVJxhPfK9mJlL2owyC1QhZmiSdoxRY",
+      "pwEm": "2026-10-28T15:03:42.147Z",
+      "ah": "90e5947a6170bca07c6b951291a92adfbcf96c7f514b5556216c19c5efe66923",
+      "p": {
+        "iv": "1kgIC3xc1ID7ZS1u",
+        "ct": "7jwB9AKzzzvce2PsbfVb0qHv74WDhpNKRcnSSHJA2UkL5oZC+460Zxy6w6FCXQbiu0Y/OeZnG70C9yrx99u8L41D0s2K0QkPDMJpteuEGu/qseaQp3XJR7xtJoVulB4pjLV/P6Gs9yLHiGG1ZB7UYJEDYcRhjUCIcdFvh1CZ/1iGpugHNJ+QFFYmvFk/gNg8TBcT837+G4PICUoqbKFovBD0iHwk+zhXZjxNpxuQYh2fmg=="
+      },
+      "created": "2026-10-28T15:03:42.174Z"
+    },
+    {
+      "login": "d21045870301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "nrCIksQ6OnS97laPlDu4ZQ==",
+      "iv": "EgxpkaC5+qf0Z89Q",
+      "key": "jG0mCj/u9XbJao4ombNSWiHdZOIAQ2WN2XQWj7Zn6WrQhQ6knTtbo0fNCKkceK09",
+      "pwEm": "2026-10-28T15:03:42.250Z",
+      "ah": "21a91e148bf5c52aaa735256a55ab9fb93568de900883b758548f118c1727d7d",
+      "p": {
+        "iv": "Qn7FNQhZ39D8A/Uv",
+        "ct": "yztYOpdLeEvVKm3D1I7bF1pp1phJ3NNtrOwpP8p5V4qs69nCF3LY8JDJHhvU3XMY0ocFX0/fys+dY9ZQzrCVY0LCetQ/CvBHwtd2e0x4bm7TfeCRchNKdcXFEMyuw6qm8HSErsDVDCpTCk6duIUczjcGceszcrRfXeHrUmYwi4cpHtkgRKliVwrR+uyq2sAbtFMgwu0LbBt4mHoU9AVH19WP96x4daZysQbqqN84sw/28m2OQ8fhlzNM9sf2AzW8"
+      },
+      "created": "2026-10-28T15:03:42.271Z"
+    },
+    {
+      "login": "d21047424001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "pNyY25MGNhTtsNPGdJZmyw==",
+      "iv": "9OqyAxy8MXaHzULI",
+      "key": "zDnzaLS7b7zKiJvkaD+9O/hnKdh84KvuuvJGKNsNoi8uC+0YwV/Qgx0dEe1aAPi9",
+      "pwEm": "2026-10-28T15:03:42.354Z",
+      "ah": "ad00d80801ff241cd562f84feed99cf060cc7de0e4cc566a3453699edca592e0",
+      "p": {
+        "iv": "/cjxzb4Pg9S26DCd",
+        "ct": "I+Kvml+4z47wUNV1+PBLQ5JMc3sPZQ6ZevUpuFolfi/cWo7UHs6EOEe3qzzQ9zqgAAJB0/CLuwtL3albFWPI/dgJZKWEjpjS2//2mNALPGSUhpg7pKfMloWch5c5LmEYJV/qEQFUoNXihaZtzrxa9NMSvGnxklSIcqvkYv8HWhiBgWBu4cQoki0jx0Fqs5Ms6TQ6gLxsJs8v47FUPEctp4DXaiLwHq1H8PXDPynghJ2qOn7d6czq0h3m7Nk="
+      },
+      "created": "2026-10-28T15:03:42.379Z"
+    },
+    {
+      "login": "d21050637701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "X/M4CaY/ZGY0zy6+RCq44A==",
+      "iv": "mLJnrKVZMd5LPbFz",
+      "key": "Ehrw0lVykY7A0EWIWz3c9y7CMrB6ThZa0W2FGeEcCU24TvmMx5gbMR49j9mXQjkw",
+      "pwEm": "2026-10-28T15:03:42.487Z",
+      "ah": "daa7e323af6d063af5fa68a2cf6f60eb4ac0dff797b34537fe23497fbb732970",
+      "p": {
+        "iv": "h4K9tZzc98euxyJB",
+        "ct": "IrDxzSn2wSyA6AiH/al0uFdXhTlISFekYtbl3ZNIFoUie3O85UXU0aY02mDCcFW5sSqwuiIaqhPgssqRU3hZIzsMF1Awnezp8u0u0D/L0kiE3RKp4ZVAoud+VG5Oc+REtVSp++TP9SG2f9kdxH/7wtS50dLlioYw2J53R1uTJP5evmIhsS4x8aNiTfSCZTBaopaTVJ8Q6j6McG7i+vNjiHs/d/F/D1dV1RPlw+w8HuX5FQ=="
+      },
+      "created": "2026-10-28T15:03:42.524Z"
+    },
+    {
+      "login": "d21048401801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "cWKo0bYCx7IfwBkn6G7sEA==",
+      "iv": "QvEgRpEIM74HAP4l",
+      "key": "dugwSQPit4IetKcPxh2gQRopkSUmWc8KAFHsnp3I3mCYC/IuutPmwf0FO3kVvEhP",
+      "pwEm": "2026-10-28T15:03:42.623Z",
+      "ah": "e4ed84957abd0ee7838e4a2ea41c31016de1b5cf8dfdfdc0c05530fd6c612e11",
+      "p": {
+        "iv": "UElBDjBhtXNoiiE9",
+        "ct": "qAob6q8wq8TJCL5cKKIJZAfWBXVko0uP6MnTT8IFN/SucdEra9w2A/0uEbaLhr/Js9E7Y9H9cr126lKDrUu3Q8VyOVcCA2kCMHi/uHTFhTLAm6d6t9bEUn1PCY8E48KfB0sPMDdAmeMDYPtgMER8cwZCKbVp9+4TEN1o7JZUs+dDC4CSjrwDVWiDXp0FDrts2sZ38fDsd8PfYkzul7uCcb7FeMkWYxsVe27/4ksq+UE="
+      },
+      "created": "2026-10-28T15:03:42.651Z"
+    },
+    {
+      "login": "d21044719701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Lg+9VAGapwGuCSvjmxw74Q==",
+      "iv": "TL0PE1PA4eJYyPHt",
+      "key": "5P8WyVmQsilajKE/Ce0b70SDWWqZbTSvI6hru2LPs9WZ+ZfcTiuYV0o23gpIVJND",
+      "pwEm": "2026-10-28T15:03:42.728Z",
+      "ah": "e9d5a72df291399f23886ff6723f8217eca0145b5369f49fca73ac420264e764",
+      "p": {
+        "iv": "nnhNMeUYOZtTooRk",
+        "ct": "/Su1HhM8YLRtMfgSklGQ9k7fUs6iToMqvaaQL+x9oxYP8nXUCv4ME0AFGdMKejzZGAtC2r+Xe02USRNC//Wj7w3iuydLL9Oz1CgIr4L7In6zMzCF8Glymv2ysBwJZibnk5sBXuvQw3hj+Z6rN+CzUbJmVJB5ZRN8DQutDUuqQ5recTERKLZDWxQQ4Q3A/9bXxiqIRi6vZI9PBotknNdq6ii8r+zqhFv61gQKkGRNCF9JI2qZZHW5EvdL/ZCuiQ=="
+      },
+      "created": "2026-10-28T15:03:42.762Z"
+    },
+    {
+      "login": "d21026838901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "faOVpVwYutjIO2D2PP5I3Q==",
+      "iv": "7ap2bH4VYIm+Vf09",
+      "key": "W44TVTEMCH6P5tX3HDAgqFT8RpF13CC9Yrdj6vZXq7R+JvEejkAsx0qqJUIKbi/3",
+      "pwEm": "2026-10-28T15:03:42.844Z",
+      "ah": "d2d018bbaadc31094fcef12cf61a5ec4513d80584435cc10e80fb3e1b4bd0086",
+      "p": {
+        "iv": "JWCRWALdqicyaQ6V",
+        "ct": "mBW17xuPEYX8wPJsZh5iorpPtXR2T0CYPDb+xRJWKraJTffeXZMKxXzNn/d1WpvrcZefLQnFMurP1MrRqYLhbCe7/1ovtE+63RvfKFlFP/3pA4XmataH1zVcJnoNcXgp9FsN2oPNt0MTo9QoPNsQTJkIX4J3VaoyXK1ZGM0Hm1wNU6L6miuvRojKnMmBpA20R8d9QIW1hhz3+VLq6rkyHL6PMpDck/0AGVMS1lpSeXoG6rjAKrxok0aLVDkIsUkN"
+      },
+      "created": "2026-10-28T15:03:42.874Z"
+    },
+    {
+      "login": "d21051126101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "MO/6k4ezIfoZmOuuMciVcQ==",
+      "iv": "qhZZtTPNx15RdUuZ",
+      "key": "Ro53qJHlhTtqt6NrTIXu8UUPB+FwrT5E8QvvxTmjtGxILJkshKpDQZ/0oc7c0Ah3",
+      "pwEm": "2026-10-28T15:03:42.943Z",
+      "ah": "68ed322b11e61c4288f00650b8bf16e00dc79829e6a7b4218b116fda602b4154",
+      "p": {
+        "iv": "NZc1K/Hg8+Tuh0aI",
+        "ct": "aGYlATQqc3CBJSUmlRIAm4qjfoG35PZ+gebvRL/Tu4UbEAueQOGIBWImr57qowtLE1HJYH5AXXbMcS4Sc4+csdoVwHxDX26FHye+yuKzgZRLXmqiB2e/Pzgf6h48fkbKdK8iV8WfVS/kt98fpnfzp8aNCjJwH34Yph4YyLkU2PLL0Rz/+jpWK56CnSNl3jwdJr3dMsfeZHYl/wk5q6wsGA9ITrlJlKxT"
+      },
+      "created": "2026-10-28T15:03:42.979Z"
+    },
+    {
+      "login": "d21049176701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "AyuahQbMDzwxnkNweuyV9g==",
+      "iv": "/WLGO/aWMoxzfOh/",
+      "key": "o8UaRJLvmybZFJq+RoeJ2ieHL8Q9nk3IQspaDZ/t3WjhVK9ARQSNdfTXcIP//iU7",
+      "pwEm": "2026-10-28T15:03:43.069Z",
+      "ah": "62f062336fbc59be703b32a01bcaa59404bebbb72e977923e71a03f22a416d8a",
+      "p": {
+        "iv": "zEjRmD75/s+hvI3D",
+        "ct": "us4YyBSeamO8ktoTDDvYTqi024IwpeMLV9P9W5/4boZp5UzzqY5jVBkOpQS4k6ByOl9MjiwF5Eg7HEHy2g4gdNtN7/y0Zo7HY7A0JzhSAJJQM2sHev41ei6Nb9mvB3t61UThRO6JF1K0sAFc++dVQy42WJV/DsApjp/8PFR6/F1u/aXN+IKtuwVsxcYcuZjVjqZv8Y6qotfwLD6H4S8o9NXOKxM7x+uPf+1ZkspYkhKUClyITAD5MyfuM8/dlQ=="
+      },
+      "created": "2026-10-28T15:03:43.107Z"
+    },
+    {
+      "login": "d21050006301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "pYlwxiu5KLV4MfgXsRX4KQ==",
+      "iv": "ky3NdHyuxt8XP30h",
+      "key": "gKx0dmaiQygWKSSz83X9qfuGtzPe/6NnvJeBtu7M/wD1yQDejT2b1QYN8Ha/NxIe",
+      "pwEm": "2026-10-28T15:03:43.185Z",
+      "ah": "e92d8f63ae55b37d256183bc62022933a6dd15ed2a6d94ced9ac54d528a593b0",
+      "p": {
+        "iv": "ZykhYGwLMeQK/ReV",
+        "ct": "n9OjYNJGPJ+iDkqDPso5anzoRRe1/fozifiFrLVEk0BSBQTLT+l8nKSln9YQe/8CR1G/l44z1BCxM0RYPqfm1Yhv8ZANGDgy6/IhlvTR8wcawBR4hS2zHvhlj2jpudjfxoyjm1togGhF3kYz6OypfdIdSOxNl42P55siJMPQ7gr06f+vYx7c6AkIIooY1FYy2TrWH6yxqJ/oENZT5Y4tgxdSUhbkM/c38JsUI2Nl6xJkyMsk"
+      },
+      "created": "2026-10-28T15:03:43.209Z"
+    },
+    {
+      "login": "d21050931701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "nzK/M30H6xnvZC1Vr5Dgig==",
+      "iv": "nsV2CvvxlsIwNiqB",
+      "key": "J/1pbpmWn/Lexg3Ra/CyDmORHPCs84tdqZZEiPQlZY28I+yXIiby/dm0CQMkigir",
+      "pwEm": "2026-10-28T15:03:43.286Z",
+      "ah": "ffcca37d308421b6a4fe5d35bee97b2e5ae40d5a48d9ae84aa2fb5bc6a3a8757",
+      "p": {
+        "iv": "AbuMkq2UGFxiJ8aH",
+        "ct": "RTk6tf0Y9/OruTje6wcFwXyoovedDYjTM9ybYpRa5l3bNwoory0B9O4cMmk7UJk6pvIr6xxmE3WE2OSnpe/2QOYH9EfznL8QafDpBOVTNCbIZfd+R3Koca12AgrUSFdFb1WLgQeIdBoFeHNKMgVnnUj8AVoAaJAnt9+1KZ67XeP/wvCzZinrvXobKfO5JfVGezP4T0Eat1Idqxo6OEY/ell3NKSh0g+vX8qKkhXeLlO6JL97MdZZOAZU"
+      },
+      "created": "2026-10-28T15:03:43.318Z"
+    },
+    {
+      "login": "d21050895401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "dOce5XTQbCABqW+tTcldYA==",
+      "iv": "LVXUuEO8S7RRbcuu",
+      "key": "GyNPRaWMp6qN+LpJOknXeiURireyBOfSDQxhYhqBCLUNlAPUAfcO3zoWgzwBIRUU",
+      "pwEm": "2026-10-28T15:03:43.398Z",
+      "ah": "18b90f3163216bcbd1bff89bfa234e166b42ee06f1c7b5cfed380e3420a7bc36",
+      "p": {
+        "iv": "LUMDj9R9+P3XdW12",
+        "ct": "iG4f/WxwazWqgINzxx8Kqs0gd1MNWIPpLbVnSsWycdGVj/LQ3m/x4DQR9H9i5XECnkRTqWNCnfSA9maprAUfQ0s0faq7Cy5NFnYT4tjThpheTijd4tgqI7AZ6XkHQuHp7078UzUTKkKFwjRANX6b8fdI3FjbIz5FL0Y+SqkvfKX+RCmGutAkDHWjrMezjm968L7JBpTf1TGkseJid7AdECAOCKIaFk2FeAKs/22orIqlv90AhSQ9uyzri4g="
+      },
+      "created": "2026-10-28T15:03:43.432Z"
+    },
+    {
+      "login": "d21051110801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "ujzY28PJGchwoyABHHDb0g==",
+      "iv": "raKHGN1KcJu57AVF",
+      "key": "bjJGoZn95+qfVy/n251piPwKb+pbfjgU0pr/dceXIWj5JuFtUjpdR0YyM9qxmfbn",
+      "pwEm": "2026-10-28T15:03:43.514Z",
+      "ah": "c460fb7245b6fff00d506f87412a8182372465cf74121a54137b6bec1ccd516b",
+      "p": {
+        "iv": "ZK8/2LxMdaPgFawY",
+        "ct": "yo0tDa4hh2XGVhXY5GsvcWTbLRZpzwfJtnT/Wn6OUum8wfp4JSBLejAypJ7Ca+ThhfhbyjVwU4XOTd6+dAIj9lRYMcjedgXXxFs/wZmmaLBSrYjYCBQD1JKDziJqa8psV28tSYgvR/MH0eFgZ5yIO6x65miJqA+PT8RUFlyXT2ER+jfY2NDMXSpYqgD16SdR2kgG2xutN1ZsqSG2jkQfJMEkCPxENtImAlA="
+      },
+      "created": "2026-10-28T15:03:43.539Z"
+    },
+    {
+      "login": "d21046089601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Z7xoElSWUTWINvLwTBmO3w==",
+      "iv": "o9u6XivQoBbiBe/3",
+      "key": "SSwOvaErUx2MntvoJ8gMKbGeczMXLui0o/SI4N5JUrOCPxNfcCXIPKp2cM0g8yd8",
+      "pwEm": "2026-10-28T15:03:43.614Z",
+      "ah": "9c82030bdffc7168540501880360d35d12e5ec5118b6ad78fad019d07692e82d",
+      "p": {
+        "iv": "M1H1nsk6T9ELDW/y",
+        "ct": "CJXn3CN0i4kySLpRIRiPBf2xpgIK3UIW8sjWx7LPPX1+mScjUtcOMrS6a0VU19HBt9wcSQclPTyisLrLAkZZugO87Ovzts/WSYG/IMjeYtRBL1Y4IisfraLrSOVAaz/tqVWmhaEtgcAYqaDXQzh7URbNw4fbMazYZw3eL1wEZ+a349cR+AZKMYiN5NxJZaebERhWR1S0O9dcrXgHkD5NV4z/lOykpAUkC2HrP+H0TDdfHxfehDoL9g=="
+      },
+      "created": "2026-10-28T15:03:43.639Z"
+    },
+    {
+      "login": "d21028521601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "BnyvyacgdOlh5wkZZwTPWQ==",
+      "iv": "5oCDFTukAQYtCYsq",
+      "key": "cykEq1jHvbmNrJZzFimH9Gumh1IFYZMRDOPAQ8ZKUwpEpzT1D0d5ehkAJbHiRiPU",
+      "pwEm": "2026-10-28T15:03:43.711Z",
+      "ah": "15f9a9474992524545c21928c33923a1ad0dcb47f72467f89fe13d6983a750c1",
+      "p": {
+        "iv": "oChcpHIxiucrVVUp",
+        "ct": "MHmdqHZMmzgIu+SPVsKqXeTedTbhkKM/9uov6sTbtnx6mqYSHsWPh+Pjpr7qUdbKP9T0EVt6uuXLTFnRBCpjTPBU00PbnVZjvOE9IFjXXiJjDEp/Ts9/QDxg8+5xXfHq6z0z7j8LRVj/6SX/8oft6v1uyWpwYkU78CZbbjU/5J2CV6GdIMcRP8SRCKOaoU3iILDUTpBHW9mB3yM1IVyzlx6ERYUFmzgNY4JYjKe3u479ZrCrCmriLg=="
+      },
+      "created": "2026-10-28T15:03:43.740Z"
+    },
+    {
+      "login": "d21051493501",
+      "role": "ajudante",
+      "active": true,
+      "salt": "8pvbux/B4LcYLq9UStrZTQ==",
+      "iv": "GHx5SqdgBauEoZyn",
+      "key": "O8LHg6PLhOJ3fAtYFa2DoAWFJnWQuLzFJQPK+Da7FE7toDMUZpVJguNmCPzUzxE7",
+      "pwEm": "2026-10-28T15:03:43.816Z",
+      "ah": "0113bf21e1254e793975b1c3fdbb8c2e6a6ae2fd8ab367ce0d4356708954eb1f",
+      "p": {
+        "iv": "gJXIyfcRyS8eI98T",
+        "ct": "m0U7Uv1xNN2zbu4RiXXapNC96iEBnY8h4ntzU2ANRgfxfesURMqyCrNNo89PfH5Z0yphRJtL2F1BwhNp5dCXVJlKC0j43yFu57c+dEhVf5QJpd7+98uVw9sAiSOZNLptTbtF6t6aZsSMG76YoYlJ/otUU9b/MVC2c2mDEghXuo0W32I1JUYkolMEz4P+uLIZNUacgK6v2B3L65TEYwFE7SR/bAxfXn20"
+      },
+      "created": "2026-10-28T15:03:43.846Z"
+    },
+    {
+      "login": "d21048125701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "zLn8pLFDF+NelntfQOpvig==",
+      "iv": "Al98Jbpx3yqtGawd",
+      "key": "vpBcw4KdBtMifQCo8MG94z7UXC8OEDRk7zsmWSPclg1iTWJ8tP9FN0CtzNR734mZ",
+      "pwEm": "2026-10-28T15:03:43.941Z",
+      "ah": "2d3b76838556238f91f3647f2a614072f12945dad46a916fae3a49d7f8c46d25",
+      "p": {
+        "iv": "gd70RZJqa2ByuMjl",
+        "ct": "sVEJcoS6PcJUkx5HcbvU1L54gBUZXpbKLOh3RFEaU487lqFo6yshXpTw1TtPkZRK7x3SVE2dOCwBxdSnKVRpHa2yAPGcOt6gOX2hH7lxgGV5ScIx79M0uSC8l/HmMwZPyB6YhkMdVoPZxFL0kp2AmQxz/WfOD82SD4i4F3m37uuuQCP7laW/T3NNHtp8nBQJtvP4mJSud5hN84VqCAjfg/DsQ/eEHsdYEI/nNgAzlQjXsItLXEWNEqkdGrQZiA=="
+      },
+      "created": "2026-10-28T15:03:43.964Z"
+    },
+    {
+      "login": "d21051235301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "CNmD3v5I3dr6liuX2sc6Eg==",
+      "iv": "FzOTEKJmwPzMw//S",
+      "key": "3HxAVZ94kV5yrYtWPBMDHU7z7I+sKVW3QKTGwhZ5r2shbn4ML4GCwC2Ddon9mKSr",
+      "pwEm": "2026-10-28T15:03:44.062Z",
+      "ah": "fca48bb5b623a5c8725cdb2a552a15ab9349ba5a01f25470ffbec5971303639e",
+      "p": {
+        "iv": "hGUuDimTr3BXRTf9",
+        "ct": "IC7Ry821AQ/49WPhntAp0oSDVQGxfzS680U/kQii4x9T0cAdtIokTuGX4S2ZQHakUpQEhd7sPnBpB7jfzs4fKAi5i+TMMf0ID37EIzAxtePR9PKWk0pLipw1nSi2803LijdpeqbWEUg3f2v4FyKJ92jj4rM8PNEjdDvOscQbMwtF5KmcCxZF9WUGe0zPZzbWUyUEdWFdZ6XJkF+4seLrVGf4Zjx52eXBhWtbPucTu6+DTxOT2S8="
+      },
+      "created": "2026-10-28T15:03:44.093Z"
+    },
+    {
+      "login": "d21040292201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "HG4CigdRyTFy5xuT5NpjRg==",
+      "iv": "aAkxpzKoOn9zOvHP",
+      "key": "8o5J1awNCWjRMAR8qi1DblLv9ev29YzU3VjbnychDt6iLjeYRFl9PuRl+iEzFeae",
+      "pwEm": "2026-10-28T15:03:44.187Z",
+      "ah": "9c8275ec857854f857e176fb3efa873d03faff71f1922bed7bcc796936ea06b4",
+      "p": {
+        "iv": "XyV/Yal9pqIIA0to",
+        "ct": "+rTtxxnp5IW3YgRvmZJb9+aD4zzJ35WEqYqzyuFrF7k4SaqFPZ7rpMISnRLkuKjXJzKPuf4/6cn6UucFCLMAj5TrKR3uwYlGaDDQkYjgVMEYgSSuTmqQb7EK6GZAm+p7pkkHcZuTIrW8trXUY0FoWNTETL9xODSmJ+bqbv4pPgiY5s8UJ2mNnYJ9u1ciMEBPojFBl/ptEXhjp+8YVcgAd2jY2jy+PSfKLkbaGrmenHXJ65MQJaVk/n2S3yhlO56B"
+      },
+      "created": "2026-10-28T15:03:44.212Z"
+    },
+    {
+      "login": "d21050999001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "z1O5xU94vgR0QFysyrJERQ==",
+      "iv": "emMgE/cuNGRQhFan",
+      "key": "Xd5uQftDItL3TCtqPZ5n6NyUAP7QI21pKegEK2jKDqyFUreOtBdzlyd6uJBTz+td",
+      "pwEm": "2026-10-28T15:03:44.292Z",
+      "ah": "526f16559331ebb440e95e8e9bf7e8101442244728f431ffa0689bbdf77ea582",
+      "p": {
+        "iv": "fz9yajP4vlWcLgj9",
+        "ct": "TFqDI8/A43DOmTiHBTe6RsdI9IJtWfM4AKDoy70zC0cv1U21ErnWI3XZFTKiyvDdvvuRZTYVqUXAyQ/0KvbIQxfT42hj6bRjIgNx53yt7KGn00TPFyp9JVH2UfV5QTYmKjLH18JLx/hpF3id5gfK0eQYOAyQxAtuCS4Hh5QwPCI545PhFsQpw8XwEDY3+jIu632K8OLtDQlTjzjALt/59iBdylPZJ37cSTI="
+      },
+      "created": "2026-10-28T15:03:44.314Z"
+    },
+    {
+      "login": "d21035739301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "y6OgxPR7twRq1WwyP0j91w==",
+      "iv": "T3CMeSnTBUUc60gu",
+      "key": "O0oTC1B3pkg+oWlXQYwkYNVoyzvGb56/F1mThte2ee8rCKKjAvorSM09t5ivLr/q",
+      "pwEm": "2026-10-28T15:03:44.384Z",
+      "ah": "4feb2c6a54f5b489b112e9b72a4bcacf7c542900ca9d27078c3a58a0f5824928",
+      "p": {
+        "iv": "dm4jTgmr/J42ECJW",
+        "ct": "OGc90cKwEEEBV82tSOjuBOLqiDVCb2veCEKNrrluvwXNpbt4bVOq/ZPEZu+lW+vUsehp8/zSAOesT+ubJYjadOWXekvsYDctsAzubX9T48C79Mvl1dT3QCglAEF89HUiGJNRj7jZ5ubrqfKDzyML5QhFHS4Y3biY29nvlT/8VG15yigGh3qepisPigW6rKEzdwL+0/JcmwwSCKlqn/bU7dK2VGn/p2qsBokKPMrGd2KWuKcjqhE="
+      },
+      "created": "2026-10-28T15:03:44.420Z"
+    },
+    {
+      "login": "d21050637001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "WLy5HMAnwTZoYP3K4ND7qA==",
+      "iv": "ihvX0xcaFLrXCitv",
+      "key": "+CManVjgPNuB0DXKV1p6kfcni4w4kdFAN6pF/AH/O4Ne2C1tEGZ8mdthRR1h9j20",
+      "pwEm": "2026-10-28T15:03:44.502Z",
+      "ah": "672de930b0fd9a3cdeaf3315159efe0009841fb2e1d40043041fe118be4489ef",
+      "p": {
+        "iv": "jTEt/ixMnd66g+PH",
+        "ct": "2qzZnP0hsN4UfnIeqMHi4P0BAqr77pMZkritvxfCYsAwDwJGFODr1Q0dK2mZkf9AkcadKoN3EZacQ9RjV3K/WwM0syQLA4B47mjcoqeTdg0r5DtLv2iuenDsmNkEmVazvT2T6x/+e0ocxl1/u1TAyjustpYHkQ+y89LW4aVS2z8rwtNh6QtgFQ+7JEJY+a4G38SpWyLACxC7Z9I9vxMF+kCjhGohsv/4edivPCE6CUdL49CFSdI="
+      },
+      "created": "2026-10-28T15:03:44.541Z"
+    },
+    {
+      "login": "d21013540401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "r7Qm9JYkl/gKe77YDo4BFg==",
+      "iv": "Ac37X7a91Zq9ksYb",
+      "key": "lvJaox2tPd7ObRWEaFSSOyBxBWFHTK4m+dlLDpKP7Oo2M0L6c2lWz5wJGo6TnvuJ",
+      "pwEm": "2026-10-28T15:03:44.648Z",
+      "ah": "02477e92ae2a49306a3ac1dd1035291e4c441b241aabc3983b5d599be3fc8602",
+      "p": {
+        "iv": "KmZchQoNdJ1pxeCx",
+        "ct": "QuwneTzs0DPZVLiaUflv1XgbLndP4vDsYKUJtZ04UA4Hqb3qarGvltVTi1bQ7NJsnv42/8Ylfpm+hpMjwvlz/p91Na+lJ3me0/SJhIHPPVI3V5LGOV6jmU+v9NSKbtqFEaD2Nx8QfmL9/P9mh82rgiUodzyjy04WSCQnYxM4MSo4jzrmfVPkRGkkyV9PvhrbAmM926u3YfgP3hffFuMDE1zCnqTbR0rXx7Ua8BMRbphVGkwTcBI="
+      },
+      "created": "2026-10-28T15:03:44.682Z"
+    },
+    {
+      "login": "d21039092701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "mHxofEzkVPM/L3/vjh2Z1A==",
+      "iv": "hxGq1KYkEFSBp6Rt",
+      "key": "ugycA/yexpn0ZbJIF8OkN3si/q+03mKzKa4WVvdv/6Wjxq1FBo3bosPXRRSsY135",
+      "pwEm": "2026-10-28T15:03:44.764Z",
+      "ah": "0d72a8d6ff42aaba39a1d70858ce6ba8ef11888fa1fefb0579fd3e005c5fb485",
+      "p": {
+        "iv": "SN1Ex82Q5KtRBqvI",
+        "ct": "twFXmaVMWZAEpAMLGAwWoB/GU9LAnBwQtrwHk0kTRcIBfOwf0MPS8DcFZznpN5vq4/ERwqlrT1OcqXB+x2IWNUHGblYpmFpsEWv6ypGpxZ1viQw49FQXVFPqgMtYOcbO+fYeDOhqUjHUb78exfoCjBgDZxeQeXqN+5a8LPEJmagHE5wYQYnvb51JLwFYlsJ/mJippGd8q9/IYTGcFc0kdGmwa7/1Di4JSRZsSnc6m28pnG/VV6I="
+      },
+      "created": "2026-10-28T15:03:44.785Z"
+    },
+    {
+      "login": "d21047122901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "UdI4hODZiB++au36cQ6SYA==",
+      "iv": "YuiLFEtkNMxlXEeO",
+      "key": "XSCBMgIoEdX6nedJ4RDohZO9QpdFNC8eLEEpJ6f09dovcJhfq5vivUuLPpihysp3",
+      "pwEm": "2026-10-28T15:03:44.888Z",
+      "ah": "77b567e4deec6a457dedca90f6863ca085de9b0eac843bd1b3533be4e4ad6a13",
+      "p": {
+        "iv": "9lzoBS/3JO/ybLfz",
+        "ct": "4ETmfwtHfGwd2EpmVcqJ7Ai6e4/YF9K2czwHpCoFsVtEBgDDwpkWr5/X7XtASNB6FFJvEdmpTC4Op61K7Ea2tA3YBHQrBNOlthHIuUudCodggVaaBUMCy/8amCPvGUfV7xE3gSJPOV9sPgfar06JhWBosAFpnE5zyCSTpOfESBRPNPCFmULV46MhARqu/MoE99TgTePDKzJfqlqQ5DIjOVPMRg6H1CPFEY4A7yNCwP8A/OS+sMyN2l15n0Z/DA=="
+      },
+      "created": "2026-10-28T15:03:44.921Z"
+    },
+    {
+      "login": "d21049470501",
+      "role": "ajudante",
+      "active": true,
+      "salt": "rgkcVjHCGgEV/Ift03A+HQ==",
+      "iv": "NApE3mQO9nn2HMlQ",
+      "key": "Fkhf66xWAhg9fnHw6qJ6nxLCDXLudfe+zuqRdMLHEf2wrl5rf4bPdS/yBfd2Socx",
+      "pwEm": "2026-10-28T15:03:45.004Z",
+      "ah": "08da1041c26f6b8cbb3d43ec84719006f6bf126ec15b840a1439385795638e91",
+      "p": {
+        "iv": "pFmezM/fC+UP9BHc",
+        "ct": "YPfdjX1pK040sVUhX7jvAdFx9y85OkTwSJsIJjTfleitQOQi80QSBPlNxykLY0kYT4Frg6y+kokZJ7D3+64DoLzBlGg2q7qqJPDC6lCuVoNWZTyaBRk1AxxuIfkAevIYgIEc4V+/uHqYN0CGU4Bsrs4yhAj+OQuVjMalzhyDk+HQYJgOxXMhYCsBLMAHtCbFEUFgtSgtDbSsfk0/iLxTvtITKn1fRw+G7UU0wmHL59c3x5b6rSfeNQ0ECwkcHRnH"
+      },
+      "created": "2026-10-28T15:03:45.034Z"
+    },
+    {
+      "login": "d21048067601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Ek1vSatfJwAcd8P18Nf+HA==",
+      "iv": "CQJbtJXMrmuKRSxc",
+      "key": "fLFrlo+EMmw60oV3AJ2mRiyWq0i1NT07STBptVkFHHInfAUU1lspOCSCP7rF5Vpe",
+      "pwEm": "2026-10-28T15:03:45.130Z",
+      "ah": "410c4b504f5dbb0e95146e3a4d4d837218bc40d60b1f5c212b043de184c4fc26",
+      "p": {
+        "iv": "pkIsEiz6IZvCewth",
+        "ct": "oqxKAwteZC6cFVmKWVzexlv9wMqh8nczJf7jI1xtq/6PFWHOHkQ5xJpePCrjqVUmpqYDxNC5g0zHPJp7JSkgJofMm1MRLhmL9Jnmmnex93dpvebKiRK6Eth/zRxMXQlBT8ttTr4GraKZawPRKxWwR+QXK/4KcNYoiUlWTmbFCwYHweRq0ASnMsXAJmnHiwKgfNL1wobMrB8f5bgqGge6SCWX26SFkhJygh03VcZULc7EgNlZ"
+      },
+      "created": "2026-10-28T15:03:45.169Z"
+    },
+    {
+      "login": "d21040165501",
+      "role": "ajudante",
+      "active": true,
+      "salt": "AiportKRwtGN0bTxBi268Q==",
+      "iv": "0Bq1Asu4qdYopCYU",
+      "key": "Hup6ecYcW2DW57zQgguqooyDcbHeJWkfv+BB00x5sIpQ3xsURUH2Rrd9a5HUuKAL",
+      "pwEm": "2026-10-28T15:03:45.279Z",
+      "ah": "c9c9cd62d614735aa7cc4d7fcca069d613f852560544e71f059eb3657925b794",
+      "p": {
+        "iv": "EATeNVueFePFjc00",
+        "ct": "ByJjp4z8efAgPpT7+jBx/xQVtwGMRfLrWhV5W8ObeF5jQSSXGzm5o0f6ZfSdlqgdrcv60l0ooRoQpc2xpdO2LkUgCh4zDd0peLNBhOomjVdiqBC7OYH8GpWLO8DWcGugb8zy10/1skCTY8ccZ3rT+FzlVOygjIhGeijMqLDa0DkQDfytD5UCfb6GVxwU72N4oj4pVy+JzOz2NzJBcsT7Edk3r2tYeDBHzKpMDJ+Bawlqmez0Y09G7LMpH1k="
+      },
+      "created": "2026-10-28T15:03:45.310Z"
+    },
+    {
+      "login": "d21036090201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Nm3LcSLQHfHXX5oxoWdsJg==",
+      "iv": "eoB75s2PaKJghOsf",
+      "key": "BvEV3ZAZI1L68IiiRlZGVnmLrsHGJbq7cIi0oKBPyMdvQ+qKV6uUVOroL3UjTF1N",
+      "pwEm": "2026-10-28T15:03:45.394Z",
+      "ah": "0c0020c9a878ac630115e9a2af8ef4c92397b68d58d01e68f29ac39b0bde8df2",
+      "p": {
+        "iv": "J5md6xfEXFa3b8y7",
+        "ct": "HbuEpn9Co3/gsYnvUrVUuw6cOw8W9Odo+cG1yLyhe1Em3jFCF3iXjCu6Y2B907rL6VchXkRNTBFraRE9pMY4lQ0gIc4+8XgMQfpPoU60z24YPgFVgz2CbCq0h25uMUTC3L7fUWeDotOvFmygDbTx+V+5RqU9V9ybZM5TTZdJA8Ef+XGCysFXnUS9v17CYRwu7gXgHpNru4JNJjR5Eq+C7oJuNxdobKLd8NVBkD//DrjsQTxUWFHrK12c"
+      },
+      "created": "2026-10-28T15:03:45.426Z"
+    },
+    {
+      "login": "d21046598301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "hdRTmEs9x0ohhlu773CBaw==",
+      "iv": "zImGiIL5LjrAbEA9",
+      "key": "lk5wMSlm2zWB1U/76RZovC3uTkDd/rxtYIp19Gpia++/tOmN1YX/IfvGO/DNU5AV",
+      "pwEm": "2026-10-28T15:03:45.495Z",
+      "ah": "1df7d665001f7f1fb67009e307b71b0bff17c54cb865a2898d89349d7e52ab08",
+      "p": {
+        "iv": "MLH8Ku7aYyKWi9Hq",
+        "ct": "kqrwoHi7BmdHOcFtODw442KxO/5Xo3Njp12gqRjpEhngNHLCuErPyVkec1ZNO7RV2HJOpKBr8l2acAT/DcXS1XQQR8Ft9aDDHzuJuhvNkeJhb/dpDFqBXRUiAI8IPzk7GTdfb7SgrveHCl+U5+/nSuYaqbYAlmWNXTTiZZP7J6nq6AOu/vgcxfrxNJFwcAPn+ALzf3vuUSmCR7jpGKYCeghkGdrn4vpOTu4Hri3hXQMGlZZvyNK4tj30"
+      },
+      "created": "2026-10-28T15:03:45.519Z"
+    },
+    {
+      "login": "d21047955401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Y1tVGJiyDUp80e7Sdg5Wzg==",
+      "iv": "V2BxhwyKkAX+FM9P",
+      "key": "DUs4+i61zO9VxWRupD/VGUo72je+6Fy47Qz11aSrEOYC+sKE65ZfRM154/2Libbw",
+      "pwEm": "2026-10-28T15:03:45.615Z",
+      "ah": "d9dd905c8956aadfc196e01577d4e3bf6aee63671c5b1c9bd7a63fd2dd140d4e",
+      "p": {
+        "iv": "T8NfqBgqIcjEg/hv",
+        "ct": "J+QW37yaGg+WbdQH7R/72mnzLAsA+L6iH2633fvUP0iNCGW4NbpES2IyZakUrf8Sk9QZbhhuLptG2BIVu9tjrHIOxHcG0WDSpmmj6+24yfluavviifU5Rcog/dhSB36cZDmyuBnvoXRROqIai7MwQlzZgYifTrcfu2smUGBP+xtSxI0YIQTCOUErOOhUL7LAgVEGMYMBkwmjGebmqWHmr3Dgjk7FFte5lBbhLTvkf/yJixKLb2oAJFj5JZQ="
+      },
+      "created": "2026-10-28T15:03:45.652Z"
+    },
+    {
+      "login": "d21050636401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Za8uGh0hAUHcskI70HZWNg==",
+      "iv": "eQMTorr11a3o8zqo",
+      "key": "n8CyyK6vRBacJtvq/cjF9+9bhLjvUKUredB3jAFBDVSZ5IIPec8kuqZZ/2ImHaI0",
+      "pwEm": "2026-10-28T15:03:45.734Z",
+      "ah": "ac40d667028ec3b5a1038cea7d484a73ad857769a037f9d1703349718f734db8",
+      "p": {
+        "iv": "/VvTWUotQXL5NlkQ",
+        "ct": "RhYhyRbfxcSw/ptXxkVJVMIGHQpIuGJnAcuJKXbHovqBFWQfbRmMYTmCQAtQsdtrjgqzZEEzM0EzH6AOBcGvcU3FdadF7KuChZVQFiHVhAbNAr7N1FAswCcKB43RO2MhyxeotwUBo1E0mZgneglT4nO4dSXKFDb77Cdu6N3513G1QaSzMG/JnQXRA0gPM4hJ2EkCZbJA6e9dRU/5LUsIHxhnOoFNLzYtxVrhNOsUkQbvww=="
+      },
+      "created": "2026-10-28T15:03:45.763Z"
+    },
+    {
+      "login": "d21040095901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Tr4S0CTysiqb01poWD/Myw==",
+      "iv": "dZXts6Ty0eh0VWuZ",
+      "key": "V32Kk1cVcXh1c5MVZ0dQb7VMtwPoyTvTS9qQLdihHTNYhaAfgjeHYpJW8K9zBI0p",
+      "pwEm": "2026-10-28T15:03:45.878Z",
+      "ah": "d258790f63d3dfeae31d37c82b2a44f6dc9d232512e3596f80c39e0fe08cd5e4",
+      "p": {
+        "iv": "fHlanrhJ7IfWkakl",
+        "ct": "AyfQaghGu12Ao1eSYXkjPuqVEgqX8IFlkcb7fwL2dTpBL3FsNH5bH/H/dQ0q6AAjnbFNhCn2wXF/b8jfyK3Sp3cw2r9McHX2vxRP6v79cSXsPpsI14vyZqnn0aT0xIhQNnez52h/9ZBPXNq6VUaF5W/dLNgdUs0B0KWdbmOQCmDynloputtS+PtbKhD8c9krdvPDFJ/l7USoKHRjfhxjWKA30OedarvL1qC+SlNHipL1W+/RqbhI072T5fbYRywC"
+      },
+      "created": "2026-10-28T15:03:45.917Z"
+    },
+    {
+      "login": "d21049858101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Lb4EGvf//TBLJUP3+OgllA==",
+      "iv": "cjUiZbKck9kh5CJB",
+      "key": "gkqgckK2FNeiddVQelpMYBU7CZ8n4wqNxQQXrnz5rkc07xNRh8oS/HqvKiqIWucO",
+      "pwEm": "2026-10-28T15:03:45.996Z",
+      "ah": "c3a90cc6fd05c508cba310a03e74000f1efa8b3f71256eec2beb6831e80d890c",
+      "p": {
+        "iv": "GH38HZoY13UCj9yC",
+        "ct": "vGBYaYdFA7FDmzKSykVtCBHET4RSbUWcSOE146N1qaPLf/ZVa31In5+JpFAwpGxgjmJM181bCEpVa00gkOvfvl0WgLiuNJuQCAceEKH64dGCC62/6ELGw0Z12q5nxfneZXuaJ0G0QkjCaIG9EllYzKclweOOjUCKKQPvfFgdQ7nGR805g6FL2M40sUrMHUNqHSj4j33rpieCSTl4c/kGSy3KQ8OXJnNoj00x6isXPOW7YmZdQdRRyA=="
+      },
+      "created": "2026-10-28T15:03:46.021Z"
+    },
+    {
+      "login": "d21026446001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "K/0HC9fEGu0l+n1pfoXpYw==",
+      "iv": "/+4uAFkL2PxucDOy",
+      "key": "S24oMxreDB012hbRKuPgmLeuREj15AvCTNH9U8YmxF9rN/EJX9kEDDySWp/IJJfw",
+      "pwEm": "2026-10-28T15:03:46.089Z",
+      "ah": "560f236794a3fb9f197488e9573a265be07a618ea6236c4e6958425c9a0d46a5",
+      "p": {
+        "iv": "dV3uR7FJ5d0AyTU8",
+        "ct": "uaD0NxoXNslVjwvIKEhUfSTpA3AXalaM/qVDFmd9ZohiqZhUcZ7ALF6HEUsz+MOKbh/su5AOO35OrEBv0isBa3cVPWWbHCiZYEn6S8P2z1ujWYvdQ186s4HwoUdgoFLYrFo4HfQSh7UIyvu86Y+9t1tS6aL6OOOzYP8HakLcHctaCPuVLn++afxLBDNSJ8WBT/dcOx0a/d0gybTqO4FLXckHKUks/rK/tkg9+C3861BCevyEhBXkTrqp3hd4f1c0"
+      },
+      "created": "2026-10-28T15:03:46.115Z"
+    },
+    {
+      "login": "d21051503301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "IimDZRSmp32Q9Lxe6jeoiA==",
+      "iv": "o1li0/+UtMwCon3L",
+      "key": "I73+wsq+0+DkFXNk7SU+SbK4g0GqvAMYyzDSP0DOmhyvWaQ5nRjp95JLxVOG9Fxm",
+      "pwEm": "2026-10-28T15:03:46.189Z",
+      "ah": "869d7e83bd8aa235857c3c5da4364c5894ecb2ecee9730d912b5f419dadb8b34",
+      "p": {
+        "iv": "qNkVpCPEriDOk1jG",
+        "ct": "XtyLW4egJex5+EiPkQL8oHVTNAvCqjlxaeUt3xI0SmNbiqmNyXWvnpGkkAe3lepQwMo7PLEELpUUGtgKgldgYgzyQjioSFONQ0MlgZ2bO0RMtxLK2Ib1WE6wVVxg+y816O57aA98cT9HD+W9dY7MXk+wH5MGAJTIHQXKXwN943yeCsVDcWqrHgCtBVCb1Dx6Bv6tq4XVqWQhSTAYqY83G8pky8nt+Wk0cU5uuZiQDhO8I6HwngYuw9VfXpWwVVBF"
+      },
+      "created": "2026-10-28T15:03:46.217Z"
+    },
+    {
+      "login": "d21046570701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "pJyiP3ZGQRAB+J3uPhu5xw==",
+      "iv": "G37qpxx28X81LJPu",
+      "key": "S+zZXSAZdNywFeRiRjGgFJ+q65AAimQkYWTlkrtWG2mrNSkCWDJk4BpRwarIMfhg",
+      "pwEm": "2026-10-28T15:03:46.324Z",
+      "ah": "1710b0a424440abbe03632a9c59a729e763dbbbb625b2bd4d2ce70898cdcf05f",
+      "p": {
+        "iv": "VYggWUM+WeutUVV6",
+        "ct": "LlfiN1GfyXa4QIX3k3j5AosUruJMVRFqz84NKJNAWIbEcPx2Arx9aYIV9AtnffkKkhQyBFeNS1BksPKeOz3HAF01Yh3DPOev7k69WogPr6sXgujPvGpGRo9S/4qrxxspDIYX9ilLJkTh1K2akIzgsC8KTeo7GhvMFKvrUq1l+Okuai3dall+40J7NxgZoIwLgQl3RfUYnmuN1Hxleo0xWmOSh1V3irtszOJsmt8Vq0EwT/6wNBFTk67j"
+      },
+      "created": "2026-10-28T15:03:46.360Z"
+    },
+    {
+      "login": "d21048468001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "vUXVSShwzNbTrw/iuHxIaw==",
+      "iv": "NgJ5RoJxxlHVXvt/",
+      "key": "Rg64+mzoqYUqEUrYAd1siAYceRIAAQKE+xerK0V1xY30lQrscEFN3zavCVlelP2+",
+      "pwEm": "2026-10-28T15:03:46.450Z",
+      "ah": "7f89e96fec88bb6a2acdbcd5f1696d75c4bf2c09d90c70ce39185e5e53dfe73a",
+      "p": {
+        "iv": "PcVKgmzap59hQWl7",
+        "ct": "CUJeuSrXdTJ9Alf7Wd4Ek3HcxDTRYXMwRtgPVgB6pUBp+SGCDbn0zANaQkAuULRZBEMZU0MiROn9hbUQaMcvYNpYnMI7vplOJ+glWhfoM4iCnV3wsMNHv1glJSl7j3J9z3IFLzXFe3B5tFjzyPwMO63tjLOza1r8xg3hBZ3UWOKFgp+6HVaZvP0ocp/eESOj8jqAaUhXoXste3QKWkSp9NeTEb9lZRq/egNxFVmkktbDk6KuRtW214llfJNjQg=="
+      },
+      "created": "2026-10-28T15:03:46.480Z"
+    },
+    {
+      "login": "d21047949301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "4k6x9N5OEeWE8RCStUeVXg==",
+      "iv": "cSeFcdleubSR+KW5",
+      "key": "i3E2DV7Qt+23My2UUQ7Dm63SYYq8cwV2o0djRowGqWpQMrTm5awvqGmsPbegKKJK",
+      "pwEm": "2026-10-28T15:03:46.583Z",
+      "ah": "fb02fd4d66da0bb03a0baf383c97ef415131e01ae4d1dd09d43ec3881cc31a50",
+      "p": {
+        "iv": "UQ2r0HlGnOnok0dN",
+        "ct": "4REhYqnqjnu7E4gZFALNP0duZqTAPuYCP+5xLSCriKAlTSl1iYNlnT5qqS1oo9xilmU0C4Z5kl+weEXLRMDM/7NLAin7sfqvcCiy5L/T3+r02GXz67CBFBU4Z+fX4eJVPIo0caayRGG9e8UTcDFsz0ykRh/Kyh96anorSYfitpf1WijSoqvVw6hTPo1aF6VV9QdnJjXaAE3mrdtFBf6cTDS2NO9G3J9tTn7cT/coaHWYiQ=="
+      },
+      "created": "2026-10-28T15:03:46.617Z"
+    },
+    {
+      "login": "d21049920401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "UjskjSqM1nqDdWqJ2aYCOg==",
+      "iv": "HgEZgJ4Ip0EW9izB",
+      "key": "6GeorqK+e6L8F8FdZBaFixJks2izKXsro9fwVNMpI2/bMvwHJWWCFo25s5eD7BS8",
+      "pwEm": "2026-10-28T15:03:46.715Z",
+      "ah": "0f9f23a928851216340a7aed0b8636515760d5c55ec2bf205b62550e79dd87ec",
+      "p": {
+        "iv": "aJeR0yVLp8jiHemQ",
+        "ct": "y+Kuk97LnnYQUncNk5tGrh3Z9JHlAbmg0SjVXmZrUVQwCWMI9EbY4t8XXlQStrk1BBMEnf0sqEVYt5LPnT3Ufav/NfpDQ0Sldof1gaseYKhmSJEobdfQWcETkpbtcmI5r8zkcFqQLkTQUSBgfLhsVNy3AWr8Jyq5/pc0mN9WuWViVEaXqj8gOVyEpP7lSRZeaqAfSRKxnd4ibc1sIdPmWYo6z80wy0sYxPM="
+      },
+      "created": "2026-10-28T15:03:46.750Z"
+    },
+    {
+      "login": "d21047974401",
+      "role": "ajudante",
+      "active": true,
+      "salt": "TCTUB9Z86io4f70UbRkBpA==",
+      "iv": "h8KYqFnJw+bMI1hW",
+      "key": "IIjTqcs3+gaOQfh/u58dGikJwgrC9qt/drZW1PTROyzTdRXb0i8GK3Y+91HUUmsD",
+      "pwEm": "2026-10-28T15:03:46.849Z",
+      "ah": "565965f9d35500a482aac51f9021baabb2fc7760be5cd45463ea69ae8002acf1",
+      "p": {
+        "iv": "3Q7oV/bTJd9F/HQa",
+        "ct": "uRnQWBiLVRC9K6p0au1uDThAzI30TO25mMpjcmPcs66D5ST3qk1PAIYRIZwjeF8A016i5zq1YwOq2749zWADYNzMkutYXTOqAJ2wqZSVDLSvG7IHfKxFbjq1Z4hBD5EyWkE5RYLozJlpjoA2yz0bOta0ydugEBZFpZmcuvR8BV1CVw4Ow9AVQMLrePzo5RXqN6m+naa/B5oHsNkC+G7U5USfvV1Z5QDE1whx3B4zP/zES2BPyuxaD0rU"
+      },
+      "created": "2026-10-28T15:03:46.881Z"
+    },
+    {
+      "login": "d21051140601",
+      "role": "ajudante",
+      "active": true,
+      "salt": "1V3Xf/b1OseZiTV0AvViZA==",
+      "iv": "kbF6P1R1RcjXT1Jy",
+      "key": "oEe/VWp/vl38ADGfOacXiMcgCYRqpnc22r1nOjlHBTx1QtSR/GenhgQ1qJDyVjP6",
+      "pwEm": "2026-10-28T15:03:46.952Z",
+      "ah": "cd5d24291c3e6a52f48583981caac5c4dc8a64acd56d1f7a62b54538b46440e1",
+      "p": {
+        "iv": "VckiunhUKHmH/G4z",
+        "ct": "LyZ+WD0k2uHPQubn5YgBJrQ8B764vkVcnFxgz1gz9sW1H6smJvuzWH9M3ZFJJSOaYRDyEKaC6DXFUlbAlZHy8/MlRJxtvL6gEWFM4ZUrXeJ+m4sp2qWbPgGKgoJKqsNieOwBw0EgYst6f//xRvM3Bti5z2FfrHvyhuh+mMjbu0aYng0wWe6EQZ0dYQ9rJ54kDIDxRIlPAQeq8UFCF6Vd/OjqzpafPoxW8+RLpfU5"
+      },
+      "created": "2026-10-28T15:03:46.982Z"
+    },
+    {
+      "login": "d21026445201",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Lqb6ZrQQs9jrrPpyaIQSXw==",
+      "iv": "2UbLqf+6REamu76z",
+      "key": "p1/8gCwPBB0mOpohA8Tw8jFO6esHhzJFbh9JRh1Vo3f1FJGqq2mtiWfikEWE9QL2",
+      "pwEm": "2026-10-28T15:03:47.081Z",
+      "ah": "9535aaca57fb020ce5dd40b1badd149d2ca377ccbf88e212ae23c2e9876a98d3",
+      "p": {
+        "iv": "bz5/LJoM8t4aaLoa",
+        "ct": "w3x9mvoqJLFfA661DcxduZRg6k+rix02P0n2NyQsastbLiS3lfjzEAjGwxcGy7Yzweu+U82vAoENBJdu/7hav2iNwfriCkeBofuhhn6tgQUXzN/irmBWokeXqFwwDQbFN0qGKb3J1O1e015KlJJJZij+aiuWHbhhBzdSB88R5ps3kYIN9+P+KoXKoUYifndO/BONBLwaONXnuA+uH5N5Gzgi965p5e5ofoW1W7WNvIAtjVCeRPhuUqYU"
+      },
+      "created": "2026-10-28T15:03:47.110Z"
+    },
+    {
+      "login": "d21051020801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "m5BOxpM4lZI1BLRmanCCFQ==",
+      "iv": "NgYCr/ktPbdhax8K",
+      "key": "8w4qQf28Z12UDIqV3U4qqFD/ihS0d3avULU1FRbKISukjs15UiqcFdvMKHIM9i2k",
+      "pwEm": "2026-10-28T15:03:47.177Z",
+      "ah": "2d9258cd42bfc07d968c3f12c9b56a8eb5811a947afa17ff0989065e9bda6831",
+      "p": {
+        "iv": "RuIBjY3iEkAyY++s",
+        "ct": "7bPVgP/LLlpfDDxgZfiTgRbsrobX4I5g48hH80jingnVPFUgvClVb/5yNr6gEnnxg1ma+3oDNlHnZwPxdfdctlXnsHU0vCnlVNR55CWeGv5uO+6aGgsY/bzcWrr7ihNYBmwGz7AxYc2C6Zy/FbQdfClMdVXZj/vtx4g+jmdyIZTmhL4uSjClA3JZXPqOzMJfV7ehwxR8R2zjMKQ3dBWYPWIcggxUOqTu8UoPotHke8Zk9A=="
+      },
+      "created": "2026-10-28T15:03:47.202Z"
+    },
+    {
+      "login": "d21049557001",
+      "role": "ajudante",
+      "active": true,
+      "salt": "PnIdlG/Se1Bm8IwiIQauxg==",
+      "iv": "gfUchMMoMkCSFFXs",
+      "key": "UNocewip0gOnBAFM3I038jb4prwYOAf9KiLNhKlEnmSftEQwkLQ1r9v1cEGZz+7w",
+      "pwEm": "2026-10-28T15:03:47.288Z",
+      "ah": "801a4327c3596c48a39aa556601c07467a67c48bea41461122e20672e9ae0eb5",
+      "p": {
+        "iv": "5xeBH4Y3RjYEvc26",
+        "ct": "UxQtJedyPvGM/0CvqTYk0kkbcGE91jZS0c/mbOf3xQJmArhwZrIrSF83HmNpE9s4EbKfTeMRyL1dv0SRY+2KENOkaK3hNGRoLWnHPApmAn6+Wm2TbCEQ0dIXWR/Yo/LwOSxwdfpsRPfzGALAfzyQo/FUwe9A/SyxOLRQssEO3rorWgjrUa4qestAt/+BtN6P9DoKkOTVt9VhOVg/NMno76B5ION5DqxWk7NPccy6"
+      },
+      "created": "2026-10-28T15:03:47.320Z"
+    },
+    {
+      "login": "d21044788801",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Zk2S3P516L9duB3pIa0L7A==",
+      "iv": "TKo4etrBC0wRpgq1",
+      "key": "n//h8crssmBrcO9TDkwKJmtcsWTTTmp2bLEDt9QdzjKUIVkAEsrePndFEEjTRwBs",
+      "pwEm": "2026-10-28T15:03:47.419Z",
+      "ah": "4b0e3dfb26921b3710d0d5d9467b79858f4eb8666a304ed6b3ddd429d20e28b3",
+      "p": {
+        "iv": "F/1Z/j8tB2C9HIpQ",
+        "ct": "BEZknRmXd007teJaOJB1m4RPkWvOAQOouMbnDBUlQ8wwp8/8VghKVXIym8LZlPICjDWXovs3WKX05B1Hnhyuyhyp37gfeeWadP6mWqSINYOKgqPGRcrDySLQNVWykfTapuZy1TkLRWqJ+Bo9sv3HvgAGZ5Pz/Xxu7DrYfCX9Kcqa5gZ5wNRLhN1lVN3IzEwtIwXqBCNZ9W8vIper53TjW1q+tRIyM90IUBxXpbnj7PWQTzpjEXgV+j6r"
+      },
+      "created": "2026-10-28T15:03:47.446Z"
+    },
+    {
+      "login": "d21049920901",
+      "role": "ajudante",
+      "active": true,
+      "salt": "CAT835JeyRTg6ZoA55BBZg==",
+      "iv": "6m3rNLGCX22oqtZM",
+      "key": "KanwGfwT6rCAsP1GTtTXeUq2kVgFa6VBM4G+wEq9NWzkKyEFlqLuEBYmp6pfu+F1",
+      "pwEm": "2026-10-28T15:03:47.515Z",
+      "ah": "2229adcb5eaed84f8eae329d46067c6b647084a5bbe4bc747d684e0eaa5f9779",
+      "p": {
+        "iv": "sr/T7aLO6iQJA+FF",
+        "ct": "rg+9c/Dn6KjDaxPTh09HdMdprLKt7efH9jhq67/eO4Xr2FJLEps4TDPCxI9Tr9OnT4N/tqgPNECtZczXXG+juS3/2P0bod7/L7uhRIDoqHu0UJu9gjhl1kEJy7LN14FR78bXLaB23s6H6WH1QdjSiO61jY0RBNd9dvl3sd3rhVCjn0+wC7aqXQrq6S4dUD1sbY0ld2DBMlPgPozDYYR4adDxR3wsyL5g"
+      },
+      "created": "2026-10-28T15:03:47.543Z"
+    },
+    {
+      "login": "d21048387101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "pJ2Z3fqv1U86lYYPhadMYQ==",
+      "iv": "FXKm34XNehHdhhtQ",
+      "key": "hpS/p3SlaLK0uy78o/o7PGHRWG9QI2WnVvCPpBqu/25xtZaUuI7bV+wEt8l6cNeu",
+      "pwEm": "2026-10-28T15:03:47.643Z",
+      "ah": "91badc1be7132fcc761704bef2648a00fd89827a1e8bd619a1e4ef0bfedb5b91",
+      "p": {
+        "iv": "ZhCjJTt7zMwV/Zc0",
+        "ct": "nITorW8P/ZOXRya5Lk21rXjVwbZ1AyEfRNeQEKQQXaHAYhWhapwxYgEHLJ1Qd40VOxvKsUMcjOxgafcVQ7baLJf53tn4vETSBsKGIAhl9RQ7qyrABWQboJD3BtYCS6qqhVstRLGG6n+b0osoq0XUFYNA/XZGRz8dQfZBKq0V9w5PEJ7g0t51v+LnWnEnxHk2CQNmCgR0BqjRP5PR2X3i/u9Wq0TZDVFEiutw0lNqSVIXX3LMna0RM1BV"
+      },
+      "created": "2026-10-28T15:03:47.680Z"
+    },
+    {
+      "login": "d21030822301",
+      "role": "ajudante",
+      "active": true,
+      "salt": "Qp4yDaIdzSuIBLiRIfoLLw==",
+      "iv": "vVxptphzktky3y0/",
+      "key": "AvvhMy+tQxyuid5T2NVwn95gR1t3kXSF8NRs3CcmVgtA2ErEHQy8f3xR9P8dUmqP",
+      "pwEm": "2026-10-28T15:03:47.779Z",
+      "ah": "18a8dff8c3e2dd097283c8875793206fe8babac261bd7b707db3290df70bfc2a",
+      "p": {
+        "iv": "2sex+mcrXYivN11u",
+        "ct": "tR4H+pjKPZN/rbudkfKEmL4K1m64mxs38Z0XanW8JU40/REj8p8P9bNNc5o6KU82iAtLmL4YweGm/vgtR1j8nkqggk0fr0R8siBr1nCXQwibLXkHF64/hsabseA5Jk4kHu5ofxMNPk9hdp8fHAagAi1MEdLlKxNLppbl0Q4xKsFFesfQ2nK7xkwLNtOWfF/l1kuByFbVGJmuYCwl8d3OqF7DQ2cLvg9KjEqyHrZR/YgxsCCdCGhYXjtMXsg="
+      },
+      "created": "2026-10-28T15:03:47.807Z"
+    },
+    {
+      "login": "d21042929701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "77rQkaV5qsR4u79ZNxKvOw==",
+      "iv": "8Xa4IjVkYH/++lGz",
+      "key": "ahONxryzOZTQnL/GqLofuyfvbhC3y9lgwPw7l+t4N/MPt1/VPdO51CDp5mKoiByz",
+      "pwEm": "2026-10-28T15:03:47.906Z",
+      "ah": "b6d56c07449000a4a27fda7289a85deb12b65db7c2fcc4869c0d8854dcf99fe7",
+      "p": {
+        "iv": "VeYTKPSN/ttEjPF4",
+        "ct": "E2CHndt+Yru9Qn9ZQGp+zLKspl7zunNDCHjlRdj1Q54/2/00akBZQ5RnA2Cov3b2oy5SU1h5zmoiIYvL8CbiXn8mQXRx5/E2YYvuvqnvf/UjU/g6laIisQKCXwvleF0ZVnbYdxcx7rHPA9xrlD9hyRHDVW97y5AVBAlEPcShtIwX2lignTg+kXkuIBshjirgNBPa3xJbGfkyMTxEACHLpjln0pBaLaiMrIzsNYWcfaF59O1T8XeMNK2zSE2lEg=="
+      },
+      "created": "2026-10-28T15:03:47.931Z"
+    },
+    {
+      "login": "d21046740701",
+      "role": "ajudante",
+      "active": true,
+      "salt": "YJevdeF9pqSMiNsEDqq2Vg==",
+      "iv": "3MYbEBTa8LUUonW4",
+      "key": "36kzRZhwYgW6gnt53fEMPeSEGAo4eqe2tBC6IPwzK13NicPRuo5qaKWOGR99FZa1",
+      "pwEm": "2026-10-28T15:03:48.009Z",
+      "ah": "8e73bd007c76311f2e87f7d79dc11f72e77ef8d5be945511d98fdc2414a10f6c",
+      "p": {
+        "iv": "30wO0xSWNXIp8Yk2",
+        "ct": "mJcsxJ4WAx/B7Mjbv173vidJCbiqacXKUDtvA8T8RorhK6+Ccn2b7cTEAchIMa4FmyKc8P53lK8WKdjeiJydqnE2rjAFySF7eT/OQw6wqKd27tg7RSciSHSAXIAy5oXnH2S33WwW/Ja4V3BVuWqJ2IvTp6NZLF8lABIeDjxrqcdyN87uYnSrZviklbG9O0gEFF3b96RIbUkut+7bYzDRyspo+qD02baCg4uIArQj"
+      },
+      "created": "2026-10-28T15:03:48.051Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbwZzOY8Qo1q3uE_W6XEn8wwpDwZDv3wOSwbHOTBjT1MAW4FFhF70jGz7HVgXAJxvpasIg/exec"
