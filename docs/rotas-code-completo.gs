@@ -171,6 +171,7 @@ function doGet_(e) {
       linhas.push({ k: id, sid: id, seller: ix.sn >= 0 ? cel(r, ix.sn) : id, endereco: ix.end >= 0 ? cel(r, ix.end) : '', bairro: ix.bai >= 0 ? cel(r, ix.bai) : '', cep: cel(r, ix.cep), cidade: ix.cid >= 0 ? cel(r, ix.cid) : '', cpf: cel(r, ix.cpf), placa: cel(r, ix.placa), clientes: ['SHEIN'], media: 0, motorista: cel(r, ix.nome), alternativo: '', v: valores });
     });
     const veic = veiculos_(c.rows, ix);
+    anexaAlt_(q.base, linhas);
     return respostaCache_(q.base, ver, { colunas, linhas, motoristas: Object.keys(veic).sort(), veiculos: veic });
   }
   const ss = SpreadsheetApp.openById(P.getProperty(BASES[q.base].prop));
@@ -185,6 +186,7 @@ function doGet_(e) {
   });
   const linhas = [...porK.values()].filter(l => String(l.endereco || '').trim() && String(l.cep || '').trim() && String(l.motorista || '').trim());
   const motoristas = [...new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(linhas.map(l => String(l.motorista || '').trim())).filter(String))].sort();
+  anexaAlt_(q.base, linhas);
   return respostaCache_(q.base, ver, { linhas, motoristas });
 }
 function doPost_(e) {
@@ -198,6 +200,7 @@ function doPost_(e) {
   try {
     const rejeitados = [];
     let salvos = 0;
+    const regs = [];
     if (BASES[d.base].csv) {
       const id = P.getProperty(BASES[d.base].prop);
       const c = lerCsv_(id);
@@ -211,11 +214,12 @@ function doPost_(e) {
           if (!i || String(r[ix.id]).trim() !== String(m.k)) return;
           achou = true;
           if (String(r[ix.nome]).trim() === m.motorista) return;
+          regs.push({ k: m.k, seller: ix.sn >= 0 ? String(r[ix.sn]).trim() : String(m.k), campo: 'mot', antes: String(r[ix.nome]).trim(), depois: m.motorista });
           r[ix.nome] = m.motorista; r[ix.cpf] = novo[0]; r[ix.placa] = novo[1]; salvos++;
         });
         if (!achou) rejeitados.push(m.k);
       });
-      if (salvos) { gravarCsv_(id, c); cacheLimpar_(d.base); }
+      if (salvos) { gravarCsv_(id, c); registrarAlt_(d.base, d.usuario, regs); cacheLimpar_(d.base); }
       return resposta({ ok: true, salvos, rejeitados });
     }
     const ss = SpreadsheetApp.openById(P.getProperty(BASES[d.base].prop));
@@ -240,6 +244,7 @@ function doPost_(e) {
       is.forEach(i => {
         const col = alt ? colAlt : colNome;
         if (col[i][0] === m.motorista) return;
+        regs.push({ k: m.k, seller: String(v[i][0]), campo: alt ? 'alt' : 'mot', antes: String(col[i][0] || ''), depois: m.motorista });
         col[i][0] = m.motorista;
         if (alt) nAlt++; else nNome++;
       });
@@ -251,11 +256,34 @@ function doPost_(e) {
     }
     if (nNome) sh.getRange(1, L.mot + 1, colNome.length, 1).setValues(colNome);
     salvos = nNome + nAlt;
-    if (salvos) cacheLimpar_(d.base);
+    if (salvos) { registrarAlt_(d.base, d.usuario, regs); cacheLimpar_(d.base); }
     return resposta({ ok: true, salvos, rejeitados });
   } finally {
     lock.releaseLock();
   }
+}
+/** Histórico de trocas de motorista (aba _ALTERACOES): base, k, seller, campo (mot/alt), antes, depois, usuário, hora. Falha aqui nunca impede de salvar. */
+function registrarAlt_(base, usuario, regs) {
+  try {
+    if (!regs.length) return;
+    const ss = SpreadsheetApp.openById(P.getProperty('ID_SEMANA'));
+    const sh = ss.getSheetByName('_ALTERACOES') || ss.insertSheet('_ALTERACOES');
+    if (sh.getLastRow() === 0) sh.appendRow(['QUANDO', 'BASE', 'CHAVE', 'SELLER', 'CAMPO', 'ANTES', 'DEPOIS', 'USUARIO']);
+    const agora = new Date(), u = String(usuario || 'Sem identificação').slice(0, 80);
+    const lin = regs.map(g => [agora, base, "'" + g.k, g.seller, g.campo, g.antes, g.depois, u]);
+    sh.getRange(sh.getLastRow() + 1, 1, lin.length, 8).setValues(lin);
+  } catch (e) { Logger.log('_ALTERACOES: ' + e); }
+}
+/** Marca cada seller com a última troca de motorista de ontem e hoje: l.ult = {u: quem, t: quando (ms), a: motorista anterior}. */
+function anexaAlt_(base, linhas) {
+  try {
+    const sh = SpreadsheetApp.openById(P.getProperty('ID_SEMANA')).getSheetByName('_ALTERACOES');
+    if (!sh || sh.getLastRow() < 2) return;
+    const tz = Session.getScriptTimeZone(), hoje = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), ini = new Date(hoje + 'T00:00:00').getTime() - 86400000;
+    const n = Math.min(sh.getLastRow() - 1, 4000), v = sh.getRange(sh.getLastRow() - n + 1, 1, n, 8).getValues(), m = {};
+    v.forEach(r => { const t = new Date(r[0]).getTime(); if (r[1] === base && r[4] === 'mot' && t >= ini) m[String(r[2]).replace(/^'/, '')] = { u: String(r[7]), t, a: String(r[5]) }; });
+    linhas.forEach(l => { if (m[String(l.k)]) l.ult = m[String(l.k)]; });
+  } catch (e) { Logger.log('anexaAlt: ' + e); }
 }
 function doGet(e) {
   try { return doGet_(e); } catch (err) { return resposta({ erro: String(err) }); }

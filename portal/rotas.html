@@ -110,6 +110,7 @@ th.cmd,td.cmd{text-align:center;min-width:72px;padding-left:14px;padding-right:1
 .compact2 .sub3{display:block}
 .compact2 .calt{display:none}
 .sub4{display:none!important}
+.ult{font-size:11px;color:var(--mut);margin-top:3px;white-space:normal;line-height:1.25}
 .compact3 .cmd{display:none}
 .compact3 .sub4{display:inline-block!important;background:none!important;color:var(--mut)!important}
 .compact .ccl,.compact .cb,.compact .cc,.compact .cp{display:none}
@@ -403,6 +404,7 @@ function chaveEnd(l){
 }
 function contaEnd(){const c={};S.linhas.forEach(l=>{l._ek=chaveEnd(l);if(l._ek)c[l._ek]=(c[l._ek]||0)+1});S.ends=c}
 const endHTML=l=>{const n=l._ek&&S.ends[l._ek]>1?S.ends[l._ek]:0;return n?'<span class="endr" title="'+n+' sellers neste endereço">'+esc(l.endereco)+'</span>':esc(l.endereco)};
+const ultHTML=l=>{if(!l.ult)return '';const d=new Date(l.ult.t),hj=d.toDateString()===new Date().toDateString(),hh=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div class="ult" title="Antes: '+esc(l.ult.a||'sem motorista')+'">&#9998; '+(hj?'hoje':'ontem')+' '+hh+' &middot; '+esc(l.ult.u)+'</div>'};
 function celAlt(l){
   if(l.alt)return '<button class="mot alt" data-ua="1">'+esc(curto(l.alt))+'</button>';
   const g=altSug(l);
@@ -449,8 +451,8 @@ function desenhar(){
   if(!S.thG)S.thG=[...hr.cells].slice(1).map(c=>c.outerHTML).join('');
   const ec=ee?eeCols():null,mk=ee?'ee:'+ec.cab.join('|'):'g';
   if(hr.dataset.m!==mk){while(hr.cells.length>1)hr.deleteCell(1);hr.insertAdjacentHTML('beforeend',ee?ec.cab.map((c,i)=>'<th'+(ec.ce[i]?' class="ce"':'')+'>'+esc(c)+'</th>').join(''):S.thG);hr.dataset.m=mk}
-  if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td data-l="'+esc(ec.cab[i])+'" class="nm"><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button></td>':'<td data-l="'+esc(ec.cab[i])+'" class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
-  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button></td></tr>').join('')||'<tr><td colspan="9" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td data-l="'+esc(ec.cab[i])+'" class="nm"><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button>'+ultHTML(l)+'</td>':'<td data-l="'+esc(ec.cab[i])+'" class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
+  else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button>'+ultHTML(l)+'</td></tr>').join('')||'<tr><td colspan="9" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
   tudo.checked=vis.length>0&&nv===vis.length;tudo.indeterminate=nv>0&&nv<vis.length;
   const todosF=f.length>0&&f.every(l=>S.sel.has(l.k));
@@ -499,8 +501,8 @@ function desenharOps(){
 }
 async function salvar(mudancas,msg){
   const toast=(t,er,u)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
-  const ant=mudancas.map(m=>({k:m.k,campo:m.campo,motorista:S.linhas.find(l=>l.k===m.k)[m.campo==='alt'?'alt':'motorista']}));
-  const aplicar=lst=>lst.forEach(m=>{const l=S.linhas.find(l=>l.k===m.k);l[m.campo==='alt'?'alt':'motorista']=m.motorista;if(m.campo!=='alt'&&S.veic&&S.veic[m.motorista]){l.cpf=S.veic[m.motorista][0];l.placa=S.veic[m.motorista][1]}});
+  const ant=mudancas.map(m=>{const l=S.linhas.find(l=>l.k===m.k);return {k:m.k,campo:m.campo,motorista:l[m.campo==='alt'?'alt':'motorista'],ult:l.ult}});
+  const aplicar=lst=>lst.forEach(m=>{const l=S.linhas.find(l=>l.k===m.k);if(m.campo!=='alt'){if(lst===ant)l.ult=m.ult;else if(l.motorista!==m.motorista)l.ult={u:usuario,t:Date.now(),a:l.motorista}}l[m.campo==='alt'?'alt':'motorista']=m.motorista;if(m.campo!=='alt'&&S.veic&&S.veic[m.motorista]){l.cpf=S.veic[m.motorista][0];l.placa=S.veic[m.motorista][1]}});
   aplicar(mudancas);S.reg&&aplicar0();desenharFiltros();desenhar();
   S.ocupado=true;
   try{
