@@ -509,10 +509,11 @@ ${next?`<button class="btn btn-primary big" id="mark"${consent?'':' disabled'}>$
 <button class="btn btn-ghost btn-sm" id="ajb" type="button">Esqueceu ou errou uma marcação? Solicitar ajuste</button></div>
 <div class="box"><div class="box-head"><div><h3>Marcações de hoje</h3><p>${mine.size} de 4</p></div></div><ol class="marks">${TIPOS.map(([t,l])=>{const p=mine.get(t);return `<li class="${p?(p.sent?'ok':'wait'):''}">${p&&p.foto?`<img src="${imgSeg(p.foto)}" alt="Foto da marcação">`:'<span class="ph"></span>'}<div><b>${l}</b><small>${p?hm(p.ts)+' · '+esc(p.end):'Pendente'}</small>${p&&!p.sent?'<small class="sending">Enviando para a planilha…</small>':''}</div></li>`}).join('')}</ol></div></div>
 <div id="ajx"></div>
+<div id="lembrete"></div>
 <div class="box mt" id="hist"></div>`;
 clearInterval(CLK);const tick=()=>{const c=$('#clk');if(!c)return clearInterval(CLK);c.textContent=new Date().toLocaleTimeString('pt-BR')};CLK=setInterval(tick,1000);tick();onLeave(()=>clearInterval(CLK));
 if(!consent){$('#cs').onchange=e=>$('#csb').disabled=!e.target.checked;$('#csb').onclick=()=>{localStorage.setItem(CONS_KEY+'_'+ME.login,new Date().toISOString());pontoTela()}}
-$('#ajb').onclick=solicitarAjuste;minhasSolicitacoes();histPonto();
+$('#ajb').onclick=solicitarAjuste;minhasSolicitacoes();histPonto();window.GL_ALARME&&GL_ALARME($('#lembrete'));
 if(next&&consent)$('#mark').onclick=async e=>{if(MARCANDO)return;MARCANDO=true;const b=e.currentTarget,t0=b.innerHTML;b.disabled=true;b.textContent='Abrindo câmera…';let salvo=false;
 try{const acc=conferirAcesso(true);const cap=await capturar(next[1]);if(!cap||!await acc)return;
 if(marcasHoje().has(next[0])){toast('Essa marcação já foi registrada.');return}
