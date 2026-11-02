@@ -1424,6 +1424,21 @@
         "ct": "mJcsxJ4WAx/B7Mjbv173vidJCbiqacXKUDtvA8T8RorhK6+Ccn2b7cTEAchIMa4FmyKc8P53lK8WKdjeiJydqnE2rjAFySF7eT/OQw6wqKd27tg7RSciSHSAXIAy5oXnH2S33WwW/Ja4V3BVuWqJ2IvTp6NZLF8lABIeDjxrqcdyN87uYnSrZviklbG9O0gEFF3b96RIbUkut+7bYzDRyspo+qD02baCg4uIArQj"
       },
       "created": "2026-10-28T15:03:48.051Z"
+    },
+    {
+      "login": "d21051799101",
+      "role": "ajudante",
+      "active": true,
+      "salt": "gngZ3voP/mpRV9BqXzNEmw==",
+      "iv": "xNPvTRWXStds6H34",
+      "key": "FcrRmZBseF6IpoSxjJKZcS8pnAqq5ObfOHrrl35OHyHSQZM2xCPjFXslbLOob+Xi",
+      "pwEm": "2026-11-02T12:33:15.939Z",
+      "ah": "784ae492abc6ae03efb643531fc5fa2d52f2fd21875db16e551df1ee490ac0a0",
+      "p": {
+        "iv": "41RB0ceceZkpIhun",
+        "ct": "6IOjsShZUXtitx9/xFWd427sMOW+ajxU/Gy42TWYckOt5JvhdVhC8rBy0pi62lGOViXY9BsCcKSHM1yxjZyzN/eMUSACxeVvHcNLiwAiyyrrz+iSC8sdpeOi1V0Tr/VthcxJMXL10C9Yt4XcALUVig+vSANoDTOnVBUKCgZVTy+ZrCVufkLzptmbTiva03KrYbqIdaA4GOkUFZUwbFjHU+osUNkHS2wD4Vg6RS2Ve5kSz/xumiYSt/+1GoP2XA=="
+      },
+      "created": "2026-11-02T12:33:15.971Z"
     }
   ],
   "senhaUrl": "https://script.google.com/macros/s/AKfycbwZzOY8Qo1q3uE_W6XEn8wwpDwZDv3wOSwbHOTBjT1MAW4FFhF70jGz7HVgXAJxvpasIg/exec"
