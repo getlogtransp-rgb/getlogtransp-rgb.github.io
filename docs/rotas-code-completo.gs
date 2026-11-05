@@ -16,15 +16,31 @@ function nrm_(s) {
 // Lista oficial de motoristas: planilha "GET" (aba que começa com GET, coluna NOME).
 // ID padrão abaixo; para trocar, crie a propriedade de script ID_GET. Se a leitura falhar, usa a aba _MOTORISTAS.
 const ID_GET_PADRAO = '1PFKysChl21loaMAwn1vM65wA9RNBmkNW';
-function motoristasLista_(ss) {
+function nomesDaAba_(sheets) {
   const out = [];
+  const sh = sheets.filter(x => nrm_(x.getName()).indexOf('GET') === 0)[0];
+  if (!sh) return out;
+  const v = sh.getDataRange().getValues();
+  const c = v[0].map(nrm_).indexOf('NOME');
+  if (c >= 0) v.slice(1).forEach(r => { const n = String(r[c] == null ? '' : r[c]).trim(); if (n) out.push(n); });
+  return out;
+}
+function motoristasLista_(ss) {
+  let out = [];
   try {
-    const pl = SpreadsheetApp.openById(P.getProperty('ID_GET') || ID_GET_PADRAO);
-    const sh = pl.getSheets().filter(x => nrm_(x.getName()).indexOf('GET') === 0)[0];
-    if (sh) {
-      const v = sh.getDataRange().getValues();
-      const c = v[0].map(nrm_).indexOf('NOME');
-      if (c >= 0) v.slice(1).forEach(r => { const n = String(r[c] == null ? '' : r[c]).trim(); if (n) out.push(n); });
+    const id = P.getProperty('ID_GET') || ID_GET_PADRAO;
+    const f = DriveApp.getFileById(id);
+    const ck = 'mot_get_' + id + '_' + f.getLastUpdated().getTime();
+    const C = CacheService.getScriptCache(), salvo = C.get(ck);
+    if (salvo) out = JSON.parse(salvo);
+    else {
+      if (f.getMimeType() === MimeType.GOOGLE_SHEETS) out = nomesDaAba_(SpreadsheetApp.openById(id).getSheets());
+      else {
+        // arquivo .xlsx no Drive: converte numa cópia temporária, lê e apaga a cópia
+        const tmp = Drive.Files.create({ name: 'tmp motoristas', mimeType: MimeType.GOOGLE_SHEETS }, f.getBlob());
+        try { out = nomesDaAba_(SpreadsheetApp.openById(tmp.id).getSheets()); } finally { DriveApp.getFileById(tmp.id).setTrashed(true); }
+      }
+      if (out.length) { try { C.put(ck, JSON.stringify(out), CACHE_TTL); } catch (e) {} }
     }
   } catch (e) {}
   if (out.length) return out;
