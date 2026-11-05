@@ -13,6 +13,7 @@ body{margin:0;background:var(--bg);color:#0E1F45;font:14px/1.4 Inter,'Segoe UI',
 header{background:var(--nav);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 header h1{margin:0;font-size:18px}
 header span{border-left:3px solid var(--lar);padding-left:10px}
+thead th.so{cursor:pointer;user-select:none}thead th.so:hover{color:var(--tit)}thead th.so::after{content:attr(data-s);font-size:9px}
 main{max-width:none;margin:0;padding:0 16px 12px}
 .abas{display:flex;gap:4px;border-bottom:1px solid var(--bd);background:#fff;margin:0 -16px 12px;padding:0 16px;flex-wrap:wrap}
 .aba{padding:14px 18px;border:0;border-bottom:3px solid transparent;background:none;font-weight:600;color:var(--mut);cursor:pointer;white-space:nowrap}
@@ -277,7 +278,7 @@ function endPadrao(end,bairro,cidade){
   return r+(num?', '+num:'')+(comp.length?' - '+comp.join(', '):'');
 }
 const BASES_OK=['semana','sabado','ee','ee_sabado'];
-const S={base:BASES_OK.includes(localStorage.getItem('rotas_base'))?localStorage.getItem('rotas_base'):'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',ord:{mot:'az',cli:'az',cid:'az',bai:'az'},pag:1,lim:100,ult:-1,desfazer:null};
+const S={base:BASES_OK.includes(localStorage.getItem('rotas_base'))?localStorage.getItem('rotas_base'):'semana',linhas:[],mots:[],sel:new Set(),q:'',f:{mot:new Set(),cli:new Set(),cid:new Set(),bai:new Set()},fcep:'',st:'todos',pop:null,pq:'',ord:{mot:'az',cli:'az',cid:'az',bai:'az'},pag:1,os:null,lim:100,ult:-1,desfazer:null};
 let usuario=CFG.usuarioPortal();
 if(!usuario){usuario=prompt('Seu nome para registrar as alterações:')||'Sem identificação';localStorage.setItem('getlog_usuario',usuario)}
 $('usr').textContent=usuario;
@@ -355,8 +356,15 @@ function passa(l,skip){
   return t.every(x=>l._b.includes(x));
 }
 function filtradas(){
-  return S.linhas.filter(l=>passa(l)).sort((a,b)=>a.cep.localeCompare(b.cep)||a.seller.localeCompare(b.seller));
+  const dg=x=>String(x||'').replace(/\D/g,''),ee=S.base.startsWith('ee'),ec=ee?eeCols():null,o=S.os;
+  const ek=l=>l._ek||norm(l.endereco||''),base=(a,b)=>dg(a.cep).localeCompare(dg(b.cep))||ek(a).localeCompare(ek(b),'pt-BR')||a.seller.localeCompare(b.seller,'pt-BR');
+  const val=l=>{const i=o.c-1;if(ee)return eeVals(l,ec)[i]||'';return [l.seller,l.clientes.join(' '),l.endereco,l.bairro,l.cidade,dg(l.cep),l.media||0,curto(l.motorista)][i]};
+  return S.linhas.filter(l=>passa(l)).sort((a,b)=>{
+    if(o&&o.c){const x=val(a),y=val(b),r=(typeof x==='number'&&typeof y==='number')?x-y:String(x).localeCompare(String(y),'pt-BR',{numeric:true});if(r)return r*o.d}
+    return base(a,b)});
 }
+document.addEventListener('click',e=>{const th=e.target.closest('thead th');if(!th||th.cellIndex<1||e.target.closest('input'))return;
+  const c=th.cellIndex;S.os=S.os&&S.os.c===c?(S.os.d===1?{c,d:-1}:null):{c,d:1};S.pag=1;desenhar()});
 function opcoesDe(k){
   const m=new Map();
   S.linhas.forEach(l=>{if(passa(l,k))valores(k,l).forEach(v=>m.set(v,(m.get(v)||0)+1))});
@@ -451,6 +459,7 @@ function desenhar(){
   if(!S.thG)S.thG=[...hr.cells].slice(1).map(c=>c.outerHTML).join('');
   const ec=ee?eeCols():null,mk=ee?'ee:'+ec.cab.join('|'):'g';
   if(hr.dataset.m!==mk){while(hr.cells.length>1)hr.deleteCell(1);hr.insertAdjacentHTML('beforeend',ee?ec.cab.map((c,i)=>'<th'+(ec.ce[i]?' class="ce"':'')+'>'+esc(c)+'</th>').join(''):S.thG);hr.dataset.m=mk}
+  [...hr.cells].forEach((c,i)=>{c.classList.toggle('so',i>0);c.dataset.s=S.os&&S.os.c===i?(S.os.d===1?' ▲':' ▼'):''});
   if(ee)$('lista').innerHTML=vis.map(l=>{const v=eeVals(l,ec);return '<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td>'+v.map((x,i)=>i===ec.ix.nome?'<td data-l="'+esc(ec.cab[i])+'" class="nm"><button class="mot'+(x?'':' sem')+'" data-um="1">'+esc(x)+'</button>'+ultHTML(l)+'</td>':'<td data-l="'+esc(ec.cab[i])+'" class="'+(i===ec.ix.id?'s':'m')+(ec.ce[i]?' ce':'')+'">'+esc(x)+'</td>').join('')+'</tr>'}).join('')||'<tr><td colspan="'+(ec.cab.length+1)+'" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   else $('lista').innerHTML=vis.map(l=>'<tr data-k="'+esc(l.k)+'" class="'+(S.sel.has(l.k)?'sel':'')+'"><td class="c"><input type="checkbox"'+(S.sel.has(l.k)?' checked':'')+'></td><td class="s">'+esc(l.seller)+(l.sid?'<div class="sub2">Seller ID: '+esc(l.sid)+'</div>':'')+'<div class="sub2 cls">'+l.clientes.map(chip).join('')+(l.media?'<span class="sub4">média '+l.media.toLocaleString('pt-BR')+'</span>':'')+'</div></td><td class="cls ccl">'+l.clientes.map(chip).join('')+'</td><td>'+endHTML(l)+'<div class="sub2 m">'+[l.bairro,l.cidade,l.cep].filter(Boolean).map(esc).join(' &middot; ')+'</div></td><td class="m cb">'+esc(l.bairro)+'</td><td class="m cc">'+esc(l.cidade)+'</td><td class="m cp">'+esc(l.cep)+'</td><td class="ce m cmd">'+(l.media?l.media.toLocaleString('pt-BR'):'')+'</td><td><button class="mot'+(l.motorista?'':' sem')+'" data-um="1">'+esc(curto(l.motorista))+'</button>'+ultHTML(l)+'</td></tr>').join('')||'<tr><td colspan="9" class="vazio">Nenhum seller com esses filtros.</td></tr>';
   const nv=vis.filter(l=>S.sel.has(l.k)).length,tudo=$('tudo');
