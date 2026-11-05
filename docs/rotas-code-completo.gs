@@ -13,6 +13,23 @@ function resposta(o) {
 function nrm_(s) {
   return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 }
+// Lista oficial de motoristas: planilha "GET" (aba que começa com GET, coluna NOME).
+// ID padrão abaixo; para trocar, crie a propriedade de script ID_GET. Se a leitura falhar, usa a aba _MOTORISTAS.
+const ID_GET_PADRAO = '1PFKysChl21loaMAwn1vM65wA9RNBmkNW';
+function motoristasLista_(ss) {
+  const out = [];
+  try {
+    const pl = SpreadsheetApp.openById(P.getProperty('ID_GET') || ID_GET_PADRAO);
+    const sh = pl.getSheets().filter(x => nrm_(x.getName()).indexOf('GET') === 0)[0];
+    if (sh) {
+      const v = sh.getDataRange().getValues();
+      const c = v[0].map(nrm_).indexOf('NOME');
+      if (c >= 0) v.slice(1).forEach(r => { const n = String(r[c] == null ? '' : r[c]).trim(); if (n) out.push(n); });
+    }
+  } catch (e) {}
+  if (out.length) return out;
+  return ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).filter(String);
+}
 function sidKey_(s) {
   return String(s == null ? '' : s).trim().toUpperCase().replace(/^D/, '');
 }
@@ -185,7 +202,7 @@ function doGet_(e) {
     porK.set(k, { k, sid: sidDe_(r[0]), seller: r[0], endereco: r[2], bairro: r[3], cep: String(r[4]), cidade: r[5], clientes: cl, media: md, motorista: r[L.mot], alternativo: (L.temAlt ? r[L.alt] : '') || '' });
   });
   const linhas = [...porK.values()].filter(l => String(l.endereco || '').trim() && String(l.cep || '').trim() && String(l.motorista || '').trim());
-  const motoristas = [...new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => String(r[0]).trim()).concat(linhas.map(l => String(l.motorista || '').trim())).filter(String))].sort();
+  const motoristas = [...new Set(motoristasLista_(ss).concat(linhas.map(l => String(l.motorista || '').trim())).filter(String))].sort();
   anexaAlt_(q.base, linhas);
   return respostaCache_(q.base, ver, { linhas, motoristas });
 }
@@ -226,7 +243,7 @@ function doPost_(e) {
     const sh = ss.getSheetByName(BASES[d.base].aba);
     const v = sh.getDataRange().getValues();
     const L = layoutGeral_(v[0]);
-    const validos = new Set(ss.getSheetByName('_MOTORISTAS').getDataRange().getValues().map(r => r[0]));
+    const validos = new Set(motoristasLista_(ss));
     const idx = new Map();
     v.forEach((r, i) => {
       if (!i || !r[0]) return;
@@ -453,6 +470,7 @@ function sincronizarRotas() {
     var shM = ss.getSheetByName('_MOTORISTAS');
     var mots = {};
     shM.getDataRange().getValues().forEach(function (r) { if (r[0]) mots[nrmSync_(r[0])] = String(r[0]); });
+    motoristasLista_(ss).forEach(function (n) { mots[nrmSync_(n)] = n; });
     var novosMot = [];
     itens.forEach(function (o) {
       if (o.mot && !mots[nrmSync_(o.mot)]) { mots[nrmSync_(o.mot)] = o.mot; novosMot.push([seguroSync_(o.mot)]); }
