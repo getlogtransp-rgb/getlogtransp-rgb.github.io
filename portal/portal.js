@@ -13,7 +13,7 @@ let CFG_OK=false,CFG={},DB=null,MASTER=null,MASTER_RAW=null,ME=null,AVISOS=[],ES
 const ROLE_LBL={admin:'Administrador',colaborador:'Colaborador',ajudante:'Ajudante',motorista:'Motorista',fornecedor:'Fornecedor'};
 const VEIC=['Fiorino','Van','VUC','HR','3/4','Carreta','Carro','Moto'];
 const LIVE=['dash','coletados','equipe','financeiro'];
-const ACC={admin:['dash','coletados','equipe','perf','forecast','rotas','ponto','pontoadm','avisos','usuarios','escalas','financeiro','app'],colaborador:['dash','coletados','equipe','perf','forecast','rotas','ponto','avisos','app'],ajudante:['ponto','coletados','avisos','app'],motorista:['perf','avisos','app']};
+const ACC={admin:['dash','coletados','equipe','perf','forecast','rotas','ponto','pontoadm','avisos','usuarios','escalas','financeiro','penal','app'],colaborador:['dash','coletados','equipe','perf','forecast','rotas','ponto','avisos','app'],ajudante:['ponto','coletados','avisos','app'],motorista:['perf','avisos','app']};
 async function kek(pw,salt,iter){const base=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
 async function seal(obj){const iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},MASTER,enc.encode(JSON.stringify(obj))))}}
 async function open_(o){return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct))))}
@@ -97,7 +97,7 @@ const PLAN=()=>CFG.pontoUrl&&CFG.pontoToken;
 let PV=null;const versao=()=>PV||(PV=fetch(CFG.pontoUrl+'?versao=1',{cache:'no-store'}).then(r=>r.json()).then(j=>j.versao||1).catch(()=>{PV=null;return 0}));
 const v2=async()=>PLAN()&&await versao()>=2;
 const NOMEV=Object.fromEntries(NAV_ALL());
-function NAV_ALL(){return [['dash','Dashboard'],['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast'],['rotas','Rotas'],['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas'],['avisos','Avisos'],['financeiro','Financeiro'],['app','App GETLOG']]}
+function NAV_ALL(){return [['dash','Dashboard'],['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast'],['rotas','Rotas'],['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas'],['avisos','Avisos'],['financeiro','Financeiro'],['penal','Penalidades'],['app','App GETLOG']]}
 const ROLES_ACC=['colaborador','ajudante','motorista'];
 function accBox(){return `<div class="box mt"><div class="box-head"><div><h3>Acessos por função</h3><p>Marque o que cada função vê no menu e escolha a tela que abre ao entrar.</p></div></div><form id="accf"><div class="table-wrap"><table><thead><tr><th>Tela</th>${ROLES_ACC.map(r=>`<th>${ROLE_LBL[r]}</th>`).join('')}</tr></thead><tbody>${NAV_ALL().map(([v,l])=>`<tr><td>${l}</td>${ROLES_ACC.map(r=>`<td><input type="checkbox" data-r="${r}" data-v="${v}"${accDe(r).includes(v)?' checked':''}></td>`).join('')}</tr>`).join('')}<tr><td><b>Abre em</b></td>${ROLES_ACC.map(r=>`<td><select data-ini="${r}">${NAV_ALL().map(([v,l])=>`<option value="${v}"${accDe(r)[0]===v?' selected':''}>${l}</option>`).join('')}</select></td>`).join('')}</tr></tbody></table></div><div class="full mt"><button class="btn btn-primary">Salvar acessos</button> <button type="button" class="btn btn-ghost" id="accp">Voltar ao padrão</button></div></form></div>`}
 function accBind(){const f=$('#accf');if(!f)return;
@@ -124,11 +124,11 @@ function reenviarPonto(){if(!ME||!navigator.onLine||!PLAN()||document.hidden)ret
 window.addEventListener('online',reenviarPonto);setInterval(reenviarPonto,45000);document.addEventListener('visibilitychange',reenviarPonto);
 function vigiar(){clearInterval(VIGT);VIGT=setInterval(()=>{if(!document.hidden)conferirAcesso()},5*60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)conferirAcesso()})}
 const ic=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-const IC={dash:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),coletados:ic('<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>'),equipe:ic('<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>'),financeiro:ic('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 9.5h.01M18 15.5h.01"/>'),perf:ic('<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>'),rotas:ic('<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/>'),forecast:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),ponto:ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'),pontoadm:ic('<path d="M9 5H5v14h14v-4"/><path d="M9 13l3 3 9-9"/>'),avisos:ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),usuarios:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>'),escalas:ic('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h3M8 17h8"/>'),app:ic('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:ic('<path d="M6 6l12 12M18 6 6 18"/>'),cam:ic('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
-const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast'],['rotas','Rotas']]],['Pessoas',[['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas']]],['Comunicação',[['avisos','Avisos']]],['Gestão',[['usuarios','Usuários e acessos'],['financeiro','Financeiro']]],['Aplicativo',[['app','App GETLOG']]]];
+const IC={dash:ic('<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'),coletados:ic('<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>'),equipe:ic('<circle cx="12" cy="7" r="3.5"/><path d="M5 21c.8-4 3.6-6.5 7-6.5s6.2 2.5 7 6.5"/>'),penal:ic('<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/>'),financeiro:ic('<rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 9.5h.01M18 15.5h.01"/>'),perf:ic('<path d="M4 18a8 8 0 1 1 16 0"/><path d="m12 18 4-6"/>'),rotas:ic('<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 0 0 0-8h-4a4 4 0 0 1 0-8h6"/>'),forecast:ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),ponto:ic('<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>'),pontoadm:ic('<path d="M9 5H5v14h14v-4"/><path d="M9 13l3 3 9-9"/>'),avisos:ic('<path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>'),usuarios:ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>'),escalas:ic('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 13h3M8 17h8"/>'),app:ic('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),menu:ic('<path d="M4 7h16M4 12h16M4 17h16"/>'),x:ic('<path d="M6 6l12 12M18 6 6 18"/>'),cam:ic('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
+const NAV=[['Visão geral',[['dash','Dashboard']]],['Operação',[['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast'],['rotas','Rotas']]],['Pessoas',[['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas']]],['Comunicação',[['avisos','Avisos']]],['Gestão',[['usuarios','Usuários e acessos'],['financeiro','Financeiro'],['penal','Penalidades']]],['Aplicativo',[['app','App GETLOG']]]];
 const SLUG={coletados:'pacotes-coletados',perf:'performance',equipe:'tempo-de-operacao'};const deSlug=h=>Object.keys(SLUG).find(k=>SLUG[k]===h)||h;
 const TITULO={rotas:'Rotas',coletados:'Pacotes coletados',perf:'Performance',forecast:'Forecast',equipe:'Tempo de operação'};
-const SHORT={rotas:'Rotas',dash:'Início',coletados:'Coletados',equipe:'Tempo de operação',financeiro:'Financeiro',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
+const SHORT={rotas:'Rotas',dash:'Início',coletados:'Coletados',equipe:'Tempo de operação',financeiro:'Financeiro',penal:'Penalidades',perf:'Performance',forecast:'Forecast',ponto:'Ponto',avisos:'Avisos',app:'App'};
 // Acessos por função: o admin ajusta em Usuários e acessos (salvo em config.json); sem ajuste vale o padrão ACC. Admin sempre vê tudo.
 const accDe=r=>{if(r==='admin'||!CFG?.acc?.[r])return ACC[r]||[];const l=CFG.acc[r].filter(v=>ACC.admin.includes(v)&&v!=='usuarios');const i=CFG.ini?.[r];return i&&l.includes(i)?[i,...l.filter(v=>v!==i)]:l};
 const can=v=>accDe(ME.role).includes(v);
@@ -361,6 +361,49 @@ const finD=()=>FIN||(FIN={diaria:0,pacote:0,ajud:0,mot:{},lanc:[]});
 const valor=x=>+String(x||'').replace(/\./g,'').replace(',','.')||0;
 const LTIPO={bonus:'Bônus / extra',vale:'Vale / adiantamento',desc:'Desconto'};
 const FF={};
+// ---- Penalidades: cruza a planilha de penalidades com o histórico da Performance (data + seller) ----
+VIEWS.penal=()=>{
+M().innerHTML=top('Penalidades','Confere cada penalidade com o histórico: coletado, justificado ou ainda em rota naquela data',false)+`<div class="box"><div class="box-head"><div><h3>Planilha de penalidades</h3><p>Escolha o arquivo "Penalidades_...xlsx" (aba Detalhe). Nada é enviado: a conferência roda no seu navegador.</p></div></div><input id="pf" type="file" accept=".xlsx,.xls,.csv" aria-label="Planilha de penalidades"><p id="pst" class="muted" style="margin-top:8px"></p></div><div id="pout"></div>`;
+$('#pf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const st=$('#pst'),out=$('#pout');st.textContent='Lendo a planilha…';out.innerHTML='';
+try{await xlsx();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets['Detalhe']||wb.Sheets[wb.SheetNames[wb.SheetNames.length-1]];
+const dt=v=>{if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400)*1000);return d.toISOString().slice(0,10)}const m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''};
+const L=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).slice(1).filter(r=>r[0]&&r[1]).map(r=>({tipo:String(r[0]),d:dt(r[1]),ds:String(r[2]),wb:String(r[3]),sel:String(r[4]),mot:String(r[5]),motivo:String(r[6]),val:+r[7]||0}));
+if(!L.length){st.textContent='Não achei linhas de penalidade nessa planilha.';return}
+const dias=[...new Set(L.map(x=>x.d))].filter(Boolean).sort();const H=new Map();let faltou=0;
+st.textContent=`Buscando o histórico de ${dias.length} dias…`;
+await GL_API.pool(dias,3,async d=>{const s=d.split('-').reverse().join('.');const r=await GL_API.dia(s);if(!r){faltou++;return}
+const rs=C.normRows(C.toRecords(r.json),d).filter(x=>x.dk===d||!x.dk);const by=new Map();for(const x of rs){const k=C.nk(x.seller);if(!by.has(k))by.set(k,[]);by.get(k).push(x)}H.set(d,{by,rs})});
+const mesmo=(a,b)=>{a=C.nk(a);b=C.nk(b);return !!a&&!!b&&(a===b||a.includes(b)||b.includes(a))};
+const R=L.map(p=>{const h=H.get(p.d);const base={...p,sit:'',det:'',obs:'',qm:'',selH:''};
+if(!h)return {...base,v:'Sem histórico do dia',cl:'p-n',det:'Esse dia não está nos arquivos do Drive.'};
+const nome=p.sel.split(' - ')[0];let g=h.by.get(C.nk(p.sel))||h.by.get(C.nk(nome));
+if(!g)for(const [k,v] of h.by)if(mesmo(k,nome)){g=v;break}
+if(!g&&p.wb)g=h.rs.filter(x=>x.wb&&x.wb===p.wb);
+if(!g||!g.length)return {...base,v:'Seller não achado no dia',cl:'p-warn',det:'Nenhuma linha desse seller na Performance da data.'};
+const s=g.reduce((a,x)=>({prev:a.prev+x.prev,col:a.col+x.col,tot:a.tot+x.tot,jus:a.jus+x.jus,pen:a.pen+x.pen}),{prev:0,col:0,tot:0,jus:0,pen:0});
+const obs=[...new Set(g.map(x=>x.jtxt).filter(Boolean))].join(' | ');const sit=[...new Set(g.map(x=>x.st))].join(' / ');
+const mm=[...new Set(g.flatMap(x=>[x.mo,x.ma]).filter(x=>x&&x!==C.NAO_ATRIB))];const mOk=!p.mot||mm.some(m=>mesmo(m,p.mot));
+const q=`previsto ${s.prev} · coletado ${s.tot} · justificado ${s.jus} · em rota ${s.pen}`;
+let v,cl;
+if(s.tot>0&&s.pen===0){v='Contestar: seller foi coletado';cl='p-ok'}
+else if(s.jus>0&&s.pen===0){v='Contestar: seller justificado';cl='p-ok'}
+else if(s.pen>0&&(s.jus>0||s.tot>0)){v='Parcial: parte coletada/justificada';cl='p-warn'}
+else if(s.pen>0){v='Procede: ficou em rota';cl='p-bad'}
+else {v='Sem pacote previsto no dia';cl='p-n'}
+return {...base,v,cl,det:q,obs,sit,motH:mm.map(nm).join(' / '),mOk,selH:g[0].seller}});
+const cont=R.reduce((a,x)=>{a[x.v]=(a[x.v]||0)+1;return a},{});
+const tipos=[...new Set(R.map(x=>x.tipo))];
+st.textContent=`${R.length} penalidades · ${dias.length-faltou} de ${dias.length} dias com histórico.`;
+const draw=()=>{const ft=$('#pft').value,fv=$('#pfv').value,q=$('#pfq').value.trim().toLowerCase();
+const F=R.filter(x=>(!ft||x.tipo===ft)&&(!fv||x.v===fv)&&(!q||(x.sel+' '+x.mot+' '+x.wb).toLowerCase().includes(q)));
+$('#ptb').innerHTML=F.map(x=>`<tr><td>${esc(x.d.split('-').reverse().join('/'))}</td><td>${esc(x.tipo)}</td><td>${esc(x.sel)}</td><td>${esc(nm(x.mot))}${x.mOk===false?' <span class="pill p-warn">outro motorista</span>':''}</td><td>${esc(x.motivo)}</td><td><span class="pill ${x.cl}">${esc(x.v)}</span></td><td>${esc(x.det)}</td><td>${esc(x.obs)||'—'}</td><td>${esc(x.sit)||'—'}</td><td class="r">${BRL(x.val)}</td></tr>`).join('')||'<tr><td colspan="10" class="empty">Nada com esse filtro</td></tr>';$('#pn').textContent=`${F.length} linhas`};
+out.innerHTML=`<div class="box mt"><div class="box-head"><div><h3>Resultado</h3><p>Contestar = o histórico mostra que o seller foi coletado ou justificado naquela data. Procede = continuou em rota.</p></div><div class="row-actions"><button class="btn btn-ghost btn-sm" id="pxl">Baixar conferência</button></div></div>
+<div class="filters">${Object.entries(cont).map(([k,n])=>`<span class="pill p-n">${esc(k)}: <b>${n}</b></span>`).join(' ')}</div>
+<div class="filters"><select id="pft"><option value="">Todos os tipos</option>${tipos.map(t=>`<option>${esc(t)}</option>`).join('')}</select><select id="pfv"><option value="">Todos os resultados</option>${Object.keys(cont).map(t=>`<option>${esc(t)}</option>`).join('')}</select><input id="pfq" type="search" placeholder="Buscar seller, motorista ou pacote" aria-label="Buscar"><span id="pn" class="muted"></span></div>
+<div class="tw"><table><thead><tr><th>Data</th><th>Tipo</th><th>Seller</th><th>Motorista</th><th>Motivo</th><th>Resultado</th><th>Histórico do dia</th><th>Observação / justificativa</th><th>Status</th><th class="r">Valor</th></tr></thead><tbody id="ptb"></tbody></table></div></div>`;
+['#pft','#pfv'].forEach(s=>$(s).onchange=draw);$('#pfq').oninput=draw;draw();
+$('#pxl').onclick=()=>{const a=[['Tipo','Data','Seller','Pacote','Motorista','Motivo','Valor','Resultado','Histórico do dia','Observação','Status','Motorista no histórico']].concat(R.map(x=>[x.tipo,x.d.split('-').reverse().join('/'),x.sel,x.wb,x.mot,x.motivo,x.val,x.v,x.det,x.obs,x.sit,x.motH||'']));const w=XLSX.utils.aoa_to_sheet(a);const b=XLSX.utils.book_new();XLSX.utils.book_append_sheet(b,w,'Conferência');XLSX.writeFile(b,'Conferencia-penalidades.xlsx')};
+}catch(err){console.warn(err);st.textContent='Não consegui ler ou conferir a planilha. Tente de novo.'}}};
 VIEWS.financeiro=()=>{const F=finD();const R=rows().filter(r=>r.t>0&&r.m);const ult=R[R.length-1]?.d;const mots=[...new Set(R.map(r=>nm(r.m)))].sort();
 M().innerHTML=top('Financeiro','Quanto pagar a cada motorista e ajudante no período · em desenvolvimento',true)+`<div class="filters">${periodUI('fper',['semana','quinzena','mes','dia'],ult)}<input id="fsr" type="search" placeholder="Buscar motorista" aria-label="Buscar motorista" autocomplete="off"><button class="btn btn-ghost btn-sm" type="button" id="fcsv">Baixar planilha</button></div><div id="fout"></div>
 <div class="grid-2 eq"><div class="box"><div class="box-head"><div><h3>Valores de pagamento</h3><p>Padrão para todos. Use a regra por motorista para quem tem valor diferente.</p></div></div>
