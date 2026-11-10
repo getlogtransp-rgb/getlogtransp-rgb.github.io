@@ -386,10 +386,9 @@ const obs=[...new Set(g.map(x=>x.jtxt).filter(Boolean))].join(' | ');const sit=[
 const mm=[...new Set(g.flatMap(x=>[x.mo,x.ma]).filter(x=>x&&x!==C.NAO_ATRIB))];const mOk=!p.mot||mm.some(m=>mesmo(m,p.mot));
 const q=`previsto ${s.prev} · coletado ${s.tot} · justificado ${s.jus} · em rota ${s.pen}`;
 let v,cl;
-if(s.tot>0&&s.pen===0){v='Contestar: seller foi coletado';cl='p-ok'}
-else if(s.jus>0&&s.pen===0){v='Contestar: seller justificado';cl='p-ok'}
-else if(s.pen>0&&(s.jus>0||s.tot>0)){v='Parcial: parte coletada/justificada';cl='p-warn'}
-else if(s.pen>0){v='Procede: ficou em rota';cl='p-bad'}
+if(s.tot>0||s.col>0){v='Contestar: tem pacote coletado';cl='p-ok'}
+else if(s.jus>0){v='Contestar: tem pacote justificado/cancelado';cl='p-ok'}
+else if(s.pen>0){v='Procede: tudo em rota';cl='p-bad'}
 else {v='Sem pacote previsto no dia';cl='p-n'}
 return {...base,v,cl,det:q,obs,sit,motH:mm.map(nm).join(' / '),mOk,selH:g[0].seller}});
 const cont=R.reduce((a,x)=>{a[x.v]=(a[x.v]||0)+1;return a},{});
@@ -398,7 +397,7 @@ st.textContent=`${R.length} penalidades · ${dias.length-faltou} de ${dias.lengt
 const draw=()=>{const ft=$('#pft').value,fv=$('#pfv').value,q=$('#pfq').value.trim().toLowerCase();
 const F=R.filter(x=>(!ft||x.tipo===ft)&&(!fv||x.v===fv)&&(!q||(x.sel+' '+x.mot+' '+x.wb).toLowerCase().includes(q)));
 $('#ptb').innerHTML=F.map(x=>`<tr><td>${esc(x.d.split('-').reverse().join('/'))}</td><td>${esc(x.tipo)}</td><td>${esc(x.sel)}</td><td>${esc(nm(x.mot))}${x.mOk===false?' <span class="pill p-warn">outro motorista</span>':''}</td><td>${esc(x.motivo)}</td><td><span class="pill ${x.cl}">${esc(x.v)}</span></td><td>${esc(x.det)}</td><td>${esc(x.obs)||'—'}</td><td>${esc(x.sit)||'—'}</td><td class="r">${BRL(x.val)}</td></tr>`).join('')||'<tr><td colspan="10" class="empty">Nada com esse filtro</td></tr>';$('#pn').textContent=`${F.length} linhas`};
-out.innerHTML=`<div class="box mt"><div class="box-head"><div><h3>Resultado</h3><p>Contestar = o histórico mostra que o seller foi coletado ou justificado naquela data. Procede = continuou em rota.</p></div><div class="row-actions"><button class="btn btn-ghost btn-sm" id="pxl">Baixar conferência</button></div></div>
+out.innerHTML=`<div class="box mt"><div class="box-head"><div><h3>Resultado</h3><p>Contestar = naquela data o seller teve pelo menos um pacote coletado, justificado ou cancelado. Procede = todos os pacotes ficaram em rota.</p></div><div class="row-actions"><button class="btn btn-ghost btn-sm" id="pxl">Baixar conferência</button></div></div>
 <div class="filters">${Object.entries(cont).map(([k,n])=>`<span class="pill p-n">${esc(k)}: <b>${n}</b></span>`).join(' ')}</div>
 <div class="filters"><select id="pft"><option value="">Todos os tipos</option>${tipos.map(t=>`<option>${esc(t)}</option>`).join('')}</select><select id="pfv"><option value="">Todos os resultados</option>${Object.keys(cont).map(t=>`<option>${esc(t)}</option>`).join('')}</select><input id="pfq" type="search" placeholder="Buscar seller, motorista ou pacote" aria-label="Buscar"><span id="pn" class="muted"></span></div>
 <div class="tw"><table><thead><tr><th>Data</th><th>Tipo</th><th>Seller</th><th>Motorista</th><th>Motivo</th><th>Resultado</th><th>Histórico do dia</th><th>Observação / justificativa</th><th>Status</th><th class="r">Valor</th></tr></thead><tbody id="ptb"></tbody></table></div></div>`;
