@@ -362,10 +362,11 @@ const valor=x=>+String(x||'').replace(/\./g,'').replace(',','.')||0;
 const LTIPO={bonus:'Bônus / extra',vale:'Vale / adiantamento',desc:'Desconto'};
 const FF={};
 // ---- Penalidades: cruza a planilha de penalidades com o histórico da Performance (data + seller) ----
+const penXlsx=()=>window.XLSX?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='/assets/vendor/xlsx/xlsx.full.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
 VIEWS.penal=()=>{
 M().innerHTML=top('Penalidades','Confere cada penalidade com o histórico: coletado, justificado ou ainda em rota naquela data',false)+`<div class="box"><div class="box-head"><div><h3>Planilha de penalidades</h3><p>Escolha o arquivo "Penalidades_...xlsx" (aba Detalhe). Nada é enviado: a conferência roda no seu navegador.</p></div></div><input id="pf" type="file" accept=".xlsx,.xls,.csv" aria-label="Planilha de penalidades"><p id="pst" class="muted" style="margin-top:8px"></p></div><div id="pout"></div>`;
 $('#pf').onchange=async e=>{const f=e.target.files[0];if(!f)return;const st=$('#pst'),out=$('#pout');st.textContent='Lendo a planilha…';out.innerHTML='';
-try{await xlsx();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets['Detalhe']||wb.Sheets[wb.SheetNames[wb.SheetNames.length-1]];
+try{await penXlsx();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});const ws=wb.Sheets['Detalhe']||wb.Sheets[wb.SheetNames[wb.SheetNames.length-1]];
 const dt=v=>{if(typeof v==='number'){const d=new Date(Math.round((v-25569)*86400)*1000);return d.toISOString().slice(0,10)}const m=String(v||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?`${m[3]}-${m[2]}-${m[1]}`:''};
 const L=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).slice(1).filter(r=>r[0]&&r[1]).map(r=>({tipo:String(r[0]),d:dt(r[1]),ds:String(r[2]),wb:String(r[3]),sel:String(r[4]),mot:String(r[5]),motivo:String(r[6]),val:+r[7]||0}));
 if(!L.length){st.textContent='Não achei linhas de penalidade nessa planilha.';return}
