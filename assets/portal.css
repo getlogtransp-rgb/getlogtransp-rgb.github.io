@@ -421,3 +421,7 @@ body.side-hid .side-tg{left:16px;top:18px}
 @media (max-width:1400px){.kpi-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}}
 @media (max-width:860px){.side-tg{display:none}}
 #u{text-transform:uppercase}
+.msel{position:relative;min-width:190px}.msel summary{list-style:none;cursor:pointer;padding:10px 12px;border:1px solid var(--line,#dfe3ea);border-radius:10px;background:var(--card,#fff);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.msel summary::-webkit-details-marker{display:none}.msel summary::after{content:'▾';float:right;margin-left:10px}
+.msel-box{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:260px;max-height:320px;overflow:auto;background:var(--card,#fff);border:1px solid var(--line,#dfe3ea);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:6px}
+.msel-box label{display:flex;gap:8px;align-items:center;padding:6px 8px;font-size:14px;cursor:pointer;border-radius:6px}.msel-box label:hover{background:rgba(127,127,127,.12)}.msel-act{padding:2px 2px 6px;border-bottom:1px solid var(--line,#dfe3ea);margin-bottom:4px}
