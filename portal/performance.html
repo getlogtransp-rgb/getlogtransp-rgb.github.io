@@ -548,7 +548,9 @@ const dateLbl=()=>S.from===S.to?lblF(S.from):`${lblD(S.from)} a ${lblF(S.to)}`;
 function renderFbar(){
   const fb=$("#fbar");fb.hidden=false;
   const any=TODOS_FILTROS.some(([k])=>S.f[k].size)||!!S.metric;
+  document.querySelectorAll('body>.pop').forEach(x=>x.remove());
   fb.innerHTML=`<div class="dd"><button class="ddb date" data-pop="date" aria-haspopup="dialog" aria-expanded="${S.pop==="date"}">${IC.cal}<span>${dateLbl()}</span>${IC.down}</button>${S.pop==="date"?calHTML():""}</div><span class="fdiv"></span>`+FILTROS.map(([k,l])=>{const n=S.f[k].size;const one=n===1?optLbl(k,[...S.f[k]][0]):"";return `<div class="dd"><button class="ddb ${n?"on":""}" data-pop="${k}" aria-haspopup="listbox" aria-expanded="${S.pop===k}"><span>${n===1?esc(one):l}</span>${n>1?`<b class="c">${n}</b>`:""}${IC.down}</button>${S.pop===k?msHTML(k):""}</div>`}).join("")+`${any?'<button class="clr" id="clrAll">Limpar</button>':""}${chipHTML()}`;
+  if(innerWidth<=860){const pp=fb.querySelector('.pop');if(pp)document.body.appendChild(pp)}
   bindFbar();
 }
 function msOpts(k){
