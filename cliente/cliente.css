@@ -252,3 +252,12 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 .rt{white-space:nowrap;min-width:92px}th.rt{min-width:92px}.rt small{color:var(--mut,#667);font-size:.74rem}
 .rres{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 12px 12px;font-size:.78rem}.rres:empty{display:none}.rres span{display:inline-flex;align-items:center;gap:6px}.rres i{width:10px;height:10px;border-radius:50%;display:inline-block}
 .rpin span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;color:#fff;font-weight:800;font-size:.72rem;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+/* Tabela com Ordem + Endereço: colunas 1 Ordem, 2 Data, 3 Seller, 4 Motorista, 5 Região, 6 Bairro, 7 Endereço, 8 Prior., 9 Previsto, 10 Coletado, 11 Hora, 12 Status */
+#tbl .tw{max-height:640px;overflow-y:auto}
+#tbl table{font-size:.76rem}#tbl th,#tbl td{font-size:.76rem;padding:7px 6px;line-height:1.25}
+#tbl th:nth-child(n){width:auto}#tbl td:nth-child(n){white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;word-break:normal}
+#tbl th:nth-child(1){width:70px}#tbl th:nth-child(2){width:44px}#tbl th:nth-child(3){width:11%}#tbl th:nth-child(4){width:13%}#tbl th:nth-child(5){width:11%}#tbl th:nth-child(6){width:10%}#tbl th:nth-child(7){width:17%}#tbl th:nth-child(8){width:60px}#tbl th:nth-child(9),#tbl th:nth-child(10){width:62px}#tbl th:nth-child(11){width:46px}#tbl th:nth-child(12){width:96px}
+#tbl td:nth-child(1),#tbl td:nth-child(2),#tbl td:nth-child(8),#tbl td:nth-child(9),#tbl td:nth-child(10),#tbl td:nth-child(11){white-space:nowrap}
+#tbl td:nth-child(12) .s{white-space:normal;line-height:1.2;font-size:.68rem;padding:3px 6px;text-align:left}
+#tbl td.en{color:var(--slate,#44506a)}
+@media (max-width:600px){#tbl th:nth-child(12){width:84px}}
