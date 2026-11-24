@@ -269,10 +269,13 @@ const TOP=r=>r==='T5'?2:r==='T4'?1:0;
 // Posição dos bairros: vem do cache do aparelho; os que faltam são buscados em segundo plano (a ordem se refina sozinha).
 async function buscaGeo(){if(GBUSY)return;GBUSY=true;try{let n=0;while(PEND.size){const q=[...PEND.entries()].sort((a,b)=>b[1]-a[1])[0][0];PEND.delete(q);if(!(q in GEO)){await geo(q);if(!(q in GEO))FAIL.add(q)}
 if(++n%5===0||!PEND.size){RTS=new Map();rotear();tabela();mapa()}}}finally{GBUSY=false}}
+// Posição do seller: bairro; se não achar, CEP; se não achar, a cidade (nunca deixa a parada sem lugar).
+function posiciona(r){const ch=[gq(lug(r))];if(r.cep.length>=5)ch.push('CEP '+r.cep.slice(0,5)+'-'+(r.cep.slice(5,8)||'000')+', Brasil');ch.push(gq(r.ci||'São Paulo'));
+for(const q of ch){if(q in GEO){if(GEO[q])return GEO[q];continue}if(FAIL.has(q))continue;PEND.set(q,(PEND.get(q)||0)+r.p+1);return null}return null}
 function rotear(){const ks=new Set(),por=new Map();for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
 for(const r of ROWS)if(r.m&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
 for(const k of [...ks].sort().reverse()){if(RTS.has(k))continue;const S=por.get(k)||[];
-for(const r of S){const q=gq(lug(r));if(q in GEO)r.xy=GEO[q];else{r.xy=null;if(!FAIL.has(q))PEND.set(q,(PEND.get(q)||0)+r.p+1)}}
+for(const r of S)r.xy=posiciona(r);
 // Paradas: linhas com o mesmo endereço viram uma parada só
 const CL=new Map();for(const r of S){const e=endK(r);let c=CL.get(e.k);if(!c)CL.set(e.k,c={rows:[],rua:e.rua,n:e.n,xy:r.xy,p:0,c:0,t:0,pr:''});c.rows.push(r);c.p+=r.p;c.c+=r.c;c.t+=r.t;if(TOP(r.pr)>TOP(c.pr))c.pr=r.pr;if(!c.xy)c.xy=r.xy}
 const C=[...CL.values()].sort((a,b)=>{const x=sa(a.rows[0].b),y=sa(b.rows[0].b);return x<y?-1:x>y?1:a.rua<b.rua?-1:a.rua>b.rua?1:a.n-b.n});
@@ -282,7 +285,7 @@ RTS.set(k,{rows:O,km,fim:O.length?t+svc(O[O.length-1]):480,m:S[0]?S[0].m:'',nl:S
 }
 if(PEND.size)buscaGeo()}
 const COR=['#002060','#f86800','#11834e','#c62828','#7b1fa2','#0277bd','#8d6e00','#d81b60','#00838f','#5d4037','#455a64','#6a8f00'];
-function desenhaRotas(dK,ks){let b=[];$('#mapS').textContent='Rotas de '+fmtD(dK)+' · início 08:00 · mais perto primeiro, T4/T5 e grandes volumes por último';
+function desenhaRotas(dK,ks){let b=[];const falta=ks.reduce((a,k)=>a+RTS.get(k).rows.filter(c=>!c.xy).length,0);$('#mapS').textContent='Rotas de '+fmtD(dK)+' · início 08:00 · mais perto primeiro, T4/T5 e grandes volumes por último'+(falta?' · localizando '+falta+' paradas no mapa… ('+N(PEND.size)+' bairros na fila, só na primeira vez)':'');
 $('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
 ks.forEach((k,i)=>{const o=RTS.get(k),cor=COR[i%COR.length],pts=o.rows.filter(r=>r.xy);if(!pts.length)return;
 L.polyline(pts.map(r=>r.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(LAY);
