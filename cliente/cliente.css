@@ -267,3 +267,5 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #tbl th:nth-child(8){width:82px}#tbl td:nth-child(8) .pz{padding:3px 7px;max-width:none;overflow:visible}
 #tbl td:nth-child(8) .pz{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;box-sizing:border-box}
 #tbl td:nth-child(8){overflow:hidden}
+#tbl td:nth-child(n){overflow:hidden}#tbl td:nth-child(12){overflow:visible}
+#tbl td:nth-child(8) .pz{white-space:normal;line-height:1.15;text-overflow:clip;font-size:.68rem}#tbl th:nth-child(8){width:92px}
