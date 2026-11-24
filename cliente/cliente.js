@@ -137,7 +137,7 @@ function rotulos(){FD.forEach(([i])=>{const n=SEL[i].size,em=$('#'+i+' em');if(!
 function fecha(){document.querySelectorAll('.msp').forEach(x=>x.remove());ABERTO=null}
 function abre(id){fecha();ABERTO=id;const [,l,f]=FD.find(x=>x[0]===id);const cnt=new Map();for(const r of ROWS)if(passa(r,id)){const k=f(r);cnt.set(k,(cnt.get(k)||0)+1)}
 for(const k of SEL[id])if(!cnt.has(k))cnt.set(k,0);// Opções em ordem alfabética (A a Z); números em ordem natural (T1, T2… T10).
-const ops=[...cnt].sort((a,b)=>a[0].localeCompare(b[0],'pt-BR',{numeric:true,sensitivity:'base'}));
+const ch=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/^[^A-Za-z0-9]+/,'').trim();const ops=[...cnt].sort((a,b)=>ch(a[0]).localeCompare(ch(b[0]),'pt-BR',{numeric:true,sensitivity:'base'})||a[0].localeCompare(b[0],'pt-BR'));
 const pn=document.createElement('div');pn.className='msp';pn.onclick=e=>e.stopPropagation();
 pn.innerHTML=`<input type="search" placeholder="Pesquisar ${esc(l.toLowerCase())}…" aria-label="Pesquisar"><div class="msa"><button type="button" data-a="t">Marcar visíveis</button><button type="button" data-a="l">Limpar</button></div><div class="msl" role="listbox"></div>`;
 const lst=pn.querySelector('.msl'),inp=pn.querySelector('input');
