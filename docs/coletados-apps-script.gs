@@ -90,6 +90,7 @@ function resumirColeta_(f) {
     var col = {};
     for (var k in COLETA_COLS) {
       var i = cab.indexOf(COLETA_COLS[k]);
+      if (i < 0 && k === 'endereco') i = cab.findIndex(function (h) { return /address|endere[cç]o/i.test(h) && !/email|e-mail|ip/i.test(h); });
       if (i < 0 && k === 'endereco') { col[k] = null; continue; }
       if (i < 0) throw new Error('Coluna não encontrada: ' + COLETA_COLS[k]);
       col[k] = sh.getRange(2, i + 1, n, 1).getValues();

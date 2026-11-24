@@ -184,15 +184,15 @@ const avg=a=>a.length?a.reduce((s,x)=>s+x,0)/a.length:null;
 const sk=r=>String(r.s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim()+'|'+r.c;
 // Foto só entra na tela se for imagem embutida ou https (bloqueia endereço malicioso vindo da planilha).
 const imgSeg=u=>/^(data:image\/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/=]+|https:\/\/[^"'<>\s]+)$/.test(String(u||''))?esc(u):'';
-const toRow=r=>({d:r.dk,s:r.seller,sid:r.sid,c:r.cli,r:r.reg,m:r.mo||(r.ma!==C.NAO_ATRIB?r.ma:''),t:C.coletadoGet(r),p:r.prev,cp:r.col,h:bipMin(r.hora),a:r.aju,b:r.bai,ci:r.cid});
+const toRow=r=>({d:r.dk,s:r.seller,sid:r.sid,c:r.cli,r:r.reg,m:r.mo||(r.ma!==C.NAO_ATRIB?r.ma:''),t:C.coletadoGet(r),p:r.prev,cp:r.col,h:bipMin(r.hora),a:r.aju,b:r.bai,ci:r.cid,en:r.end,cz:r.cep});
 const ingestDia=(s,x)=>{const [d,m,y]=s.split('.');DIAS.set(s,C.normRows(C.toRecords(x.json),`${y}-${m}-${d}`).map(toRow));ROWS=null};
 // Base de coletados (todos os pacotes bipados, com horário real). Quando existe para o dia, ela é a fonte do "coletado":
 // as linhas da Performance ficam só com previsto/coletado do previsto (t=0) e os pacotes vêm da base de coletados.
 const COLD=new Map();
 const HORAS=new Map();
 const ingestCol=(s,x)=>{if(!x||!Array.isArray(x.linhas))return;if(Array.isArray(x.horas))HORAS.set(s.split('.').reverse().join('-'),x.horas);const [d,m,y]=s.split('.');const k=`${y}-${m}-${d}`;
-const reg=new Map(),aj=new Map();for(const r of DIAS.get(s)||[]){if(r.sid&&r.r&&!reg.has(r.sid))reg.set(r.sid,r.r);if(r.m&&r.a&&!aj.has(r.m))aj.set(r.m,r.a)}
-COLD.set(s,x.linhas.map(a=>({d:k,c:String(a[0]||'SEM CLIENTE'),sid:String(a[1]||''),s:String(a[2]||a[1]||''),m:String(a[3]||(/hub nuvem envio/i.test(String(a[0]))?'GET - HUB NUVEM ENVIO':'')),b:String(a[4]||''),t:+a[5]||0,ds:+a[6]||0,h:bipMin(a[7]),hf:bipMin(a[8]),ad:String(a[9]||''),r:reg.get(String(a[1]||''))||'Sem região',p:0,cp:0,a:aj.get(String(a[3]||''))||'',col:1})));ROWS=null};
+const reg=new Map(),aj=new Map(),ev=new Map();for(const r of DIAS.get(s)||[]){if(r.sid&&(r.en||r.ci||r.cz)&&!ev.has(r.sid))ev.set(r.sid,r);if(r.sid&&r.r&&!reg.has(r.sid))reg.set(r.sid,r.r);if(r.m&&r.a&&!aj.has(r.m))aj.set(r.m,r.a)}
+COLD.set(s,x.linhas.map(a=>({d:k,c:String(a[0]||'SEM CLIENTE'),sid:String(a[1]||''),s:String(a[2]||a[1]||''),m:String(a[3]||(/hub nuvem envio/i.test(String(a[0]))?'GET - HUB NUVEM ENVIO':'')),b:String(a[4]||''),t:+a[5]||0,ds:+a[6]||0,h:bipMin(a[7]),hf:bipMin(a[8]),ad:String(a[9]||''),en:(ev.get(String(a[1]||''))||{}).en||'',ci:(ev.get(String(a[1]||''))||{}).ci||'',cz:(ev.get(String(a[1]||''))||{}).cz||'',r:reg.get(String(a[1]||''))||'Sem região',p:0,cp:0,a:aj.get(String(a[3]||''))||'',col:1})));ROWS=null};
 function rows(){if(!ROWS){const out=[];for(const [s,R] of DIAS){if(COLD.has(s)){for(const r of R)out.push(r.t?{...r,t:0}:r);out.push(...COLD.get(s))}else out.push(...R)}
 for(const [s,R] of COLD)if(!DIAS.has(s))out.push(...R);ROWS=out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)}return ROWS}
 const usaCol=()=>C.veTudo(ME.role);
@@ -307,10 +307,10 @@ for(const id of CFK){const el=$(id),v=CF[id];if(el&&v!=null&&(!el.options||[...e
 const run=()=>{const [a,b,lbl]=periodRange($('#per'));const fm=own?'':$('#fm').value,fr=$('#fr').value,fs=C.nk($('#fs').value),fe=C.nk($('#fe').value);
 for(const id of CFK){const el=$(id);if(el)CF[id]=el.value}
 const fc=[...$$('#fc input:checked')].map(i=>i.value);CF.cli=fc;$('#fc summary').textContent=!fc.length?'Todos os clientes':fc.length===1?fc[0]:fc.length+' clientes';
-const f=R.filter(r=>r.t>0&&r.d>=a&&r.d<=b&&(!fm||nm(r.m)===fm)&&(!fr||r.r===fr)&&(!fc.length||fc.includes(r.c))&&(!fs||C.nk(r.s+' '+r.sid).includes(fs))&&(!fe||C.nk((r.ad||'')+' '+(r.b||'')+' '+(r.ci||'')).includes(fe)));
-const semEnd=fe&&!f.length&&!R.some(r=>r.ad);
+const f=R.filter(r=>r.t>0&&r.d>=a&&r.d<=b&&(!fm||nm(r.m)===fm)&&(!fr||r.r===fr)&&(!fc.length||fc.includes(r.c))&&(!fs||C.nk(r.s+' '+r.sid).includes(fs))&&(!fe||C.nk((r.ad||'')+' '+(r.en||'')+' '+(r.b||'')+' '+(r.ci||'')+' '+(r.cz||'')).includes(fe)));
+const semEnd=fe&&!f.length&&!R.some(r=>r.ad||r.en);
 const tot=f.reduce((x,r)=>x+r.t,0);const days=[...new Set(f.map(r=>r.d))];
-const sel=group(f,r=>[r.s,r.sid,r.c,r.r,nm(r.m),r.ad||r.b||''].join('|'),r=>r.t).sort((a,b)=>b[1]-a[1]);
+const sel=group(f,r=>[r.s,r.sid,r.c,r.r,nm(r.m),r.ad||r.en||r.b||''].join('|'),r=>r.t).sort((a,b)=>b[1]-a[1]);
 $('#cout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pacotes coletados</small><b>${N(tot)}</b><span>${esc(lbl)}</span></div><div class="kpi"><small>Dias com coleta</small><b>${days.length}</b><span>No período</span></div><div class="kpi"><small>Média por dia</small><b>${N(Math.round(tot/Math.max(1,days.length)))}</b><span>Pacotes</span></div><div class="kpi"><small>Sellers atendidos</small><b>${N(new Set(f.map(sk)).size)}</b><span>No período</span></div></div>
 ${days.length?`<div class="box mt"><div class="box-head"><div><h3>Pacotes e sellers coletados por dia</h3><p>${esc(lbl)}</p></div></div>${gbars([...f.reduce((m,r)=>{const k=lblD(r.d);let o=m.get(k);if(!o)m.set(k,o={t:0,s:new Set()});o.t+=r.t;o.s.add(sk(r));return m},new Map())].map(([k,o])=>[k,o.t,o.s.size]),'Pacotes coletados','Sellers coletados')}</div>
 <div class="grid-2 eq">${own?'':`<div class="box"><div class="box-head"><div><h3>Ranking de motoristas</h3><p>Top 10 no período</p></div></div>${hbars(group(f,r=>nm(r.m),r=>r.t).sort((a,b)=>b[1]-a[1]).slice(0,10))}</div>`}
