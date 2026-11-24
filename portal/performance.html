@@ -3,7 +3,7 @@
 <head>
 <meta name="robots" content="noindex">
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.github.com https://nominatim.openstreetmap.org https://cep.awesomeapi.com.br; media-src 'self' blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.github.com https://nominatim.openstreetmap.org https://cep.awesomeapi.com.br; media-src 'self' blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <script src="/assets/tema.js?v=2"></script>
 <link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
@@ -376,7 +376,7 @@ for(const sh of document.styleSheets){try{limpa(sh.cssRules)}catch(e){}}
 </script>
 
 <script src="/portal/core.js?v=7"></script>
-<script src="/portal/rota-geo.js?v=1"></script>
+<script src="/portal/rota-geo.js?v=2"></script>
 <script src="/portal/drive-api.js?v=15"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:99,ALERTA:80,EMPRESA_PROPRIA:"GET"};
@@ -713,10 +713,10 @@ function rotasItens(sl){return sl.filter(s=>s.maList[0]&&s.maList[0]!==NAO_ATRIB
 function rotasCalc(){if(!window.GL_ROTA||!$("#sTable"))return;const sl=sellerAgg(applyF(baseRows())),it=rotasItens(sl);
   const ds=[...new Set(it.map(x=>x.k))],keys=S.f.ma&&S.f.ma.size?ds.filter(d=>S.f.ma.has(d)):(ds.length<=12?ds:[]);
   const G=GL_ROTA.rotear(it,new Set(keys),rotasCalc);RES.clear();for(const x of it)if(x.rn)RES.set(x.ref.k,{rn:x.rn,eta:x.eta,nome:x.nome});
-  $("#sTable").innerHTML=sellerTable(sl);bindTable();rotasMapa(G,keys)}
-function rotasMapa(G,keys){const box=$("#rmap");if(!box||!window.L)return;
-  if(!RM||RM._container!==box){if(RM){try{RM.remove()}catch(e){}}RM=L.map(box,{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,referrerPolicy:"strict-origin-when-cross-origin",attribution:"© OpenStreetMap"}).addTo(RM);RLAY=L.layerGroup().addTo(RM)}
-  const sub=$("#rmapS");if(!keys.length){RLAY.clearLayers();$("#rres").innerHTML="";sub.textContent="Filtre um motorista (ou deixe até 12 motoristas) para ver as rotas no mapa.";return}
+  $("#sTable").innerHTML=sellerTable(sl);bindTable();rotasMapa(G,keys,sl)}
+function rotasMapa(G,keys,sl){const box=$("#rmap");if(!box||!window.L)return;
+  if(!RM||RM._container!==box){if(RM){try{RM.remove()}catch(e){}}RM=L.map(box,{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,referrerPolicy:"strict-origin-when-cross-origin",attribution:"© OpenStreetMap"}).addTo(RM);RLAY=L.layerGroup().addTo(RM);setTimeout(()=>{if(RM)RM.invalidateSize()},250)}
+  const sub=$("#rmapS");if(!keys.length){const r=GL_ROTA.bairros(L,RM,RLAY,sl.map(s=>({k:"x",s:s.seller,b:s.bai||"",ci:s.cid||"",cep:String(s.cep||"").replace(/\D/g,""),en:"",p:s.prev||0,c:s.col||0,t:s.tot||0,pr:""})));$("#rres").innerHTML="";sub.textContent=r.n?"Bairros atendidos ("+r.n+"); tamanho = volume, cor = performance de coleta · filtre um motorista para ver a rota"+(r.falta?" · localizando "+r.falta+" bairros… ("+N(r.pend)+" na fila, só na primeira vez)":""):"Sem endereço nos dados do período.";return}
   const r=GL_ROTA.desenha(L,RM,RLAY,G,keys);$("#rres").innerHTML=r.html;
   sub.textContent="Rota por motorista: mais perto primeiro, T4/T5 e grandes volumes por último, início 08:00"+(r.falta?" · localizando "+r.falta+" paradas no mapa… ("+N(r.pend)+" na fila, só na primeira vez)":"")}
 function rotasInit(){RM=null;rotasCalc()}

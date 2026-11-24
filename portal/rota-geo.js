@@ -63,6 +63,14 @@ res+=`<span><i style="background:${cor}"></i><b>${esc(o.nome)}</b> ${o.rows.leng
 if(!pts.length)return;L.polyline(pts.map(c=>c.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(layer);
 pts.forEach(c=>{b.push(c.xy);L.marker(c.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${c.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${c.rn}ª parada · ${minH(c.eta)}</b><br>${c.its.map(x=>esc(x.s)).join('<br>')}<br>${esc(c.its[0].en||c.its[0].b||c.its[0].ci||'')}<br>Previsto: ${c.p.toLocaleString('pt-BR')} · Coletado: ${c.c.toLocaleString('pt-BR')}${rank(c)?' · '+esc(/^T/.test(c.pr)?c.pr:'volume alto'):''}`).addTo(layer)})});
 if(b.length&&layer._n!==b.length)map.fitBounds(b,{padding:[24,24],maxZoom:14});layer._n=b.length;return {html:res,falta,pend:PEND.size}}
+/** Sem motorista filtrado: bairros atendidos (tamanho = volume previsto, cor = % de coleta), como no portal do cliente. */
+function bairros(L,map,layer,items){layer.clearLayers();const M=new Map();for(const r of items){const q=lug(r);if(!q)continue;let o=M.get(q);if(!o)M.set(q,o={q,p:0,c:0,n:0,r});o.p+=r.p||0;o.c+=Math.min(r.c||0,r.p||0);o.n++}
+const A=[...M.values()].sort((a,b)=>b.p-a.p).slice(0,70),mx=Math.max(1,...A.map(a=>a.p)),pts=[];let falta=0;
+for(const a of A){const xy=posiciona(a.r,false);if(!xy){falta++;continue}const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(xy);
+L.circleMarker(xy,{radius:6+Math.sqrt(a.p/mx)*16,color:cor,weight:2,fillColor:cor,fillOpacity:.35}).bindPopup(`<b>${esc(a.q)}</b><br>Sellers: ${a.n}<br>Previsto: ${a.p.toLocaleString('pt-BR')}<br>Coletado: ${a.c.toLocaleString('pt-BR')}<br>Coleta: <b>${p.toFixed(1).replace('.',',')}%</b>`).addTo(layer)}
+if(pts.length&&layer._n!==pts.length){const q=(arr,f)=>{const v=[...arr].sort((a,b)=>a-b);return v[Math.min(v.length-1,Math.max(0,Math.round(f*(v.length-1))))]};const la=pts.map(p=>p[0]),lo=pts.map(p=>p[1]),c=pts.length>=10?[.1,.9]:[0,1];
+if(pts.length===1)map.setView(pts[0],13);else map.fitBounds([[q(la,c[0]),q(lo,c[0])],[q(la,c[1]),q(lo,c[1])]],{padding:[18,18],maxZoom:14})}
+layer._n=pts.length;return {falta,pend:PEND.size,n:A.length}}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-window.GL_ROTA={rotear,desenha,minH,COR,pend:()=>PEND.size};
+window.GL_ROTA={rotear,desenha,bairros,minH,COR,pend:()=>PEND.size};
 })();
