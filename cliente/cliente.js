@@ -258,20 +258,32 @@ while(R.length){const l=P[P.length-1];let j=0;for(let i=1;i<R.length;i++)if(dist
 // 2-opt: troca trechos que se cruzam (primeira parada fixa)
 for(let it=0,ch=true;ch&&it<40;it++){ch=false;for(let i=1;i<P.length-1;i++)for(let j=i+1;j<P.length;j++){const a=P[i-1],b=P[i],c=P[j],d=P[j+1];const g=dist(a,b)+(d?dist(c,d):0)-dist(a,c)-(d?dist(b,d):0);if(g>1e-6){P.splice(i,j-i+1,...P.slice(i,j+1).reverse());ch=true}}}
 out=out.concat(P);atual=P[P.length-1]}out=out.concat(X)}return out}
+// Endereço "de verdade": rua + número (sem sala, loja, galpão, -2…). Mesmo endereço = mesma parada.
+const sa=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+function endK(r){let e=sa(r.en).replace(/[.,;]/g,' ').replace(/\s+/g,' ').trim();if(!e)return {k:'u|'+r.s+'|'+r.dk+'|'+r.cl,rua:'',n:0};
+e=e.replace(/\b(sala|conj|conjunto|loja|lj|galp|galpao|bloco|bl|andar|apto|apt|ap|box|cj|fundos|sl|torre|modulo|mod|casa|sobrado|barracao|predio|edificio|ed|km)\b.*$/,'').trim();
+const m=e.match(/^(.*?)(?:\s+(?:n|no|nro|numero)\s*)?\s*(\d+)\b/);let rua=(m?m[1]:e).trim(),n=m?+m[2]:0;
+rua=rua.replace(/^(r|rua)\b/,'rua').replace(/^(av|avenida)\b/,'avenida').replace(/^(al|alameda)\b/,'alameda').replace(/^(estr|estrada)\b/,'estrada').replace(/^(rod|rodovia)\b/,'rodovia').replace(/^(tv|travessa)\b/,'travessa').replace(/^(pc|praca)\b/,'praca').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+return {k:rua+'|'+n+'|'+sa(r.b)+'|'+sa(r.ci),rua,n}}
+const TOP=r=>r==='T5'?2:r==='T4'?1:0;
 async function rotear(){const g=++RG,ks=new Set(),por=new Map();for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
 for(const r of ROWS)if(r.m&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
 let ult=0;for(const k of [...ks].sort().reverse()){if(g!==RG)return;if(RTS.has(k))continue;const S=por.get(k)||[];
 for(const r of S){if(r.xy===undefined){const c=await geo(gq(lug(r)));if(g!==RG)return;r.xy=c||null}}
-const O=ordena(S);let t=480,km=0;O.forEach((r,i)=>{if(i){const q=O[i-1],d=q.xy&&r.xy?hav(q.xy,r.xy)*1.35:0;km+=d;t+=Math.min(90,3+vol(q)/25)+(q.xy&&r.xy?d/25*60:8)}r.rn=i+1;r.eta=t;r.ro=(30000000-(+r.dk.replace(/-/g,''))).toString()+'|'+r.m+'|'+String(i+1).padStart(3,'0')});
-RTS.set(k,{rows:O,km,fim:O.length?t+Math.min(90,3+vol(O[O.length-1])/25):480,m:O[0]?O[0].m:''});
+// Paradas: linhas com o mesmo endereço viram uma parada só
+const CL=new Map();for(const r of S){const e=endK(r);let c=CL.get(e.k);if(!c)CL.set(e.k,c={rows:[],rua:e.rua,n:e.n,xy:r.xy,p:0,c:0,t:0,pr:''});c.rows.push(r);c.p+=r.p;c.c+=r.c;c.t+=r.t;if(TOP(r.pr)>TOP(c.pr))c.pr=r.pr;if(!c.xy)c.xy=r.xy}
+const C=[...CL.values()].sort((a,b)=>a.rua<b.rua?-1:a.rua>b.rua?1:a.n-b.n);
+const O=ordena(C);let t=480,km=0;const svc=c=>Math.min(90,3+vol(c)/25);
+O.forEach((c,i)=>{if(i){const q=O[i-1],d=q.xy&&c.xy?hav(q.xy,c.xy)*1.35:0;km+=d;t+=svc(q)+(q.xy&&c.xy?d/25*60:8)}c.rn=i+1;c.eta=t;c.rows.sort((a,b)=>b.p-a.p).forEach((r,j)=>{r.rn=i+1;r.eta=t;r.ro=(30000000-(+r.dk.replace(/-/g,''))).toString()+'|'+r.m+'|'+String(i+1).padStart(3,'0')+String(j).padStart(3,'0')})});
+RTS.set(k,{rows:O,km,fim:O.length?t+svc(O[O.length-1]):480,m:S[0]?S[0].m:'',nl:S.length});
 if(Date.now()-ult>600){ult=Date.now();tabela()}}
 if(g===RG){tabela();mapa()}}
 const COR=['#002060','#f86800','#11834e','#c62828','#7b1fa2','#0277bd','#8d6e00','#d81b60','#00838f','#5d4037','#455a64','#6a8f00'];
 function desenhaRotas(dK,ks){let b=[];$('#mapS').textContent='Rotas de '+fmtD(dK)+' · início 08:00 · mais perto primeiro, T4/T5 e grandes volumes por último';
-$('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
+$('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
 ks.forEach((k,i)=>{const o=RTS.get(k),cor=COR[i%COR.length],pts=o.rows.filter(r=>r.xy);if(!pts.length)return;
 L.polyline(pts.map(r=>r.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(LAY);
-pts.forEach(r=>{b.push(r.xy);L.marker(r.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${r.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${esc(r.s)}<br>${esc(r.b||r.ci||'')}<br>Previsto: ${N(r.p)} · Coletado: ${N(r.c)}${rank(r)?' · '+esc(r.pr&&/^T/.test(r.pr)?r.pr:'volume alto'):''}<br>${esc(r.m)}`).addTo(LAY)})});
+pts.forEach(r=>{b.push(r.xy);L.marker(r.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${r.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${r.rows.map(x=>esc(x.s)).join('<br>')}<br>${esc(r.rows[0].en||r.rows[0].b||r.rows[0].ci||'')}<br>Previsto: ${N(r.p)} · Coletado: ${N(r.c)}${rank(r)?' · '+esc(r.pr&&/^T/.test(r.pr)?r.pr:'volume alto'):''}`).addTo(LAY)})});
 if(b.length)MAP.fitBounds(b,{padding:[24,24],maxZoom:14})}
 // ---- Mapa: bairros atendidos (posição pelo bairro/cidade, guardada no aparelho) ----
 let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo')||'{}')}catch(e){}
