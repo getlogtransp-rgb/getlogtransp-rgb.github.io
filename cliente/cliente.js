@@ -107,7 +107,7 @@ let per='1',ROWS=[],GEN=0,ORD={o:'ro',d:1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
 const mesK=(o)=>{const d=new Date(LS[0].k+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()+o);return d.toISOString().slice(0,7)};
 const dias=()=>per==='ontem'?LS.slice(1,2):per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
-const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente',en:String(a[17]||'').trim(),ro:'~'+a[0]+'|'+(a[2]||'')});
+const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente',en:String(a[17]||'').trim(),ro:'z'+a[0]+'|'+(a[2]||'')});
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;carregando(true);prog.firstChild.style.width='4%';
 const res=new Array(D.length);let i=0,falhas=0;
@@ -148,7 +148,7 @@ $('#'+id).appendChild(pn);desenha();if(matchMedia('(hover:hover)').matches)inp.f
 let AT=0;const aplica=()=>{rotulos();clearTimeout(AT);AT=setTimeout(()=>{LIM=50;run()},120)};
 document.addEventListener('click',fecha);document.addEventListener('keydown',e=>{if(e.key==='Escape')fecha()});
 const agr=(R,key)=>{const M=new Map();for(const r of R){const k=key(r);let o=M.get(k);if(!o)M.set(k,o={k,p:0,c:0,t:0,n:0,v:0});o.p+=r.p;o.c+=Math.min(r.c,r.p);o.t+=r.t;if(r.p>0){(o.A||(o.A=new Set)).add(r.g);if(r.vz)(o.B||(o.B=new Set)).add(r.g)}}for(const o of M.values()){o.n=o.A?o.A.size:0;o.v=o.B?o.B.size:0}return [...M.values()]};
-let F=[],RTS=new Map(),RG=0;
+let F=[],RTS=new Map(),RG=0,PEND=new Map(),GBUSY=false;const FAIL=new Set();
 function run(){F=filtra();const at=FD.filter(([i])=>SEL[i].size).map(([i,l])=>`<button type="button" data-x="${i}">${l}: ${esc([...SEL[i]].slice(0,2).join(', '))}${SEL[i].size>2?' +'+(SEL[i].size-2):''} ✕</button>`);if($('#q').value)at.push(`<button type="button" data-x="q">Busca: ${esc($('#q').value)} ✕</button>`);const fa=$('#fa');fa.hidden=!at.length;$('#lmp').disabled=!at.length;fa.innerHTML=at.join('')+(at.length>1?'<button type="button" class="cl" data-x="*">Limpar tudo</button>':'');fa.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();const x=b.dataset.x;if(x==='*'||x==='q')$('#q').value='';if(x==='*')FD.forEach(([i])=>SEL[i].clear());else if(x!=='q')SEL[x].clear();rotulos();LIM=50;run()});const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,[nSel,V]=sel(F),pv=nSel?V/nSel*100:0;
 const pend=F.filter(semCol).length;
 const sC=new Set(F.filter(r=>r.p>0&&(r.c>0||r.t>0)).map(r=>r.g)).size,nV=nSel-V;
@@ -160,7 +160,7 @@ kp.innerHTML=K('Previsto',N(P)+' <em>pacotes</em>',`<span class="ks"><b>${N(nSel
 $('#dn').innerHTML=ros('Visita',pv,grad(pv),`${N(V)} de ${N(nSel)} sellers`,`Visita: ${P1(pv)}\n${N(V)} de ${N(nSel)} sellers`)+ros('Coleta',pc,grad(pc),`${N(Cc)} de ${N(P)} pac.`,`Coleta: ${P1(pc)}\n${N(Cc)} de ${N(P)} pacotes`)}
 $('#t45b').classList.toggle('on',SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('T5'));
 kp.querySelectorAll('.kb').forEach(b=>b.onclick=()=>{const f=b.dataset.f,v=b.dataset.v,on=SEL[f].size===1&&SEL[f].has(v);SEL[f].clear();if(!on)SEL[f].add(v);rotulos();LIM=50;run();if(!on)$('#tbl').scrollIntoView({behavior:'smooth',block:'start'})});
-charts();t45();tabela();rotear();mapa()}
+charts();t45();rotear();tabela();mapa()}
 // ---- Gráficos (SVG desenhado na largura real do quadro: textos nunca se sobrepõem) ----
 const W=el=>Math.max(260,el.clientWidth-24);
 const kfmt=v=>v>=1e6?(v/1e6).toFixed(1).replace('.',',')+' mi':v>=1e4?Math.round(v/1e3)+' mil':v>=1e3?(v/1e3).toFixed(1).replace('.',',')+' mil':String(Math.round(v));
@@ -230,7 +230,7 @@ $('#tkx').onclick=()=>$('#t45f').click();
 $('#t45f').onclick=()=>{const so=SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.test(x));SEL.fp.clear();if(!so){SEL.fp.add('T4');SEL.fp.add('T5')}rotulos();LIM=50;run()}}
 // ---- Tabela ----
 function tabela(){const o=ORD.o,d=ORD.d;const R=[...F].sort((a,b)=>{const x=a[o],y=b[o];return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR'))*d});
-$('#sub').textContent=N(F.length)+' registros';
+$('#sub').textContent=N(F.length)+' registros'+(PEND.size?' · localizando '+N(PEND.size)+' bairros para a rota…':'');
 document.querySelectorAll('th[data-o]').forEach(th=>{th.classList.toggle('so',th.dataset.o===o);th.dataset.d=d>0?'▲':'▼'});
 $('#tb').innerHTML=R.length?R.slice(0,LIM).map(r=>{const [c,l]=cls(r);return `<tr><td class="rt">${r.rn?`<b>${r.rn}º</b> <small>${minH(r.eta)}</small>`:''}</td><td>${fmtD(r.dk).slice(0,5)}</td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="hide-m">${esc(r.r)}</td><td class="hide-m">${esc(r.b)}</td><td class="hide-m en" title="${esc(r.en)}">${esc(r.en)}</td><td class="hide-m">${/^T[45]$/.test(r.pr)?`<span class="tg">${esc(r.pr)}</span>`:r.pr&&r.pr!=='—'?`<span class="pz" title="${esc(r.pr)}">${esc(r.pr.charAt(0)+r.pr.slice(1).toLowerCase())}</span>`:''}</td><td class="n">${N(r.p)}</td><td class="n">${N(r.c)}</td><td class="n hide-m">${r.h>=0?esc(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):''}</td><td><span class="s ${c}" title="${esc(l)}">${esc(stx(r)||l)}</span></td></tr>`}).join(''):'<tr><td colspan="12" class="emp">Nenhuma coleta encontrada.</td></tr>';
 $('#more').innerHTML=R.length>LIM?`<button class="btn2" type="button" id="mais">Mostrar mais (${N(R.length-LIM)} restantes)</button>`:'';if($('#mais'))$('#mais').onclick=()=>{LIM+=300;tabela()}}
@@ -266,18 +266,21 @@ const m=e.match(/^(.*?)(?:\s+(?:n|no|nro|numero)\s*)?\s*(\d+)\b/);let rua=(m?m[1
 rua=rua.replace(/^(r|rua)\b/,'rua').replace(/^(av|avenida)\b/,'avenida').replace(/^(al|alameda)\b/,'alameda').replace(/^(estr|estrada)\b/,'estrada').replace(/^(rod|rodovia)\b/,'rodovia').replace(/^(tv|travessa)\b/,'travessa').replace(/^(pc|praca)\b/,'praca').replace(/\b(de|da|do|dos|das)\b/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
 return {k:rua+'|'+n+'|'+sa(r.b)+'|'+sa(r.ci),rua,n}}
 const TOP=r=>r==='T5'?2:r==='T4'?1:0;
-async function rotear(){const g=++RG,ks=new Set(),por=new Map();for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
+// Posição dos bairros: vem do cache do aparelho; os que faltam são buscados em segundo plano (a ordem se refina sozinha).
+async function buscaGeo(){if(GBUSY)return;GBUSY=true;try{let n=0;while(PEND.size){const q=[...PEND.entries()].sort((a,b)=>b[1]-a[1])[0][0];PEND.delete(q);if(!(q in GEO)){await geo(q);if(!(q in GEO))FAIL.add(q)}
+if(++n%5===0||!PEND.size){RTS=new Map();rotear();tabela();mapa()}}}finally{GBUSY=false}}
+function rotear(){const ks=new Set(),por=new Map();for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
 for(const r of ROWS)if(r.m&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
-let ult=0;for(const k of [...ks].sort().reverse()){if(g!==RG)return;if(RTS.has(k))continue;const S=por.get(k)||[];
-for(const r of S){if(r.xy===undefined){const c=await geo(gq(lug(r)));if(g!==RG)return;r.xy=c||null}}
+for(const k of [...ks].sort().reverse()){if(RTS.has(k))continue;const S=por.get(k)||[];
+for(const r of S){const q=gq(lug(r));if(q in GEO)r.xy=GEO[q];else{r.xy=null;if(!FAIL.has(q))PEND.set(q,(PEND.get(q)||0)+r.p+1)}}
 // Paradas: linhas com o mesmo endereço viram uma parada só
 const CL=new Map();for(const r of S){const e=endK(r);let c=CL.get(e.k);if(!c)CL.set(e.k,c={rows:[],rua:e.rua,n:e.n,xy:r.xy,p:0,c:0,t:0,pr:''});c.rows.push(r);c.p+=r.p;c.c+=r.c;c.t+=r.t;if(TOP(r.pr)>TOP(c.pr))c.pr=r.pr;if(!c.xy)c.xy=r.xy}
-const C=[...CL.values()].sort((a,b)=>a.rua<b.rua?-1:a.rua>b.rua?1:a.n-b.n);
+const C=[...CL.values()].sort((a,b)=>{const x=sa(a.rows[0].b),y=sa(b.rows[0].b);return x<y?-1:x>y?1:a.rua<b.rua?-1:a.rua>b.rua?1:a.n-b.n});
 const O=ordena(C);let t=480,km=0;const svc=c=>Math.min(90,3+vol(c)/25);
 O.forEach((c,i)=>{if(i){const q=O[i-1],d=q.xy&&c.xy?hav(q.xy,c.xy)*1.35:0;km+=d;t+=svc(q)+(q.xy&&c.xy?d/25*60:8)}c.rn=i+1;c.eta=t;c.rows.sort((a,b)=>b.p-a.p).forEach((r,j)=>{r.rn=i+1;r.eta=t;r.ro=(30000000-(+r.dk.replace(/-/g,''))).toString()+'|'+r.m+'|'+String(i+1).padStart(3,'0')+String(j).padStart(3,'0')})});
 RTS.set(k,{rows:O,km,fim:O.length?t+svc(O[O.length-1]):480,m:S[0]?S[0].m:'',nl:S.length});
-if(Date.now()-ult>600){ult=Date.now();tabela()}}
-if(g===RG){tabela();mapa()}}
+}
+if(PEND.size)buscaGeo()}
 const COR=['#002060','#f86800','#11834e','#c62828','#7b1fa2','#0277bd','#8d6e00','#d81b60','#00838f','#5d4037','#455a64','#6a8f00'];
 function desenhaRotas(dK,ks){let b=[];$('#mapS').textContent='Rotas de '+fmtD(dK)+' · início 08:00 · mais perto primeiro, T4/T5 e grandes volumes por último';
 $('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
