@@ -319,7 +319,9 @@ function desenhaRotas(dK,ks){let b=[];const falta=ks.reduce((a,k)=>a+RTS.get(k).
 $('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
 ks.forEach((k,i)=>{const o=RTS.get(k),cor=COR[i%COR.length],pts=o.rows.filter(r=>r.xy);if(!pts.length)return;
 L.polyline(pts.map(r=>r.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(LAY);
-pts.forEach(r=>{b.push(r.xy);L.marker(r.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${r.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${r.rows.map(x=>esc(x.s)).join('<br>')}<br>${esc(r.rows[0].en||r.rows[0].b||r.rows[0].ci||'')}<br>Previsto: ${N(r.p)} · Coletado: ${N(r.c)}${rank(r)?' · '+esc(r.pr&&/^T/.test(r.pr)?r.pr:'volume alto'):''}`).addTo(LAY)})});
+const GR=new Map();pts.forEach(r=>{const kk=r.xy[0].toFixed(4)+','+r.xy[1].toFixed(4);if(!GR.has(kk))GR.set(kk,[]);GR.get(kk).push(r)});
+GR.forEach(A=>{const p0=A[0];b.push(p0.xy);const ns=A.map(x=>x.rn),lb=A.length===1?String(ns[0]):A.length<=4?ns.join('·'):ns[0]+'+'+(A.length-1),w=Math.max(24,lb.length*7+14);
+L.marker(p0.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor};width:${w}px;border-radius:12px">${lb}</span>`,iconSize:[w,24],iconAnchor:[w/2,12]})}).bindPopup(A.map(r=>`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${r.rows.map(x=>esc(x.s)).join('<br>')}<br>${esc(r.rows[0].en||r.rows[0].b||r.rows[0].ci||'')}<br>Previsto: ${N(r.p)} · Coletado: ${N(r.c)}${rank(r)?' · '+esc(/^T/.test(r.pr)?r.pr:'volume alto'):''}`).join('<hr>')).addTo(LAY)})});
 if(b.length)MAP.fitBounds(b,{padding:[24,24],maxZoom:14})}
 // ---- Mapa: bairros atendidos (posição pelo bairro/cidade, guardada no aparelho) ----
 let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo2')||'{}')}catch(e){}
