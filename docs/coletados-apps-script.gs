@@ -67,7 +67,10 @@ function coletados_(dia) {
   var cache = pastaCacheColeta_(), nomeCache = dia + '.json';
   var ci = cache.getFilesByName(nomeCache);
   var velho = ci.hasNext() ? ci.next() : null;
-  if (velho && velho.getDescription() === sig) return JSON.parse(velho.getBlob().getDataAsString());
+  if (velho && velho.getDescription() === sig) {
+    var c = JSON.parse(velho.getBlob().getDataAsString());
+    if ((c.colunas || []).indexOf('endereco') >= 0) return c; // cache antigo (sem endereço) é refeito
+  }
 
   var dados = resumirColeta_(f);
   dados.modificadoEm = sig;
