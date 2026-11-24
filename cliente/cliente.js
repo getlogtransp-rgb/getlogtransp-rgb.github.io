@@ -57,8 +57,8 @@ A.innerHTML=`<header class="hd"><div class="w"><div class="hd-row"><span class="
 <div class="g2"><section class="card"><h2 id="chDt">Performance por dia</h2><p class="sub">% de visita e % de coleta da operação inteira (não segue os filtros) · um dia só = por hora</p><div class="ch" id="chD"></div></section>
 <section class="card"><h2>Coletas por hora</h2><p class="sub">Barras: pacotes coletados na hora (número embaixo) · linha: % acumulado do previsto</p><div class="ch" id="chH"></div></section></div>
 <div class="g2"><section class="card"><h2>Performance por região</h2><p class="sub">% de visita (sellers) · coleta em segundo plano · clique para filtrar</p><div class="ch" id="chR"></div></section>
-<section class="card"><h2>Mapa da operação</h2><p class="sub" id="mapS">Bairros atendidos; cor = performance de coleta</p><div id="map"></div></section></div>
-<section class="card" id="tbl"><div class="tb-h"><div><h2>Sellers</h2><p class="sub" id="sub"></p></div><button class="btn2 xl" id="csv" type="button">Baixar Excel (.xlsx)</button></div><div class="tw"><table><thead><tr><th data-o="dk">Data</th><th data-o="s">Seller</th><th class="hide-m" data-o="m">Motorista</th><th class="hide-m" data-o="r">Região</th><th class="hide-m" data-o="b">Bairro</th><th class="hide-m" data-o="pr">Prior.</th><th class="n" data-o="p">Previsto</th><th class="n" data-o="c">Coletado</th><th class="n hide-m" data-o="h">Hora</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div><div class="more" id="more"></div></section>
+<section class="card"><h2>Mapa da operação</h2><p class="sub" id="mapS">Bairros atendidos; cor = performance de coleta</p><div id="map"></div><div id="rres" class="rres"></div></section></div>
+<section class="card" id="tbl"><div class="tb-h"><div><h2>Sellers</h2><p class="sub" id="sub"></p></div><button class="btn2 xl" id="csv" type="button">Baixar Excel (.xlsx)</button></div><div class="tw"><table><thead><tr><th data-o="ro">Rota</th><th data-o="ro" title="Ordem de visita e horário previsto (saída às 08:00)">Rota</th><th data-o="dk">Data</th><th data-o="s">Seller</th><th class="hide-m" data-o="m">Motorista</th><th class="hide-m" data-o="r">Região</th><th class="hide-m" data-o="b">Bairro</th><th class="hide-m" data-o="pr">Prior.</th><th class="n" data-o="p">Previsto</th><th class="n" data-o="c">Coletado</th><th class="n hide-m" data-o="h">Hora</th><th>Status</th></tr></thead><tbody id="tb"></tbody></table></div><div class="more" id="more"></div></section>
 </main><footer class="fz"><div class="w"><div class="fz-top"><div class="fz-b"><img src="/assets/logo-getlog.webp" alt="GETLOG Transportes" width="96" height="38"><p>Transporte e logística de primeira milha. Acompanhamento de coletas em tempo real para nossos clientes.</p></div><div class="fz-s"><div class="sl2"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Conexão segura</b><small>HTTPS · TLS</small></span></div><div class="sl2"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg><span><b>Dados criptografados</b><small>AES-256 no aparelho</small></span></div><div class="sl2"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><span><b>Acesso restrito</b><small>Login individual e sessão com tempo</small></span></div><div class="sl2"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12h6M9 16h6M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/></svg><span><b>LGPD</b><small>Só os dados da sua operação</small></span></div></div></div><div class="fz-bot"><span>© ${new Date().getFullYear()} GETLOG Transportes · Todos os direitos reservados</span><span><a href="https://getlogbr.com.br/" target="_blank" rel="noopener">getlogbr.com.br</a> · <a href="${WA}" target="_blank" rel="noopener">Suporte ao cliente</a></span></div></div></footer>
 <a class="wa" href="${WA}" target="_blank" rel="noopener" aria-label="Fale conosco no WhatsApp"><svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6c-2 0-4-.5-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5 1-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.2 1.1-1.2 2.8 1.2 3.2 1.4 3.5c.2.2 2.4 3.6 5.8 5.1 2.2.9 3 1 4.1.8.7-.1 1.9-.8 2.2-1.5s.3-1.4.2-1.5c-.1-.1-.3-.2-.6-.3z"/></svg><span>Fale conosco</span></a>`;
 $('#sair').onclick=sai;
@@ -103,11 +103,11 @@ const tierOf=r=>{const m=String(r.pri).match(/T\s?-?([1-9])/i);return TIER.get('
 const RR=R.filter(r=>tudo||eu.has(r.cli)),VZ=visitados(RR);const out=RR.map(r=>{const g=nS(r.seller)+'|'+r.cli;return [it.k,r.seller,r.mo.replace(/^.*? - /,''),r.reg,r.bai,r.cid,r.st,r.hora,r.prev,r.col,r.tot,r.jus,tierOf(r),r.cep,g,VZ.get(g)?1:0,r.cli]});gravaC(it.dia,it.modificadoEm,out);return out})().catch(e=>{delete MEM[key(it)];throw e}));
 if(!LS.length){carregando(false);$('#upd').textContent='Nenhum dia publicado';kp.innerHTML='<div class="k err">Ainda não há dados publicados. Tente de novo mais tarde.</div>';return}
 const kmin=LS[LS.length-1].k,kmax=LS[0].k;$('#d1').min=$('#d2').min=kmin;$('#d1').max=$('#d2').max=kmax;$('#d1').value=$('#d2').value=kmax;
-let per='1',ROWS=[],GEN=0,ORD={o:'p',d:-1},LIM=50;
+let per='1',ROWS=[],GEN=0,ORD={o:'ro',d:1},LIM=50;
 const semIni=k=>{const d=new Date(k+'T12:00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));return d.toISOString().slice(0,10)};
 const mesK=(o)=>{const d=new Date(LS[0].k+'T12:00:00');d.setDate(1);d.setMonth(d.getMonth()+o);return d.toISOString().slice(0,7)};
 const dias=()=>per==='ontem'?LS.slice(1,2):per==='mes'?LS.filter(x=>x.k.slice(0,7)===mesK(0)):per==='mp'?LS.filter(x=>x.k.slice(0,7)===mesK(-1)):per==='sem'?LS.filter(x=>x.k>=semIni(LS[0].k)):per==='sp'?(()=>{const a=semIni(LS[0].k),d=new Date(a+'T12:00:00');d.setDate(d.getDate()-7);const b=d.toISOString().slice(0,10);return LS.filter(x=>x.k>=b&&x.k<a)})():per==='c'?(()=>{let a=$('#d1').value||kmin,b=$('#d2').value||kmax;if(a>b)[a,b]=[b,a];return LS.filter(x=>x.k>=a&&x.k<=b)})():LS.slice(0,+per);
-const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente'});
+const lin=a=>({dk:a[0],s:a[1],m:a[2],r:a[3],b:a[4],ci:a[5],st:a[6],hs:a[7],h:hr(a[7]),p:a[8],c:a[9],t:a[10],j:a[11],pr:String(a[12]||'').toUpperCase(),cep:String(a[13]||'').replace(/\D/g,''),g:a[0]+'|'+(a[14]||a[1]),vz:!!a[15],cl:a[16]||'Sem cliente',ro:'~'+a[0]+'|'+(a[2]||'')});
 const prog=$('#prog');
 async function load(){const g=++GEN,D=dias();let feitos=0;prog.hidden=false;carregando(true);prog.firstChild.style.width='4%';
 const res=new Array(D.length);let i=0,falhas=0;
@@ -115,7 +115,7 @@ let pt=0;const parcial=()=>{if(g!==GEN||feitos===D.length)return;clearTimeout(pt
 await Promise.all(Array.from({length:Math.min(6,D.length)},async()=>{while(i<D.length){const k=i++;try{res[k]=await carrega(D[k])}catch(e){res[k]=[];falhas++}if(g!==GEN)return;prog.firstChild.style.width=(++feitos/D.length*100)+'%';parcial()}}));
 if(g!==GEN)return;prog.hidden=true;carregando(false);if(falhas===D.length&&D.length){falhou();return}monta(res,falhas)}
 // Monta a tela com o que já chegou (os dias aparecem conforme carregam).
-function monta(res,falhas,parc){ROWS=res.flat().map(lin);
+function monta(res,falhas,parc){ROWS=res.flat().map(lin);RTS=new Map();
 if(!parc)mostraUlt();if(falhas)$('#upd').textContent='Alguns dias não carregaram ('+falhas+'). Tente atualizar.';
 montaFiltros();if(!parc)LIM=50;run();if(!parc)setTimeout(adiantar,300)}
 // Depois de abrir, deixa os últimos 7 dias prontos em segundo plano (trocar de período fica instantâneo).
@@ -148,7 +148,7 @@ $('#'+id).appendChild(pn);desenha();if(matchMedia('(hover:hover)').matches)inp.f
 let AT=0;const aplica=()=>{rotulos();clearTimeout(AT);AT=setTimeout(()=>{LIM=50;run()},120)};
 document.addEventListener('click',fecha);document.addEventListener('keydown',e=>{if(e.key==='Escape')fecha()});
 const agr=(R,key)=>{const M=new Map();for(const r of R){const k=key(r);let o=M.get(k);if(!o)M.set(k,o={k,p:0,c:0,t:0,n:0,v:0});o.p+=r.p;o.c+=Math.min(r.c,r.p);o.t+=r.t;if(r.p>0){(o.A||(o.A=new Set)).add(r.g);if(r.vz)(o.B||(o.B=new Set)).add(r.g)}}for(const o of M.values()){o.n=o.A?o.A.size:0;o.v=o.B?o.B.size:0}return [...M.values()]};
-let F=[];
+let F=[],RTS=new Map(),RG=0;
 function run(){F=filtra();const at=FD.filter(([i])=>SEL[i].size).map(([i,l])=>`<button type="button" data-x="${i}">${l}: ${esc([...SEL[i]].slice(0,2).join(', '))}${SEL[i].size>2?' +'+(SEL[i].size-2):''} ✕</button>`);if($('#q').value)at.push(`<button type="button" data-x="q">Busca: ${esc($('#q').value)} ✕</button>`);const fa=$('#fa');fa.hidden=!at.length;$('#lmp').disabled=!at.length;fa.innerHTML=at.join('')+(at.length>1?'<button type="button" class="cl" data-x="*">Limpar tudo</button>':'');fa.querySelectorAll('button').forEach(b=>b.onclick=e=>{e.stopPropagation();const x=b.dataset.x;if(x==='*'||x==='q')$('#q').value='';if(x==='*')FD.forEach(([i])=>SEL[i].clear());else if(x!=='q')SEL[x].clear();rotulos();LIM=50;run()});const P=F.reduce((a,r)=>a+r.p,0),Cc=F.reduce((a,r)=>a+Math.min(r.c,r.p),0),T=F.reduce((a,r)=>a+r.t,0),pc=P?Cc/P*100:0,[nSel,V]=sel(F),pv=nSel?V/nSel*100:0;
 const pend=F.filter(semCol).length;
 const sC=new Set(F.filter(r=>r.p>0&&(r.c>0||r.t>0)).map(r=>r.g)).size,nV=nSel-V;
@@ -160,7 +160,7 @@ kp.innerHTML=K('Previsto',N(P)+' <em>pacotes</em>',`<span class="ks"><b>${N(nSel
 $('#dn').innerHTML=ros('Visita',pv,grad(pv),`${N(V)} de ${N(nSel)} sellers`,`Visita: ${P1(pv)}\n${N(V)} de ${N(nSel)} sellers`)+ros('Coleta',pc,grad(pc),`${N(Cc)} de ${N(P)} pac.`,`Coleta: ${P1(pc)}\n${N(Cc)} de ${N(P)} pacotes`)}
 $('#t45b').classList.toggle('on',SEL.fp.size===2&&SEL.fp.has('T4')&&SEL.fp.has('T5'));
 kp.querySelectorAll('.kb').forEach(b=>b.onclick=()=>{const f=b.dataset.f,v=b.dataset.v,on=SEL[f].size===1&&SEL[f].has(v);SEL[f].clear();if(!on)SEL[f].add(v);rotulos();LIM=50;run();if(!on)$('#tbl').scrollIntoView({behavior:'smooth',block:'start'})});
-charts();t45();tabela();mapa()}
+charts();t45();tabela();rotear();mapa()}
 // ---- Gráficos (SVG desenhado na largura real do quadro: textos nunca se sobrepõem) ----
 const W=el=>Math.max(260,el.clientWidth-24);
 const kfmt=v=>v>=1e6?(v/1e6).toFixed(1).replace('.',',')+' mi':v>=1e4?Math.round(v/1e3)+' mil':v>=1e3?(v/1e3).toFixed(1).replace('.',',')+' mil':String(Math.round(v));
@@ -232,26 +232,57 @@ $('#t45f').onclick=()=>{const so=SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.tes
 function tabela(){const o=ORD.o,d=ORD.d;const R=[...F].sort((a,b)=>{const x=a[o],y=b[o];return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR'))*d});
 $('#sub').textContent=N(F.length)+' registros';
 document.querySelectorAll('th[data-o]').forEach(th=>{th.classList.toggle('so',th.dataset.o===o);th.dataset.d=d>0?'▲':'▼'});
-$('#tb').innerHTML=R.length?R.slice(0,LIM).map(r=>{const [c,l]=cls(r);return `<tr><td>${fmtD(r.dk).slice(0,5)}</td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="hide-m">${esc(r.r)}</td><td class="hide-m">${esc(r.b)}</td><td class="hide-m">${/^T[45]$/.test(r.pr)?`<span class="tg">${esc(r.pr)}</span>`:r.pr&&r.pr!=='—'?`<span class="pz" title="${esc(r.pr)}">${esc(r.pr.charAt(0)+r.pr.slice(1).toLowerCase())}</span>`:''}</td><td class="n">${N(r.p)}</td><td class="n">${N(r.c)}</td><td class="n hide-m">${r.h>=0?esc(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):''}</td><td><span class="s ${c}" title="${esc(l)}">${esc(stx(r)||l)}</span></td></tr>`}).join(''):'<tr><td colspan="10" class="emp">Nenhuma coleta encontrada.</td></tr>';
+$('#tb').innerHTML=R.length?R.slice(0,LIM).map(r=>{const [c,l]=cls(r);return `<tr><td class="rt">${r.rn?`<b>${r.rn}º</b> <small>${minH(r.eta)}</small>`:''}</td><td>${fmtD(r.dk).slice(0,5)}</td><td class="sl">${esc(r.s)}</td><td class="hide-m">${esc(r.m)}</td><td class="hide-m">${esc(r.r)}</td><td class="hide-m">${esc(r.b)}</td><td class="hide-m">${/^T[45]$/.test(r.pr)?`<span class="tg">${esc(r.pr)}</span>`:r.pr&&r.pr!=='—'?`<span class="pz" title="${esc(r.pr)}">${esc(r.pr.charAt(0)+r.pr.slice(1).toLowerCase())}</span>`:''}</td><td class="n">${N(r.p)}</td><td class="n">${N(r.c)}</td><td class="n hide-m">${r.h>=0?esc(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):''}</td><td><span class="s ${c}" title="${esc(l)}">${esc(stx(r)||l)}</span></td></tr>`}).join(''):'<tr><td colspan="11" class="emp">Nenhuma coleta encontrada.</td></tr>';
 $('#more').innerHTML=R.length>LIM?`<button class="btn2" type="button" id="mais">Mostrar mais (${N(R.length-LIM)} restantes)</button>`:'';if($('#mais'))$('#mais').onclick=()=>{LIM+=300;tabela()}}
-document.querySelectorAll('th[data-o]').forEach(th=>th.onclick=()=>{ORD=ORD.o===th.dataset.o?{o:ORD.o,d:-ORD.d}:{o:th.dataset.o,d:['p','c','h','dk'].includes(th.dataset.o)?-1:1};tabela()});
+document.querySelectorAll('th[data-o]').forEach(th=>th.onclick=()=>{ORD=ORD.o===th.dataset.o?{o:ORD.o,d:-ORD.d}:{o:th.dataset.o,d:['p','c','h'].includes(th.dataset.o)?-1:1};tabela()});
 // Excel: a biblioteca só é baixada na hora do clique (não pesa na abertura do site).
 let XL=null;const xlsx=()=>XL||(XL=new Promise((ok,err)=>{if(window.XLSX)return ok(window.XLSX);const sc=document.createElement('script');sc.src='/assets/vendor/xlsx/xlsx.full.min.js';sc.onload=()=>ok(window.XLSX);sc.onerror=()=>{XL=null;err()};document.head.appendChild(sc)}));
 $('#csv').onclick=async()=>{const b=$('#csv');b.disabled=true;b.textContent='Gerando…';try{const X=await xlsx();
-const lin=F.map(r=>({'Data':fmtD(r.dk),'Seller':r.s,'Cliente':r.cl,'Prioridade':r.pr,'Motorista':r.m,'Região':r.r,'Bairro':r.b,'Cidade':r.ci,'Previsto':r.p,'Coletado do previsto':r.c,'Coletado total':r.t,'Hora':r.hs,'Visitado':vis(r)?'Sim':'Não','Situação':cls(r)[1],'Status do seller':r.st}));
-const ws=X.utils.json_to_sheet(lin);ws['!cols']=[10,30,14,10,24,18,18,14,10,12,12,10,9,14,18].map(w=>({wch:w}));ws['!autofilter']={ref:ws['!ref']};
+const lin=F.map(r=>({'Data':fmtD(r.dk),'Seller':r.s,'Cliente':r.cl,'Prioridade':r.pr,'Motorista':r.m,'Região':r.r,'Bairro':r.b,'Cidade':r.ci,'Previsto':r.p,'Coletado do previsto':r.c,'Coletado total':r.t,'Hora':r.hs,'Visitado':vis(r)?'Sim':'Não','Situação':cls(r)[1],'Status do seller':r.st,'Parada na rota':r.rn||'','Chegada prevista':r.rn?minH(r.eta):''}));
+const ws=X.utils.json_to_sheet(lin);ws['!cols']=[10,30,14,10,24,18,18,14,10,12,12,10,9,14,18,12,14].map(w=>({wch:w}));ws['!autofilter']={ref:ws['!ref']};
 const wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,'Coletas');
 const rs=agr(F,r=>r.r||'Sem região').map(a=>({'Região':a.k,'Previsto':a.p,'Coletado':a.c,'% coleta':a.p?+(a.c/a.p*100).toFixed(1):0,'Sellers':a.n,'Visitados':a.v,'% visita':a.n?+(a.v/a.n*100).toFixed(1):0}));X.utils.book_append_sheet(wb,X.utils.json_to_sheet(rs),'Por região');
 const ds=agr(F,r=>r.dk).sort((a,b)=>a.k<b.k?-1:1).map(a=>({'Data':fmtD(a.k),'Previsto':a.p,'Coletado':a.c,'% coleta':a.p?+(a.c/a.p*100).toFixed(1):0,'Sellers':a.n,'Visitados':a.v,'% visita':a.n?+(a.v/a.n*100).toFixed(1):0}));X.utils.book_append_sheet(wb,X.utils.json_to_sheet(ds),'Por dia');
 X.writeFile(wb,'coletas-getlog-'+new Date().toISOString().slice(0,10)+'.xlsx')}catch(e){alert('Não foi possível gerar o Excel agora. Tente de novo.')}b.disabled=false;b.textContent='Baixar Excel (.xlsx)'};
+// ---- Roteirização: por motorista e dia, mais perto primeiro; T4/T5 e grandes volumes por último; saída às 08:00 ----
+const lug=r=>r.b?r.b+', '+(r.ci||'São Paulo'):r.cep.length>=5?'CEP '+r.cep.slice(0,5)+'-'+(r.cep.slice(5,8)||'000'):r.ci?r.ci:'';
+const gq=l=>l.startsWith('CEP ')?l.slice(4)+', Brasil':l+', SP';
+const hav=(a,b)=>{const R=Math.PI/180,x=(b[0]-a[0])*R,y=(b[1]-a[1])*R,h=Math.sin(x/2)**2+Math.cos(a[0]*R)*Math.cos(b[0]*R)*Math.sin(y/2)**2;return 12742*Math.asin(Math.sqrt(h))};
+const minH=m=>{m=Math.round(m);return String(Math.floor(m/60)%24).padStart(2,'0')+':'+String(m%60).padStart(2,'0')};
+const rank=r=>r.pr==='T5'?2:(r.pr==='T4'||r.p>=3000)?1:0;
+const dist=(a,b)=>hav(a.xy,b.xy);
+function ordena(S){const ok=S.filter(r=>r.xy),cen=ok.length?[ok.reduce((a,r)=>a+r.xy[0],0)/ok.length,ok.reduce((a,r)=>a+r.xy[1],0)/ok.length]:null;let out=[],atual=null;
+for(let k=0;k<3;k++){const B=ok.filter(r=>rank(r)===k),X=S.filter(r=>!r.xy&&rank(r)===k).sort((a,b)=>a.p-b.p);if(B.length){
+let ini=atual?B.reduce((m,r)=>dist(atual,r)<dist(atual,m)?r:m):B.reduce((m,r)=>hav(cen,r.xy)>hav(cen,m.xy)?r:m);const P=[ini],R=B.filter(x=>x!==ini);
+while(R.length){const l=P[P.length-1];let j=0;for(let i=1;i<R.length;i++)if(dist(l,R[i])<dist(l,R[j]))j=i;P.push(R.splice(j,1)[0])}
+// 2-opt: troca trechos que se cruzam (primeira parada fixa)
+for(let it=0,ch=true;ch&&it<40;it++){ch=false;for(let i=1;i<P.length-1;i++)for(let j=i+1;j<P.length;j++){const a=P[i-1],b=P[i],c=P[j],d=P[j+1];const g=dist(a,b)+(d?dist(c,d):0)-dist(a,c)-(d?dist(b,d):0);if(g>1e-6){P.splice(i,j-i+1,...P.slice(i,j+1).reverse());ch=true}}}
+out=out.concat(P);atual=P[P.length-1]}out=out.concat(X)}return out}
+async function rotear(){const g=++RG,ks=new Set(),por=new Map();for(const r of F)if(r.m&&r.p>0&&lug(r))ks.add(r.dk+'|'+r.m);
+for(const r of ROWS)if(r.m&&r.p>0&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
+let ult=0;for(const k of [...ks].sort().reverse()){if(g!==RG)return;if(RTS.has(k))continue;const S=por.get(k)||[];
+for(const r of S){if(r.xy===undefined){const c=await geo(gq(lug(r)));if(g!==RG)return;r.xy=c||null}}
+const O=ordena(S);let t=480,km=0;O.forEach((r,i)=>{if(i){const q=O[i-1],d=q.xy&&r.xy?hav(q.xy,r.xy)*1.35:0;km+=d;t+=Math.min(45,8+q.p/80)+(q.xy&&r.xy?d/25*60:8)}r.rn=i+1;r.eta=t;r.ro=(30000000-(+r.dk.replace(/-/g,''))).toString()+'|'+r.m+'|'+String(i+1).padStart(3,'0')});
+RTS.set(k,{rows:O,km,fim:O.length?t+Math.min(45,8+O[O.length-1].p/80):480,m:O[0]?O[0].m:''});
+if(Date.now()-ult>600){ult=Date.now();tabela()}}
+if(g===RG){tabela();mapa()}}
+const COR=['#002060','#f86800','#11834e','#c62828','#7b1fa2','#0277bd','#8d6e00','#d81b60','#00838f','#5d4037','#455a64','#6a8f00'];
+function desenhaRotas(dK,ks){let b=[];$('#mapS').textContent='Rotas de '+fmtD(dK)+' · saída 08:00 · mais perto primeiro, T4/T5 e grandes volumes por último';
+$('#rres').innerHTML=ks.map((k,i)=>{const o=RTS.get(k);return `<span><i style="background:${COR[i%COR.length]}"></i><b>${esc(o.m)}</b> ${o.rows.length} paradas · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`}).join('');
+ks.forEach((k,i)=>{const o=RTS.get(k),cor=COR[i%COR.length],pts=o.rows.filter(r=>r.xy);if(!pts.length)return;
+L.polyline(pts.map(r=>r.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(LAY);
+pts.forEach(r=>{b.push(r.xy);L.marker(r.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${r.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${esc(r.s)}<br>${esc(r.b||r.ci||'')}<br>Previsto: ${N(r.p)}${rank(r)?' · '+esc(r.pr&&/^T/.test(r.pr)?r.pr:'volume alto'):''}<br>${esc(r.m)}`).addTo(LAY)})});
+if(b.length)MAP.fitBounds(b,{padding:[24,24],maxZoom:14})}
 // ---- Mapa: bairros atendidos (posição pelo bairro/cidade, guardada no aparelho) ----
 let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo')||'{}')}catch(e){}
 const geo=k=>k in GEO?Promise.resolve(GEO[k]):(GQ=GQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(k));const j=await r.json();if(j[0])v=[+j[0].lat,+j[0].lon]}catch(e){return null}
 GEO[k]=v;try{localStorage.setItem('getlog_geo',JSON.stringify(GEO))}catch(e){}await new Promise(r=>setTimeout(r,1100));return v}));
 async function mapa(){if(!window.L)return;const g=++MG;if(!MAP){MAP=L.map('map',{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© OpenStreetMap'}).addTo(MAP);LAY=L.layerGroup().addTo(MAP)}
-LAY.clearLayers();const lugar=r=>r.b?r.b+', '+(r.ci||'São Paulo'):r.cep.length>=5?'CEP '+r.cep.slice(0,5)+'-'+(r.cep.slice(5,8)||'000'):r.ci?r.ci:'';const A=agr(F.filter(lugar),lugar).sort((a,b)=>b.p-a.p).slice(0,70);const mx=Math.max(1,...A.map(a=>a.p));const pts=[];
+LAY.clearLayers();const dK=F.filter(r=>r.m&&r.p>0).map(r=>r.dk).sort().pop(),ms=[...new Set(F.filter(r=>r.dk===dK&&r.m&&r.p>0).map(r=>r.m))];
+if(ms.length&&(SEL.fm.size||ms.length<=12)){const ks=ms.map(m=>dK+'|'+m);if(!ks.every(k=>RTS.has(k))){$('#mapS').textContent='Roteirizando… buscando a posição dos bairros (só na primeira vez)';return}desenhaRotas(dK,ks);return}
+$('#rres').innerHTML='';const lugar=lug;const A=agr(F.filter(lugar),lugar).sort((a,b)=>b.p-a.p).slice(0,70);const mx=Math.max(1,...A.map(a=>a.p));const pts=[];
 $('#mapS').textContent=A.length?'Bairros atendidos ('+A.length+'); tamanho = volume, cor = performance de coleta':'Sem endereço nos dados do período.';
-for(const a of A){const c=await geo(a.k.startsWith('CEP ')?a.k.slice(4)+', Brasil':a.k+', SP');if(g!==MG)return;if(!c)continue;const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(c);
+for(const a of A){const c=await geo(gq(a.k));if(g!==MG)return;if(!c)continue;const p=a.p?a.c/a.p*100:0,cor=p>=98?'#11834e':p>=85?'#d18a00':'#c62828';pts.push(c);
 L.circleMarker(c,{radius:6+Math.sqrt(a.p/mx)*16,color:cor,weight:2,fillColor:cor,fillOpacity:.35}).bindPopup(`<b>${esc(a.k)}</b><br>Previsto: ${N(a.p)}<br>Coletado: ${N(a.c)}<br>Coleta: <b>${P1(p)}</b> · Visita: ${P1(a.n?a.v/a.n*100:0)}`).addTo(LAY);
 if(pts.length===1)MAP.fitBounds(L.latLng(c).toBounds(6000))}
 // Enquadra onde estão os sellers: ignora pontos isolados (fora de 10%–90%) para o mapa abrir já aproximado.
