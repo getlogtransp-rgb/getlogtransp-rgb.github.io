@@ -3,9 +3,11 @@
 <head>
 <meta name="robots" content="noindex">
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.github.com https://nominatim.openstreetmap.org; media-src 'self' blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.github.com https://nominatim.openstreetmap.org https://cep.awesomeapi.com.br; media-src 'self' blob:; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="no-referrer">
 <script src="/assets/tema.js?v=2"></script>
+<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<script src="/assets/vendor/leaflet/leaflet.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Performance de coleta · GETLOG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -336,6 +338,7 @@ tr[data-setf]{cursor:pointer}
 @media (max-width:520px){.kpis{grid-template-columns:1fr}.kpi{border-right:0!important;border-bottom:1px solid var(--line-2)!important}.kpi:last-child{border-bottom:0!important}.pcard{grid-template-columns:92px minmax(0,1fr)}.gauge{align-self:start}.pv b{font-size:29px}.pmeta.top-metrics{grid-template-columns:1fr 1fr}.status-item{flex-basis:190px}.card{padding:10px}.ch{margin-bottom:8px}.ch h3{font-size:14px}.gap-row{padding:7px}.top-in .upd b{font-size:13px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 :root[data-theme="dark"] :is(.cal-p button:hover,.cal-p button[aria-pressed="true"],.al.n .ic,.seg button[aria-pressed="true"],.state h2,.ms-toggle:hover,.gap-seller strong){color:#C9D5FF}
+.ord{text-align:center;font-weight:700;white-space:nowrap}#rmap{height:420px;margin:0 16px 12px;border-radius:12px;z-index:0}.rres{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 16px 14px;font-size:12px}.rres:empty{display:none}.rres span{display:inline-flex;align-items:center;gap:6px}.rres i{width:10px;height:10px;border-radius:50%;display:inline-block}.rpin span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;color:#fff;font-weight:800;font-size:11px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -373,6 +376,7 @@ for(const sh of document.styleSheets){try{limpa(sh.cssRules)}catch(e){}}
 </script>
 
 <script src="/portal/core.js?v=7"></script>
+<script src="/portal/rota-geo.js?v=1"></script>
 <script src="/portal/drive-api.js?v=15"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:99,ALERTA:80,EMPRESA_PROPRIA:"GET"};
@@ -381,7 +385,7 @@ const FILTROS=[["sel","Seller","seller"],["cli","Cliente","cli"],["reg","Região
 const EXTRA_FILTROS=[["st","Status","st"],["hr","Hora","hh"]];
 const TODOS_FILTROS=[...FILTROS,...EXTRA_FILTROS];
 
-const S={byDate:new Map(),meta:new Map(),dates:[],from:null,to:null,f:Object.fromEntries(TODOS_FILTROS.map(x=>[x[0],new Set()])),metric:null,rankMode:"pen",tSort:{k:"pen",d:-1},tPage:0,tQ:"",pQ:"",pOpen:new Set(),gapOpen:new Set(),unloadOpen:false,view:"home",lastCheck:null,src:"http",pop:null,popQ:"",cal:null,calPick:null,msStart:0,grp:{sit:new Set(),pri:new Set()}};
+const S={byDate:new Map(),meta:new Map(),dates:[],from:null,to:null,f:Object.fromEntries(TODOS_FILTROS.map(x=>[x[0],new Set()])),metric:null,rankMode:"pen",tSort:{k:"ro",d:1},tPage:0,tQ:"",pQ:"",pOpen:new Set(),gapOpen:new Set(),unloadOpen:false,view:"home",lastCheck:null,src:"http",pop:null,popQ:"",cal:null,calPick:null,msStart:0,grp:{sit:new Set(),pri:new Set()}};
 
 const $=s=>document.querySelector(s);
 const nf=new Intl.NumberFormat("pt-BR");
@@ -700,16 +704,30 @@ function homeHTML(rows,t){
   <div class="tw mc compact-table"><table><thead><tr><th>Hora</th><th>Cliente</th><th>Motorista atribuído</th><th>Coletado por</th><th class="r">Previsto</th><th class="r">Coletado</th><th class="r">Justificado</th><th class="r">Em rota</th><th>Status</th><th>Observação</th></tr></thead><tbody>${L.map(r=>`<tr><td><b>${r.h||"—"}</b></td><td>${esc(r.cli)}</td><td>${esc(r.ma===NAO_ATRIB?"Sem motorista":nameOf(r.ma))}</td><td>${r.tot>0&&r.mo?esc(nameOf(r.mo)):"—"}</td><td class="r">${N(r.prev)}</td><td class="r">${N(r.tot)}</td><td class="r">${N(r.jus)}</td><td class="r">${N(r.pen)}</td><td>${stPill(r.st,r.pen>0)}</td><td>${esc(r.jtxt)||"—"}</td></tr>`).join("")}</tbody></table></div></div>`})():""}
   ${(()=>{const hs=new Array(24).fill(0);for(const r of (S.f.hr.size?applyF(baseRows(),"hr"):rows)){const h=horaDe(r.hora);if(h&&r.tot>0)hs[+h.slice(0,2)]+=r.tot}const ix=hs.map((v,i)=>v?i:-1).filter(i=>i>=0);if(!ix.length)return "";const L=[];for(let i=ix[0];i<=ix.at(-1);i++)L.push([i,hs[i]]);const mx=Math.max(...L.map(x=>x[1])),pico=L.find(x=>x[1]===mx);
   return `<div class="card c12"><div class="ch"><div><h3>Coletado por hora</h3><p>Pacotes coletados em cada hora, com os filtros aplicados · clique numa barra para filtrar a hora · pico às ${String(pico[0]).padStart(2,"0")}h (${N(mx)} pacotes)</p></div></div><div class="evo hr${S.f.hr.size?" f":""}">${L.map(([h,v])=>`<button type="button" class="col clickcell${S.f.hr.has(String(h).padStart(2,"0")+"h")?" in":""}" data-setf="hr" data-v="${String(h).padStart(2,"0")}h" title="${String(h).padStart(2,"0")}h: ${N(v)} · clique para filtrar"><b>${v>=10000?(v/1000).toFixed(1).replace(".",",")+" mil":N(v)}</b><div class="b" style="height:${Math.max(3,v/mx*110)}px;background:${v===mx?"var(--or)":"var(--navy)"}"></div><span>${String(h).padStart(2,"0")}h</span></button>`).join("")}</div></div>`})()}
+  <div class="card c12" id="rmapCard"><div class="ch"><div><h3>Mapa das rotas</h3><p id="rmapS">Rota por motorista: mais perto primeiro, T4/T5 e grandes volumes por último, início 08:00</p></div></div><div id="rmap"></div><div id="rres" class="rres"></div></div>
   <div class="card c12" id="sellersCard"><div class="ch"><div><h3>Detalhado por seller</h3><p>Seller, endereço, localização, motorista e performance completa. Clique no título para ordenar</p></div><button class="btn" id="expAll">${IC.dl}Baixar lista</button></div><div class="tools"><label class="search">${IC.search}<input id="tQ" type="search" placeholder="Buscar seller, motorista, endereço, cidade, bairro ou CEP" value="${esc(S.tQ)}"></label></div><div id="sTable">${sellerTable(sellers)}</div></div></section>`;
 }
+// ---- Rotas: ordem das paradas por motorista + mapa (regras em /portal/rota-geo.js) ----
+const RES=new Map();let RM=null,RLAY=null;
+function rotasItens(sl){return sl.filter(s=>s.maList[0]&&s.maList[0]!==NAO_ATRIB).map(s=>({k:s.maList[0],nome:nameOf(s.maList[0]),s:s.seller,b:s.bai||"",ci:s.cid||"",cep:String(s.cep||"").replace(/\D/g,""),en:s.end||"",p:s.prev||0,c:s.col||0,t:s.tot||0,pr:((String(s.pri||"").match(/T\s?-?([1-9])/i)||[])[0]||"").replace(/\W/g,"").toUpperCase(),ref:s}))}
+function rotasCalc(){if(!window.GL_ROTA||!$("#sTable"))return;const sl=sellerAgg(applyF(baseRows())),it=rotasItens(sl);
+  const ds=[...new Set(it.map(x=>x.k))],keys=S.f.ma&&S.f.ma.size?ds.filter(d=>S.f.ma.has(d)):(ds.length<=12?ds:[]);
+  const G=GL_ROTA.rotear(it,new Set(keys),rotasCalc);RES.clear();for(const x of it)if(x.rn)RES.set(x.ref.k,{rn:x.rn,eta:x.eta,nome:x.nome});
+  $("#sTable").innerHTML=sellerTable(sl);bindTable();rotasMapa(G,keys)}
+function rotasMapa(G,keys){const box=$("#rmap");if(!box||!window.L)return;
+  if(!RM||RM._container!==box){if(RM){try{RM.remove()}catch(e){}}RM=L.map(box,{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,referrerPolicy:"strict-origin-when-cross-origin",attribution:"© OpenStreetMap"}).addTo(RM);RLAY=L.layerGroup().addTo(RM)}
+  const sub=$("#rmapS");if(!keys.length){RLAY.clearLayers();$("#rres").innerHTML="";sub.textContent="Filtre um motorista (ou deixe até 12 motoristas) para ver as rotas no mapa.";return}
+  const r=GL_ROTA.desenha(L,RM,RLAY,G,keys);$("#rres").innerHTML=r.html;
+  sub.textContent="Rota por motorista: mais perto primeiro, T4/T5 e grandes volumes por último, início 08:00"+(r.falta?" · localizando "+r.falta+" paradas no mapa… ("+N(r.pend)+" na fila, só na primeira vez)":"")}
+function rotasInit(){RM=null;rotasCalc()}
 function sellerTable(sellers){
-  const q=S.tQ.toLowerCase();let list=sellers.map(s=>({...s,ma:s.maList.join(" "),pv:s.pv}));
+  const q=S.tQ.toLowerCase();let list=sellers.map(s=>{const r=RES.get(s.k);return {...s,ma:s.maList.join(" "),pv:s.pv,rn:r?r.rn:0,ro:r?r.nome+"|"+String(r.rn).padStart(3,"0"):"zzzz"}});
   if(q)list=list.filter(s=>(s.seller+" "+s.sid+" "+s.ma+" "+s.mo+" "+s.bai+" "+s.cid+" "+s.cep+" "+s.end+" "+s.cli+" "+s.jtxt).toLowerCase().includes(q));
   const {k,d}=S.tSort;list.sort((a,b)=>{const x=a[k]??"",y=b[k]??"";return (typeof x==="string"?String(x).localeCompare(String(y),"pt-BR",{numeric:true}):(x-y))*d||b.pen-a.pen});
   const per=25,pages=Math.max(1,Math.ceil(list.length/per));S.tPage=Math.min(S.tPage,pages-1);const pg=list.slice(S.tPage*per,S.tPage*per+per);
   const th=(key,l,r)=>`<th class="s ${r?"r":""}" data-sort="${key}" ${S.tSort.k===key?`aria-sort="${S.tSort.d<0?"descending":"ascending"}"`:""}>${l}</th>`;
   const cell=(k,v,l,cls="")=>`<td class="${cls} clickcell" data-l="${l}" data-setf="${k}" data-v="${esc(v)}">${esc(v)||"—"}</td>`;
-  return `<div class="tw mc compact-table"><table><thead><tr>${th("seller","Seller")}${th("end","Endereço")}${th("cid","Cidade")}${th("bai","Bairro")}${th("cep","CEP")}${th("cli","Cliente")}${th("ma","Motorista atribuído")}${th("reg","Região")}${th("prev","Previsto",1)}${th("col","Coletado previsto",1)}${th("tot","Coletado total",1)}${th("mo","Coletado por")}${th("hora","Hora")}${th("adi","Adiantado",1)}${th("jus","Justificado",1)}${th("pen","Em rota",1)}${th("pv","Visita",1)}${th("st","Status")}${th("jtxt","Observação")}</tr></thead><tbody>${pg.map(s=>`<tr data-setf="sel" data-v="${esc(s.seller)}">${cell("sel",s.seller,"Seller","first")}${cell("end",s.end,"Endereço")}${cell("cid",s.cid,"Cidade")}${cell("bai",s.bai,"Bairro")}<td data-l="CEP">${esc(s.cep)||"—"}</td>${cell("cli",s.cli,"Cliente")}<td class="clickcell" data-l="Motorista" data-setf="ma" data-v="${esc(s.maList[0]||NAO_ATRIB)}">${esc(s.maList.map(m=>m===NAO_ATRIB?"Sem motorista":nameOf(m)).join(" / "))}</td>${cell("reg",s.reg,"Região")}<td class="r" data-l="Previsto">${N(s.prev)}</td><td class="r" data-l="Coletado previsto">${N(s.col)}</td><td class="r" data-l="Coletado total">${N(s.tot)}</td><td data-l="Coletado por">${s.mo?`<span class="${s.other?"other-driver":""}">${esc(s.mo)}</span>`:"—"}</td><td class="r" data-l="Hora">${s.hora||"—"}</td><td class="r" data-l="Adiantado">${N(s.adi)}</td><td class="r" data-l="Justificado">${N(s.jus)}</td><td class="r ${s.pen>0?"pending-num":""}" data-l="Em rota">${N(s.pen)}</td><td class="r" data-l="Visita">${perfCell(s.pv)}</td><td class="clickcell" data-l="Status" data-setf="st" data-v="${esc(s.st)}">${stPill(s.st,s.pen>0)}</td><td data-l="Observação" title="${esc(s.jtxt)}">${esc(s.jtxt)||"—"}</td></tr>`).join("")||`<tr><td colspan="19" class="empty">Nenhum seller encontrado</td></tr>`}</tbody></table></div><div class="pager"><span>${N(list.length)} sellers · página ${S.tPage+1} de ${pages}</span><span style="display:flex;gap:6px"><button class="btn" data-pg="-1" ${S.tPage?"":"disabled"}>Anterior</button><button class="btn" data-pg="1" ${S.tPage<pages-1?"":"disabled"}>Próxima</button></span></div>`;
+  return `<div class="tw mc compact-table"><table><thead><tr>${th("ro","Ordem")}${th("seller","Seller")}${th("end","Endereço")}${th("cid","Cidade")}${th("bai","Bairro")}${th("cep","CEP")}${th("cli","Cliente")}${th("ma","Motorista atribuído")}${th("reg","Região")}${th("prev","Previsto",1)}${th("col","Coletado previsto",1)}${th("tot","Coletado total",1)}${th("mo","Coletado por")}${th("hora","Hora")}${th("adi","Adiantado",1)}${th("jus","Justificado",1)}${th("pen","Em rota",1)}${th("pv","Visita",1)}${th("st","Status")}${th("jtxt","Observação")}</tr></thead><tbody>${pg.map(s=>`<tr data-setf="sel" data-v="${esc(s.seller)}"><td data-l="Ordem" class="ord">${s.rn?s.rn+"º":"—"}</td>${cell("sel",s.seller,"Seller","first")}${cell("end",s.end,"Endereço")}${cell("cid",s.cid,"Cidade")}${cell("bai",s.bai,"Bairro")}<td data-l="CEP">${esc(s.cep)||"—"}</td>${cell("cli",s.cli,"Cliente")}<td class="clickcell" data-l="Motorista" data-setf="ma" data-v="${esc(s.maList[0]||NAO_ATRIB)}">${esc(s.maList.map(m=>m===NAO_ATRIB?"Sem motorista":nameOf(m)).join(" / "))}</td>${cell("reg",s.reg,"Região")}<td class="r" data-l="Previsto">${N(s.prev)}</td><td class="r" data-l="Coletado previsto">${N(s.col)}</td><td class="r" data-l="Coletado total">${N(s.tot)}</td><td data-l="Coletado por">${s.mo?`<span class="${s.other?"other-driver":""}">${esc(s.mo)}</span>`:"—"}</td><td class="r" data-l="Hora">${s.hora||"—"}</td><td class="r" data-l="Adiantado">${N(s.adi)}</td><td class="r" data-l="Justificado">${N(s.jus)}</td><td class="r ${s.pen>0?"pending-num":""}" data-l="Em rota">${N(s.pen)}</td><td class="r" data-l="Visita">${perfCell(s.pv)}</td><td class="clickcell" data-l="Status" data-setf="st" data-v="${esc(s.st)}">${stPill(s.st,s.pen>0)}</td><td data-l="Observação" title="${esc(s.jtxt)}">${esc(s.jtxt)||"—"}</td></tr>`).join("")||`<tr><td colspan="19" class="empty">Nenhum seller encontrado</td></tr>`}</tbody></table></div><div class="pager"><span>${N(list.length)} sellers · página ${S.tPage+1} de ${pages}</span><span style="display:flex;gap:6px"><button class="btn" data-pg="-1" ${S.tPage?"":"disabled"}>Anterior</button><button class="btn" data-pg="1" ${S.tPage<pages-1?"":"disabled"}>Próxima</button></span></div>`;
 }
 function pendData(rows){
   const pendingKeys=new Set(sellerAgg(rows).filter(s=>s.sit==="Pendente").map(s=>sKey(s)));
@@ -747,7 +765,7 @@ function bindMain(){
   document.querySelectorAll("[data-go=pend]").forEach(b=>b.onclick=e=>{e.stopPropagation();go("pend")});
   document.querySelectorAll("[data-day1]").forEach(b=>b.onclick=()=>setRange(b.dataset.day1,b.dataset.day1));
   const c2=$("#clr2");if(c2)c2.onclick=()=>{TODOS_FILTROS.forEach(([k])=>S.f[k].clear());S.metric=null;saveURLState();render()};
-  bindTable();
+  bindTable();rotasInit();
   const tq=$("#tQ");if(tq){let tm;tq.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{S.tQ=tq.value.trim();S.tPage=0;$("#sTable").innerHTML=sellerTable(sellerAgg(applyF(baseRows())));bindTable()},250)}}
   const ea=$("#expAll");if(ea)ea.onclick=()=>{const s=sellerAgg(applyF(baseRows()));csv(s.map(x=>[x.seller,x.sid,x.end,x.cid,x.bai,x.cep,x.cli,x.maList.map(nameOf).join(" / "),x.reg,x.pri,x.st,x.sit,x.prev,x.col,x.tot,x.mo,x.adi,x.jus,x.pen,isFinite(x.pv)?(x.pv*100).toFixed(2).replace(".",","):"",x.jtxt]),["Seller","Seller ID","Endereço","Cidade","Bairro","CEP","Cliente","Motorista atribuído","Região","Prioridade","Status","Situação","Previsto","Coletado do previsto","Coletado total","Coletado por","Adiantado","Justificado","Em rota","Performance visita %","Observação"],`SELLERS - ${fileDay()}.csv`);toast("Lista baixada")};
   const pq=$("#pQ");if(pq){let tm;pq.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{S.pQ=pq.value.trim();const pos=pq.selectionStart;renderMain();const n=$("#pQ");n.focus();n.setSelectionRange(pos,pos)},300)}}
@@ -759,7 +777,7 @@ function bindMain(){
   animate();
 }
 function bindTable(){
-  document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;S.tSort=S.tSort.k===k?{k,d:-S.tSort.d}:{k,d:["seller","cli","ma","end","cid","bai","cep","reg","mo","st","jtxt"].includes(k)?1:-1};S.tPage=0;$("#sTable").innerHTML=sellerTable(sellerAgg(applyF(baseRows())));bindTable()});
+  document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;S.tSort=S.tSort.k===k?{k,d:-S.tSort.d}:{k,d:["ro","seller","cli","ma","end","cid","bai","cep","reg","mo","st","jtxt"].includes(k)?1:-1};S.tPage=0;$("#sTable").innerHTML=sellerTable(sellerAgg(applyF(baseRows())));bindTable()});
   document.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{S.tPage+=+b.dataset.pg;$("#sTable").innerHTML=sellerTable(sellerAgg(applyF(baseRows())));bindTable();$("#sellersCard").scrollIntoView({behavior:"smooth",block:"start"})});
 }
 function animate(){
