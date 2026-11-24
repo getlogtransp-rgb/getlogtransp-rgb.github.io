@@ -269,3 +269,16 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #tbl td:nth-child(8){overflow:hidden}
 #tbl td:nth-child(n){overflow:hidden}#tbl td:nth-child(12){overflow:visible}
 #tbl td:nth-child(8) .pz{white-space:normal;line-height:1.15;text-overflow:clip;font-size:.68rem}#tbl th:nth-child(8){width:92px}
+
+/* v2: Ordem só número; Prior. e Região no fim; rolagem horizontal; dados centralizados na vertical */
+#tbl .tw{overflow-x:auto;overflow-y:auto}
+#tbl table{table-layout:auto;min-width:1320px}
+#tbl td{vertical-align:middle}
+#tbl th:nth-child(n){width:auto}
+#tbl th:nth-child(1){width:64px}#tbl th:nth-child(2){width:52px}#tbl th:nth-child(3){width:170px}#tbl th:nth-child(4){width:190px}#tbl th:nth-child(5){width:120px}#tbl th:nth-child(6){width:120px}#tbl th:nth-child(7){width:260px}#tbl th:nth-child(8),#tbl th:nth-child(9){width:76px}#tbl th:nth-child(10){width:56px}#tbl th:nth-child(11){width:130px}#tbl th:nth-child(12){width:150px}#tbl th:nth-child(13){width:120px}
+#tbl td:nth-child(n){white-space:normal;overflow:visible}
+#tbl td:nth-child(1),#tbl td:nth-child(2),#tbl td:nth-child(8),#tbl td:nth-child(9),#tbl td:nth-child(10){white-space:nowrap}
+#tbl td:nth-child(1),#tbl th:nth-child(1),#tbl td:nth-child(2),#tbl th:nth-child(2){text-align:center}
+#tbl td:nth-child(13) .pz{display:inline-block;white-space:normal}
+#tbl td.ve{font-weight:600}
+#tbl td:nth-child(11) .s{white-space:normal;line-height:1.2;font-size:.68rem;padding:3px 8px;text-align:left;display:inline-block}
