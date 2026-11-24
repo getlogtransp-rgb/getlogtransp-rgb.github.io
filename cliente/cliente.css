@@ -307,3 +307,4 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #tbl th:nth-child(n){width:auto}
 #tbl th,#tbl td{padding:7px 6px}
 @media (max-width:600px){#tbl table{table-layout:auto;width:100%;min-width:0}}
+#tbl .cl2{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;word-break:break-word}
