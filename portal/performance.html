@@ -357,6 +357,21 @@ tr[data-setf]{cursor:pointer}
 <div class="toast" id="toast"></div>
 
 <script src="/portal/perf-guard.js?v=9"></script>
+<script>
+// iPhone/iPad: o Safari gasta o 1º toque em botões com efeito :hover (e transição) e não dispara o clique.
+// Em aparelhos de toque removemos todas as regras :hover das folhas de estilo.
+(()=>{try{if(!matchMedia("(hover:none)").matches)return;
+const split=t=>{const o=[];let d=0,c="";for(const ch of t){if(ch==="("||ch==="[")d++;if(ch===")"||ch==="]")d--;if(ch===","&&!d){o.push(c);c=""}else c+=ch}o.push(c);return o};
+const limpa=rs=>{for(let i=rs.length-1;i>=0;i--){const r=rs[i];
+if(r.cssRules&&!r.selectorText){limpa(r.cssRules);continue}
+if(!r.selectorText||r.selectorText.indexOf(":hover")<0)continue;
+const keep=split(r.selectorText).filter(x=>x.indexOf(":hover")<0);
+const par=r.parentRule||r.parentStyleSheet;
+if(!keep.length){par.deleteRule(i)}else{const css=r.style.cssText;par.deleteRule(i);par.insertRule(keep.join(",")+"{"+css+"}",i)}}};
+for(const sh of document.styleSheets){try{limpa(sh.cssRules)}catch(e){}}
+}catch(e){}})();
+</script>
+
 <script src="/portal/core.js?v=7"></script>
 <script src="/portal/drive-api.js?v=15"></script>
 <script>
