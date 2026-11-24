@@ -233,12 +233,13 @@ $('#t45f').onclick=()=>{const so=SEL.fp.size&&[...SEL.fp].every(x=>/^T[45]$/.tes
 const cl=t=>`<div class="cl2" title="${esc(t)}">${esc(t)}</div>`;
 function ajusta(V){const tb=document.querySelector('#tbl table'),cg=$('#cg');if(!tb||!cg)return;if(matchMedia('(max-width:600px)').matches){tb.style.width='';tb.style.minWidth='';cg.querySelectorAll('col').forEach(c=>c.style.width='');return}
 const cv=ajusta.c||(ajusta.c=document.createElement('canvas').getContext('2d')),fam=getComputedStyle(document.body).fontFamily;
-const G=[[r=>r.rn?r.rn+'º':'',56],[r=>fmtD(r.dk).slice(0,5),60],[r=>r.s,190],[r=>r.m,200],[r=>r.ve||'',120],[r=>r.b,125],[r=>r.en,215],[r=>r.cep.length===8?r.cep.slice(0,5)+'-'+r.cep.slice(5):r.cep,86],[r=>N(r.p),80],[r=>N(r.c),80],[r=>stx(r)||cls(r)[1],130],[r=>r.r,150],[r=>r.pr&&r.pr!=='—'?r.pr:'',120],[r=>r.h>=0?(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):'',58]];
+const G=[[r=>r.rn?r.rn+'º':'',56],[r=>fmtD(r.dk).slice(0,5),60],[r=>r.s,190],[r=>r.m,230],[r=>r.ve||'',120],[r=>r.b,125],[r=>r.en,260],[r=>r.cep.length===8?r.cep.slice(0,5)+'-'+r.cep.slice(5):r.cep,86],[r=>N(r.p),80],[r=>N(r.c),80],[r=>stx(r)||cls(r)[1],130],[r=>r.r,150],[r=>r.pr&&r.pr!=='—'?r.pr:'',120],[r=>r.h>=0?(String(r.hs).match(/\d{1,2}:\d{2}/)?.[0]||''):'',58]];
 const hd=[...document.querySelectorAll('#tbl thead th')];let tot=0;const WS=[];const cols=[...cg.querySelectorAll('col')];
 G.forEach(([f,cap],i)=>{cv.font='700 12px '+fam;let m=cv.measureText(hd[i].textContent).width+22;cv.font=(i===10?'700 11px ':i===4?'600 12px ':'12px ')+fam;const vistos=new Set();for(const r of V){const t=String(f(r));if(t&&!vistos.has(t)){vistos.add(t);const w=cv.measureText(t).width+(i===10||i===12?22:0);if(w>m-14+2)m=Math.max(m,w+14)}}
 const w=Math.ceil(Math.max(hd[i].textContent.length>0?cv.measureText('M').width*3:40,Math.min(m+6,cap)));WS.push(w);tot+=w});
-// Se passar da largura do quadro, encolhe só as colunas de texto (proporcionalmente); o texto vai a 2 linhas.
-const W=(tb.parentElement.clientWidth||tot)-2,FX=[2,3,4,5,6,11,12];if(tot>W){const ft=FX.reduce((a,i)=>a+WS[i],0),ex=tot-W,k=Math.max(0,(ft-ex)/ft);FX.forEach(i=>{WS[i]=Math.max(78,Math.floor(WS[i]*k))})}
+// Até a coluna Status tudo cabe na tela (colunas de texto se ajustam, Motorista e Endereço ficam com mais espaço); Região, Prior. e Hora ficam à direita, na rolagem horizontal.
+const W=(tb.parentElement.clientWidth||tot)-2,FIX=[0,1,7,8,9,10],FL=[2,3,4,5,6],MIN={2:96,3:150,4:84,5:84,6:170};const fx=FIX.reduce((a,i)=>a+WS[i],0),A=W-fx,D=FL.reduce((a,i)=>a+WS[i],0);
+if(D>A){const mn=FL.reduce((a,i)=>a+MIN[i],0),ex=Math.max(0,A-mn),sob=FL.reduce((a,i)=>a+Math.max(0,WS[i]-MIN[i]),0)||1;FL.forEach(i=>{WS[i]=Math.floor(MIN[i]+Math.min(1,ex/sob)*Math.max(0,WS[i]-MIN[i]))})}
 tot=WS.reduce((a,b)=>a+b,0);cols.forEach((c,i)=>c.style.width=WS[i]+'px');tb.style.width=tot+'px';tb.style.minWidth='100%'}
 function tabela(){for(const r of F)r.ve=veic(r);const o=ORD.o,d=ORD.d;const R=[...F].sort((a,b)=>{const x=a[o],y=b[o];return (typeof x==='number'?x-y:String(x).localeCompare(String(y),'pt-BR'))*d});
 $('#sub').textContent=N(F.length)+' registros'+(PEND.size?' · localizando '+N(PEND.size)+' bairros para a rota…':'');
