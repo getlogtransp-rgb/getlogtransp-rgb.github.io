@@ -272,19 +272,22 @@ const ehAj=m=>/\(\s*AJ\s*\)|-\s*A\s*$/i.test(String(m||''));
 const veic=r=>{if(!r.m)return '';let v=VC.get(r.m);if(v===undefined){v=ehAj(r.m)?'Ajudante':(VM.get(nkm(r.m))||'—');VC.set(r.m,v)}return v};
 const TOP=r=>r==='T5'?2:r==='T4'?1:0;
 // Posição dos bairros: vem do cache do aparelho; os que faltam são buscados em segundo plano (a ordem se refina sozinha).
-const INF=new Set(),NRUN={c:0,n:0};let RFT=0;
+const INF=new Set(),NRUN={c:0,n:0};let RFT=0,SGT=0;const salvaGeo=()=>{if(SGT)return;SGT=setTimeout(()=>{SGT=0;try{localStorage.setItem('getlog_geo2',JSON.stringify(GEO))}catch(e){}},2000)};
 const BOX=(la,lo)=>la<-22.9&&la>-24.4&&lo>-47.4&&lo<-45.6;
 // CEP -> coordenada (rápido, vários ao mesmo tempo); falhou/não achou: cai para a busca por endereço/bairro.
 async function geoCep(k){let v=null;try{const r=await fetch('https://cep.awesomeapi.com.br/json/'+k.slice(4));if(r.status===404||r.status===400){v=null}else if(!r.ok){FAIL.add(k);return}else{const j=await r.json(),la=+j.lat,lo=+j.lng;if(la&&lo&&BOX(la,lo))v=[la,lo]}}catch(e){FAIL.add(k);return}
-GEO[k]=v;try{localStorage.setItem('getlog_geo2',JSON.stringify(GEO))}catch(e){}}
-const refaz=()=>{if(RFT)return;RFT=setTimeout(()=>{RFT=0;RTS=new Map();rotear();tabela();mapa()},700)};
+GEO[k]=v;salvaGeo();}
+const refaz=()=>{if(RFT)return;RFT=setTimeout(()=>{RFT=0;RTS=new Map();rotear();tabela();mapa()},350)};
 async function worker(t){NRUN[t]++;try{for(;;){const L=[...PEND.entries()].filter(([q])=>q.startsWith('cep:')===(t==='c')).sort((x,y)=>y[1]-x[1]);if(!L.length)break;const q=L[0][0];PEND.delete(q);INF.add(q);
 try{if(t==='c')await geoCep(q);else{await geo(q);if(!(q in GEO))FAIL.add(q)}}finally{INF.delete(q)}refaz()}}finally{NRUN[t]--;if(!NRUN.c&&!NRUN.n)refaz()}}
 function buscaGeo(){const tem=t=>[...PEND.keys()].some(q=>q.startsWith('cep:')===(t==='c'));while(NRUN.c<6&&tem('c')&&PEND.size)worker('c');if(NRUN.n<1&&tem('n'))worker('n')}
 // Posição do seller: bairro; se não achar, CEP; se não achar, a cidade (nunca deixa a parada sem lugar).
-function posiciona(r,pri){const e=endK(r),ch=[];if(r.cep.length>=8)ch.push('cep:'+r.cep.slice(0,8));if(e.rua&&e.n)ch.push(gq(e.rua+' '+e.n+', '+(r.b?r.b+', ':'')+(r.ci||'São Paulo')));
-ch.push(gq(lug(r)));ch.push(gq(r.ci||'São Paulo'));
-for(const q of ch){if(q in GEO){if(GEO[q])return GEO[q];continue}if(FAIL.has(q))continue;if(!INF.has(q))PEND.set(q,(PEND.get(q)||0)+r.p+1+(pri?1e9:0));return null}return null}
+// Posição em dois níveis: BAIRRO (rápido, poucos pedidos, serve a todos) e ENDEREÇO/CEP (preciso, só para o motorista que está no mapa).
+// Mostra na hora o melhor que já existe no aparelho e refina sozinho quando o preciso chega.
+function posiciona(r,pri){const fila=(q,w)=>{if(!INF.has(q))PEND.set(q,(PEND.get(q)||0)+w)};
+if(pri){const e=endK(r),pr=[];if(r.cep.length>=8)pr.push('cep:'+r.cep.slice(0,8));if(e.rua&&e.n)pr.push(gq(e.rua+' '+e.n+', '+(r.b?r.b+', ':'')+(r.ci||'São Paulo')));
+for(const q of pr){if(q in GEO){if(GEO[q])return GEO[q];continue}if(FAIL.has(q))continue;fila(q,r.p+1+1e9);break}}
+for(const q of [gq(lug(r)),gq(r.ci||'São Paulo')]){if(q in GEO){if(GEO[q])return GEO[q];continue}if(FAIL.has(q))continue;fila(q,r.p+1+(pri?2e9:0));return null}return null}
 function rotear(){const ks=new Set(),por=new Map();const dK0=F.filter(r=>r.m).map(r=>r.dk).sort().pop(),ms0=[...new Set(F.filter(r=>r.dk===dK0&&r.m).map(r=>r.m))],MK=new Set(ms0.length&&(SEL.fm.size||ms0.length<=12)?ms0.map(m=>dK0+'|'+m):[]);for(const k of MK){const o=RTS.get(k);if(o&&o.rows.some(c=>!c.xy))RTS.delete(k)}
 for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
 for(const r of ROWS)if(r.m&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
@@ -308,7 +311,7 @@ if(b.length)MAP.fitBounds(b,{padding:[24,24],maxZoom:14})}
 // ---- Mapa: bairros atendidos (posição pelo bairro/cidade, guardada no aparelho) ----
 let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo2')||'{}')}catch(e){}
 const geo=k=>k in GEO?Promise.resolve(GEO[k]):(GQ=GQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&viewbox=-47.4,-22.9,-45.6,-24.4&bounded=1&q='+encodeURIComponent(k));const j=await r.json();if(j[0]){const la=+j[0].lat,lo=+j[0].lon;if(la<-22.9&&la>-24.4&&lo>-47.4&&lo<-45.6)v=[la,lo]}}catch(e){return null}
-GEO[k]=v;try{localStorage.setItem('getlog_geo2',JSON.stringify(GEO))}catch(e){}await new Promise(r=>setTimeout(r,1100));return v}));
+GEO[k]=v;salvaGeo();await new Promise(r=>setTimeout(r,1100));return v}));
 async function mapa(){if(!window.L)return;const g=++MG;if(!MAP){MAP=L.map('map',{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© OpenStreetMap'}).addTo(MAP);LAY=L.layerGroup().addTo(MAP)}
 LAY.clearLayers();const dK=F.filter(r=>r.m).map(r=>r.dk).sort().pop(),ms=[...new Set(F.filter(r=>r.dk===dK&&r.m).map(r=>r.m))];
 if(ms.length&&(SEL.fm.size||ms.length<=12)){const ks=ms.map(m=>dK+'|'+m);if(!ks.every(k=>RTS.has(k))){$('#mapS').textContent='Roteirizando… buscando a posição dos bairros (só na primeira vez)';return}desenhaRotas(dK,ks);return}
