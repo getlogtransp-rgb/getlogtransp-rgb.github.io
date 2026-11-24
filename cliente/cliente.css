@@ -288,5 +288,16 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #tbl th:nth-child(1){width:64px}#tbl th:nth-child(2){width:52px}#tbl th:nth-child(3){width:170px}#tbl th:nth-child(4){width:190px}#tbl th:nth-child(5){width:120px}#tbl th:nth-child(6){width:120px}#tbl th:nth-child(7){width:260px}#tbl th:nth-child(8){width:86px}#tbl th:nth-child(9),#tbl th:nth-child(10){width:76px}#tbl th:nth-child(11){width:56px}#tbl th:nth-child(12){width:130px}#tbl th:nth-child(13){width:150px}#tbl th:nth-child(14){width:120px}
 #tbl td:nth-child(8),#tbl td:nth-child(9),#tbl td:nth-child(10),#tbl td:nth-child(11){white-space:nowrap}
 #tbl td:nth-child(14) .pz{display:inline-block;white-space:normal}#tbl td:nth-child(13) .pz{display:inline}
-#tbl td:nth-child(11) .s{display:inline;white-space:nowrap;font-size:inherit;padding:0;background:none}
 #tbl td:nth-child(12) .s{white-space:normal;line-height:1.2;font-size:.68rem;padding:3px 8px;text-align:left;display:inline-block}
+
+/* v4 (final): 1 Ordem,2 Data,3 Seller,4 Motorista,5 Veículo,6 Bairro,7 Endereço,8 CEP,9 Previsto,10 Coletado,11 Status,12 Região,13 Prior.,14 Hora */
+#tbl table{table-layout:fixed;width:1532px;min-width:1532px}
+#tbl th,#tbl td{padding:7px 5px}
+#tbl th:nth-child(1){width:46px}#tbl th:nth-child(2){width:50px}#tbl th:nth-child(3){width:150px}#tbl th:nth-child(4){width:170px}#tbl th:nth-child(5){width:100px}#tbl th:nth-child(6){width:110px}#tbl th:nth-child(7){width:250px}#tbl th:nth-child(8){width:82px}#tbl th:nth-child(9){width:70px}#tbl th:nth-child(10){width:72px}#tbl th:nth-child(11){width:128px}#tbl th:nth-child(12){width:140px}#tbl th:nth-child(13){width:110px}#tbl th:nth-child(14){width:54px}
+#tbl td:nth-child(n){white-space:normal;overflow:hidden;text-align:left}
+#tbl td:nth-child(1),#tbl th:nth-child(1),#tbl td:nth-child(2),#tbl th:nth-child(2),#tbl td:nth-child(14),#tbl th:nth-child(14){text-align:center}
+#tbl td:nth-child(9),#tbl td:nth-child(10),#tbl th:nth-child(9),#tbl th:nth-child(10){text-align:right}
+#tbl td:nth-child(1),#tbl td:nth-child(2),#tbl td:nth-child(8),#tbl td:nth-child(9),#tbl td:nth-child(10),#tbl td:nth-child(14){white-space:nowrap}
+#tbl td:nth-child(11){overflow:visible}#tbl td:nth-child(11) .s{display:inline-block;white-space:normal;line-height:1.2;font-size:.68rem;padding:3px 8px;text-align:left}
+#tbl td:nth-child(13) .pz{display:inline-block;white-space:normal;max-width:100%;overflow:visible;font-size:.68rem}#tbl td:nth-child(12) .pz{display:inline}
+#tbl td.cep{background:none;font-variant-numeric:tabular-nums}
