@@ -301,3 +301,9 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 #tbl td:nth-child(11){overflow:visible}#tbl td:nth-child(11) .s{display:inline-block;white-space:normal;line-height:1.2;font-size:.68rem;padding:3px 8px;text-align:left}
 #tbl td:nth-child(13) .pz{display:inline-block;white-space:normal;max-width:100%;overflow:visible;font-size:.68rem}#tbl td:nth-child(12) .pz{display:inline}
 #tbl td.cep{background:none;font-variant-numeric:tabular-nums}
+
+/* v5: larguras vêm do JS (ajusta); sem larguras fixas por coluna */
+#tbl table{table-layout:fixed;width:auto;min-width:100%}
+#tbl th:nth-child(n){width:auto}
+#tbl th,#tbl td{padding:7px 6px}
+@media (max-width:600px){#tbl table{table-layout:auto;width:100%;min-width:0}}
