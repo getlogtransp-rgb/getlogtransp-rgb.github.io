@@ -21,7 +21,7 @@ const pw=$('#p').value;const abreW=async w=>{try{const k=await kek(pw,b2u(w.salt
 // Senha pessoal (criada pelo próprio usuário) fica no servidor do ponto; a do site só vale se for mais nova. Igual ao portal.
 // Cliente usa só a chave própria dos clientes (definida pelo admin no site); nada do servidor do ponto.
 raw=await abreW(u);if(!raw)throw 0;p=await prof(raw,u)}
-catch(x){const t=trv();t.n++;if(t.n>=5){t.ate=Date.now()+5*60000*Math.min(6,t.n-4);}trvSet(t);m.textContent=t.n>=5?'Muitas tentativas. Login bloqueado por alguns minutos.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar';return}
+catch(x){const t=trv();t.n++;if(t.n>=5){t.ate=Date.now()+2*60000;}trvSet(t);m.textContent=t.n>=5?'Muitas tentativas. Login bloqueado por alguns minutos.':'Usuário ou senha incorretos.';go.disabled=false;go.textContent='Entrar';return}
 trvSet({n:0,ate:0});
 let cfg={};try{const r=await fetch('/data/config-cliente.json?t='+Date.now(),{cache:'no-store'});cfg=await abre(raw,await r.json())}catch(x){}
 sessionStorage.setItem(S_KEY,JSON.stringify({login:u.login,role:'fornecedor',name:p.name,cliente:p.cliente,t:cfg.driveToken||''}));app()});
