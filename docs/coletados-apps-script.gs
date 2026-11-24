@@ -16,7 +16,7 @@ var COLETA_TZ = 'America/Sao_Paulo';
 // Colunas lidas da planilha (pelo nome do cabeçalho)
 var COLETA_COLS = {
   cliente: 'Client Name', sid: 'Seller ID', seller: 'Seller Name', motorista: 'Collection Driver Name',
-  bairro: 'Shipping Area', hora: 'Scan Time', desc: 'Status de descarregamento'
+  bairro: 'Shipping Area', hora: 'Scan Time', desc: 'Status de descarregamento', endereco: 'Address'
 };
 
 function coletaJson_(o) {
@@ -87,6 +87,7 @@ function resumirColeta_(f) {
     var col = {};
     for (var k in COLETA_COLS) {
       var i = cab.indexOf(COLETA_COLS[k]);
+      if (i < 0 && k === 'endereco') { col[k] = null; continue; }
       if (i < 0) throw new Error('Coluna não encontrada: ' + COLETA_COLS[k]);
       col[k] = sh.getRange(2, i + 1, n, 1).getValues();
     }
@@ -95,9 +96,9 @@ function resumirColeta_(f) {
     for (var r = 0; r < n; r++) {
       var h = col.hora[r][0];
       var hm = h instanceof Date ? Utilities.formatDate(h, COLETA_TZ, 'HH:mm:ss') : String(h || '').slice(11, 19);
-      var chave = [col.cliente[r][0], col.sid[r][0], col.seller[r][0], col.motorista[r][0], col.bairro[r][0]].map(function (x) { return String(x || '').trim(); });
+      var chave = [col.cliente[r][0], col.sid[r][0], col.seller[r][0], col.motorista[r][0], col.bairro[r][0], col.endereco ? col.endereco[r][0] : ''].map(function (x) { return String(x || '').trim(); });
       var id = chave.join('\u0001'), o = g[id];
-      if (!o) o = g[id] = chave.concat([0, 0, hm, hm]);
+      if (!o) o = g[id] = chave.slice(0, 5).concat([0, 0, hm, hm, chave[5]]);
       o[5]++; total++;
       if (hm) horas[+hm.slice(0, 2)]++;
       if (/^j[aá] descarregado/i.test(String(col.desc[r][0] || ''))) o[6]++;
@@ -105,7 +106,7 @@ function resumirColeta_(f) {
       if (hm && hm > o[8]) o[8] = hm;
     }
     var linhas = []; for (var x in g) linhas.push(g[x]);
-    return { colunas: ['cliente', 'sid', 'seller', 'motorista', 'bairro', 'qtd', 'descarregados', 'ini', 'fim'], linhas: linhas, total: total, horas: horas };
+    return { colunas: ['cliente', 'sid', 'seller', 'motorista', 'bairro', 'qtd', 'descarregados', 'ini', 'fim', 'endereco'], linhas: linhas, total: total, horas: horas };
   } finally {
     DriveApp.getFileById(tmp.id).setTrashed(true);
   }
