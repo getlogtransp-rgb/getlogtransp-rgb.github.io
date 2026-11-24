@@ -270,7 +270,8 @@ const TOP=r=>r==='T5'?2:r==='T4'?1:0;
 async function buscaGeo(){if(GBUSY)return;GBUSY=true;try{let n=0;while(PEND.size){const q=[...PEND.entries()].sort((a,b)=>b[1]-a[1])[0][0];PEND.delete(q);if(!(q in GEO)){await geo(q);if(!(q in GEO))FAIL.add(q)}
 if(++n%5===0||!PEND.size){RTS=new Map();rotear();tabela();mapa()}}}finally{GBUSY=false}}
 // Posição do seller: bairro; se não achar, CEP; se não achar, a cidade (nunca deixa a parada sem lugar).
-function posiciona(r){const ch=[gq(lug(r))];if(r.cep.length>=5)ch.push('CEP '+r.cep.slice(0,5)+'-'+(r.cep.slice(5,8)||'000')+', Brasil');ch.push(gq(r.ci||'São Paulo'));
+function posiciona(r){const e=endK(r),ch=[];if(e.rua&&e.n)ch.push(gq(e.rua+' '+e.n+', '+(r.b?r.b+', ':'')+(r.ci||'São Paulo')));
+if(r.cep.length>=8)ch.push(r.cep.slice(0,5)+'-'+r.cep.slice(5,8)+', São Paulo, SP, Brasil');ch.push(gq(lug(r)));ch.push(gq(r.ci||'São Paulo'));
 for(const q of ch){if(q in GEO){if(GEO[q])return GEO[q];continue}if(FAIL.has(q))continue;PEND.set(q,(PEND.get(q)||0)+r.p+1);return null}return null}
 function rotear(){const ks=new Set(),por=new Map();for(const r of F)if(r.m&&lug(r))ks.add(r.dk+'|'+r.m);
 for(const r of ROWS)if(r.m&&lug(r)){const k=r.dk+'|'+r.m;if(ks.has(k)){if(!por.has(k))por.set(k,[]);por.get(k).push(r)}}
@@ -292,9 +293,9 @@ L.polyline(pts.map(r=>r.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).ad
 pts.forEach(r=>{b.push(r.xy);L.marker(r.xy,{icon:L.divIcon({className:'rpin',html:`<span style="background:${cor}">${r.rn}</span>`,iconSize:[24,24],iconAnchor:[12,12]})}).bindPopup(`<b>${r.rn}ª parada · ${minH(r.eta)}</b><br>${r.rows.map(x=>esc(x.s)).join('<br>')}<br>${esc(r.rows[0].en||r.rows[0].b||r.rows[0].ci||'')}<br>Previsto: ${N(r.p)} · Coletado: ${N(r.c)}${rank(r)?' · '+esc(r.pr&&/^T/.test(r.pr)?r.pr:'volume alto'):''}`).addTo(LAY)})});
 if(b.length)MAP.fitBounds(b,{padding:[24,24],maxZoom:14})}
 // ---- Mapa: bairros atendidos (posição pelo bairro/cidade, guardada no aparelho) ----
-let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo')||'{}')}catch(e){}
-const geo=k=>k in GEO?Promise.resolve(GEO[k]):(GQ=GQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q='+encodeURIComponent(k));const j=await r.json();if(j[0])v=[+j[0].lat,+j[0].lon]}catch(e){return null}
-GEO[k]=v;try{localStorage.setItem('getlog_geo',JSON.stringify(GEO))}catch(e){}await new Promise(r=>setTimeout(r,1100));return v}));
+let MAP=null,LAY=null,GEO={},GQ=Promise.resolve(),MG=0;try{GEO=JSON.parse(localStorage.getItem('getlog_geo2')||'{}')}catch(e){}
+const geo=k=>k in GEO?Promise.resolve(GEO[k]):(GQ=GQ.then(async()=>{if(k in GEO)return GEO[k];let v=null;try{const r=await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&viewbox=-47.4,-22.9,-45.6,-24.4&bounded=1&q='+encodeURIComponent(k));const j=await r.json();if(j[0]){const la=+j[0].lat,lo=+j[0].lon;if(la<-22.9&&la>-24.4&&lo>-47.4&&lo<-45.6)v=[la,lo]}}catch(e){return null}
+GEO[k]=v;try{localStorage.setItem('getlog_geo2',JSON.stringify(GEO))}catch(e){}await new Promise(r=>setTimeout(r,1100));return v}));
 async function mapa(){if(!window.L)return;const g=++MG;if(!MAP){MAP=L.map('map',{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© OpenStreetMap'}).addTo(MAP);LAY=L.layerGroup().addTo(MAP)}
 LAY.clearLayers();const dK=F.filter(r=>r.m).map(r=>r.dk).sort().pop(),ms=[...new Set(F.filter(r=>r.dk===dK&&r.m).map(r=>r.m))];
 if(ms.length&&(SEL.fm.size||ms.length<=12)){const ks=ms.map(m=>dK+'|'+m);if(!ks.every(k=>RTS.has(k))){$('#mapS').textContent='Roteirizando… buscando a posição dos bairros (só na primeira vez)';return}desenhaRotas(dK,ks);return}
