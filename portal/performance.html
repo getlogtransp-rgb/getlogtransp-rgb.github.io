@@ -338,7 +338,7 @@ tr[data-setf]{cursor:pointer}
 @media (max-width:520px){.kpis{grid-template-columns:1fr}.kpi{border-right:0!important;border-bottom:1px solid var(--line-2)!important}.kpi:last-child{border-bottom:0!important}.pcard{grid-template-columns:92px minmax(0,1fr)}.gauge{align-self:start}.pv b{font-size:29px}.pmeta.top-metrics{grid-template-columns:1fr 1fr}.status-item{flex-basis:190px}.card{padding:10px}.ch{margin-bottom:8px}.ch h3{font-size:14px}.gap-row{padding:7px}.top-in .upd b{font-size:13px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 :root[data-theme="dark"] :is(.cal-p button:hover,.cal-p button[aria-pressed="true"],.al.n .ic,.seg button[aria-pressed="true"],.state h2,.ms-toggle:hover,.gap-seller strong){color:#C9D5FF}
-.ord{text-align:center;font-weight:700;white-space:nowrap}#rmap{height:420px;margin:0 16px 12px;border-radius:12px;z-index:0}.rres{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 16px 14px;font-size:12px}.rres:empty{display:none}.rres span{display:inline-flex;align-items:center;gap:6px}.rres i{width:10px;height:10px;border-radius:50%;display:inline-block}.rpin span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;color:#fff;font-weight:800;font-size:11px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.ord{text-align:center;font-weight:700;white-space:nowrap}#rmap{height:420px;margin:0 16px 12px;border-radius:12px;z-index:0}.rres{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0 16px 14px;font-size:12px}.rres:empty{display:none}.rres span{display:inline-flex;align-items:center;gap:6px}.rcp{border:1px solid var(--line,#d5dbe8);background:#fff;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;cursor:pointer}.rres i{width:10px;height:10px;border-radius:50%;display:inline-block}.rpin span{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;color:#fff;font-weight:800;font-size:11px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -376,7 +376,7 @@ for(const sh of document.styleSheets){try{limpa(sh.cssRules)}catch(e){}}
 </script>
 
 <script src="/portal/core.js?v=7"></script>
-<script src="/portal/rota-geo.js?v=3"></script>
+<script src="/portal/rota-geo.js?v=4"></script>
 <script src="/portal/drive-api.js?v=15"></script>
 <script>
 const CONFIG={PASTA:"/portal/dados/",PREFIXO:"",DIAS_HISTORICO:62,INCLUIR_SABADO:true,INTERVALO_ATUALIZACAO_MIN:15,CHECAR_A_CADA_SEG:900,META:99,ALERTA:80,EMPRESA_PROPRIA:"GET"};
@@ -717,7 +717,7 @@ function rotasCalc(){if(!window.GL_ROTA||!$("#sTable"))return;const sl=sellerAgg
 function rotasMapa(G,keys,sl){const box=$("#rmap");if(!box||!window.L)return;
   if(!RM||RM._container!==box){if(RM){try{RM.remove()}catch(e){}}RM=L.map(box,{scrollWheelZoom:false}).setView([-23.55,-46.63],10);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,referrerPolicy:"strict-origin-when-cross-origin",attribution:"© OpenStreetMap"}).addTo(RM);RLAY=L.layerGroup().addTo(RM);setTimeout(()=>{if(RM)RM.invalidateSize()},250)}
   const sub=$("#rmapS");if(!keys.length){const r=GL_ROTA.bairros(L,RM,RLAY,sl.map(s=>({k:"x",s:s.seller,b:s.bai||"",ci:s.cid||"",cep:String(s.cep||"").replace(/\D/g,""),en:"",p:s.prev||0,c:s.col||0,t:s.tot||0,pr:""})));$("#rres").innerHTML="";sub.textContent=r.n?"Bairros atendidos ("+r.n+"); tamanho = volume, cor = performance de coleta · filtre um motorista para ver a rota"+(r.falta?" · localizando "+r.falta+" bairros… ("+N(r.pend)+" na fila, só na primeira vez)":""):"Sem endereço nos dados do período.";return}
-  const r=GL_ROTA.desenha(L,RM,RLAY,G,keys);$("#rres").innerHTML=r.html;
+  const r=GL_ROTA.desenha(L,RM,RLAY,G,keys);$("#rres").innerHTML=r.html;$("#rres").onclick=e=>{const b=e.target.closest(".rcp");if(!b||!G.get(b.dataset.k))return;navigator.clipboard.writeText(GL_ROTA.texto(G.get(b.dataset.k))).then(()=>{b.textContent="Copiado ✔"},()=>{b.textContent="Não copiou"})};
   sub.textContent="Rota por motorista: mais perto primeiro, T4/T5 e grandes volumes por último, início 08:00"+(r.falta?" · localizando "+r.falta+" paradas no mapa… ("+N(r.pend)+" na fila, só na primeira vez)":"")}
 function rotasInit(){RM=null;rotasCalc()}
 function sellerTable(sellers){

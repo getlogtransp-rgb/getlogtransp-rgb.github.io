@@ -59,7 +59,7 @@ const COR=['#002060','#f86800','#11834e','#c62828','#7b1fa2','#0277bd','#8d6e00'
 /** Desenha as rotas de `keys` no mapa Leaflet; devolve o HTML do resumo e quantas paradas ainda não têm posição. */
 function desenha(L,map,layer,groups,keys){layer.clearLayers();const b=[];let falta=0,res='';
 keys.forEach((k,i)=>{const o=groups.get(k);if(!o)return;const cor=COR[i%COR.length],pts=o.rows.filter(c=>c.xy);falta+=o.rows.length-pts.length;
-res+=`<span><i style="background:${cor}"></i><b>${esc(o.nome)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)}</span>`;
+res+=`<span><i style="background:${cor}"></i><b>${esc(o.nome)}</b> ${o.rows.length} paradas (${o.nl} sellers) · ${o.km.toFixed(0)} km · fim ~${minH(o.fim)} <button type="button" class="rcp" data-k="${esc(k)}">Copiar rota</button></span>`;
 if(!pts.length)return;L.polyline(pts.map(c=>c.xy),{color:cor,weight:3,opacity:.75,dashArray:'6 6'}).addTo(layer);
 const GR=new Map();pts.forEach(c=>{const kk=c.xy[0].toFixed(4)+','+c.xy[1].toFixed(4);if(!GR.has(kk))GR.set(kk,[]);GR.get(kk).push(c)});
 GR.forEach(A=>{const p0=A[0];b.push(p0.xy);const ns=A.map(x=>x.rn),lb=A.length===1?String(ns[0]):A.length<=4?ns.join('·'):ns[0]+'+'+(A.length-1),w=Math.max(24,lb.length*7+14);
@@ -74,5 +74,6 @@ if(pts.length&&layer._n!==pts.length){const q=(arr,f)=>{const v=[...arr].sort((a
 if(pts.length===1)map.setView(pts[0],13);else map.fitBounds([[q(la,c[0]),q(lo,c[0])],[q(la,c[1]),q(lo,c[1])]],{padding:[18,18],maxZoom:14})}
 layer._n=pts.length;return {falta,pend:PEND.size,n:A.length}}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-window.GL_ROTA={rotear,desenha,bairros,minH,COR,pend:()=>PEND.size};
+const texto=o=>'ROTA '+o.nome+' · saída 08:00\n'+o.rows.map(c=>c.rn+'º '+minH(c.eta)+' · '+c.its.map(x=>x.s).join(' / ')+' · '+(c.its[0].en||c.its[0].b||'')+(c.its[0].en&&c.its[0].b?' ('+c.its[0].b+')':'')+' · '+c.p+' pac.').join('\n');
+window.GL_ROTA={texto,rotear,desenha,bairros,minH,COR,pend:()=>PEND.size};
 })();
