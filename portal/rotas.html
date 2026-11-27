@@ -532,7 +532,6 @@ async function enviarFila(msg){
     const g=filaLer(base);lst.forEach(m=>{const k=m.k+'|'+m.campo;if(g[k]&&g[k].motorista===m.motorista)delete g[k]});filaGravar(g,base);
     S.tent=0;mostrarFila();
     if(r.rejeitados.length){toast('Salvo, mas '+r.rejeitados.length+(r.rejeitados.length===1?' não foi aceito':' não foram aceitos')+'. Lista atualizada.',true,false);S.ocupado=false;await recarregar()}
-    else toast('Alteração realizada',false,!!msg&&S.tent===0&&!S.reenvio,2000)
   }catch(e){
     S.tent=(S.tent||0)+1;const d=ATRASOS[Math.min(S.tent-1,ATRASOS.length-1)];
     clearTimeout(S.rt);S.rt=setTimeout(()=>{S.reenvio=1;enviarFila()},d);
@@ -547,6 +546,7 @@ async function salvar(mudancas,msg){
   S.reg&&aplicar0();desenharFiltros();desenhar();
   const f=filaLer();mudancas.forEach(m=>{f[m.k+'|'+m.campo]={k:m.k,campo:m.campo,motorista:m.motorista}});filaGravar(f);mostrarFila();
   S.desfazer=ant;S.reenvio=0;S.tent=0;clearTimeout(S.rt);
+  $('tm').textContent='Alteração realizada';$('toast').className='';$('tu').hidden=false;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',2000);
   await enviarFila(msg);
 }
 $('lista').addEventListener('click',e=>{
