@@ -437,11 +437,11 @@ async function loadAll(){
   const lim=keyD(new Date(Date.now()-CONFIG.DIAS_HISTORICO*864e5)),de=new URLSearchParams(location.search).get("de");
   const ds=L.map(x=>dDia(x.dia)).filter(d=>keyD(d)>=lim);
   const first=ds.filter((d,i)=>i<1||(de&&keyD(d)>=de)),rest=ds.filter(d=>!first.includes(d));
-  const take=async list=>{let n=0;await window.GL_API.pool(list,6,async d=>{const x=await fetchDay(d);if(x.miss)return;try{ingest(keyD(d),x.json,x.lm).forEach(k=>S.meta.get(k).sig=x.sig);n++}catch(e){console.warn("Dia ilegível",fmtD(d),e)}});return n};
+  const take=async(list,pn=6)=>{let n=0;await window.GL_API.pool(list,pn,async d=>{const x=await fetchDay(d);if(x.miss)return;try{ingest(keyD(d),x.json,x.lm).forEach(k=>S.meta.get(k).sig=x.sig);n++}catch(e){console.warn("Dia ilegível",fmtD(d),e)}});return n};
   const found=await take(first);
   if(found)afterLoad();
   sub();
-  if(rest.length&&await take(rest))afterLoad(!!found);
+  if(rest.length){const r1=rest.slice(0,7),r2=rest.slice(7);let g=await take(r1);if(g)afterLoad(!!found);if(r2.length&&await take(r2,2))afterLoad(true)}
   if(!S.dates.length)showEmpty();
 }
 // Chamado pela camada de dados quando a lista do Drive é conferida (no horário previsto ou pelo botão Atualizar).

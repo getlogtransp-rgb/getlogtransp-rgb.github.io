@@ -40,7 +40,7 @@ const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 function preaquece(){try{const a=accDe(ME.role),pf=u=>{const l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l)};
 if(CFG.pontoUrl&&(a.includes('ponto')||a.includes('pontoadm')))versao();if(a.includes('perf')||a.some(v=>LIVE.includes(v)))loadReal().catch(()=>{});
 if(a.includes('forecast'))setTimeout(()=>loadF().catch(()=>{}),2500);
-if(a.includes('perf')){pf('/portal/performance.html?v=55');pf('/portal/rota-geo.js?v=4')}
+if(a.includes('perf')){pf('/portal/performance.html?v=56');pf('/portal/rota-geo.js?v=4')}
 if(a.includes('perf')||a.includes('rotas')){pf('/assets/vendor/leaflet/leaflet.css');pf('/assets/vendor/leaflet/leaflet.js')}
 if(a.includes('rotas'))pf('/portal/rotas.html?v=37')}catch(e){}}
 let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
@@ -213,11 +213,11 @@ await Promise.all(V.map(async x=>{const r=await GL_API.diaVelho(x);if(r)ingestDi
 if(DIAS.size&&LIVE.includes(CUR))VIEWS[CUR]()}catch(e){console.warn('guardado',e)}}
 // Abre a semana mais recente e mostra; o restante do histórico entra em segundo plano e atualiza só a tela aberta.
 function loadReal(){return LOADING||(LOADING=(async()=>{await mostraGuardado();const pl=GL_API.lista();if(usaCol())GL_API.listaCol();const L=GL_API.ordem(await pl);const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
-const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
+const take=(list,n=6)=>GL_API.pool(list,n,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
 const re=()=>{ROWS=null;if(LIVE.includes(CUR)&&DIAS.size)VIEWS[CUR]()};
 // Abre assim que o dia mais recente chega (1 só arquivo). Ontem, a base de coletados e o histórico entram em segundo plano, atualizando a tela aberta.
 await take(ds.slice(0,1));
-(async()=>{try{await Promise.all([take(ds.slice(1,2)),loadCol(ds.slice(0,2)).catch(()=>{})]);re();await take(ds.slice(2));re();await loadCol(ds.slice(2)).catch(()=>{});re()}catch(e){console.warn('histórico',e)}})();
+(async()=>{try{await Promise.all([take(ds.slice(1,2)),loadCol(ds.slice(0,2)).catch(()=>{})]);re();await take(ds.slice(2,8));re();await loadCol(ds.slice(2,8)).catch(()=>{});re();await take(ds.slice(8),2);re();await loadCol(ds.slice(8)).catch(()=>{});re()}catch(e){console.warn('histórico',e)}})();
 if(!L.length)LOADING=null})())}
 function assinarDados(){const un=GL_API.assinar(async(est,mud)=>{AGENDA=est;let ch=false;
 const min=[...DIAS.keys()].map(diaKey).sort()[0]||'';for(const s of mud){if(!DIAS.has(s)&&diaKey(s)<min)continue;try{const r=await GL_API.dia(s);if(r){ingestDia(s,r);ch=true}}catch(e){console.warn('atualização',s,e)}}
@@ -461,7 +461,7 @@ VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rota
       vh=innerHeight,top=f.getBoundingClientRect().top+scrollY;
     f.style.height=Math.max(320,Math.floor(vh-top-nh))+'px'};
   fit();setTimeout(fit,150);addEventListener('resize',fit);addEventListener('orientationchange',fit);};
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=55" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=56" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
