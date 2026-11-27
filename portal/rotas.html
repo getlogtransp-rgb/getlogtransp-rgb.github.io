@@ -523,7 +523,7 @@ async function salvar(mudancas,msg){
     S.desfazer=ant;
   }catch(e){
     aplicar(ant);aplicar0();desenharFiltros();desenhar();
-    toast('Não foi possível salvar. Nada foi alterado.',true,false);
+    const mot=String(e&&e.message||e);const por=/abort/i.test(mot)?'demorou demais (mais de 40 s)':/acesso/.test(mot)?'token do servidor das Rotas recusado':/http 4|http 5/.test(mot)?'servidor respondeu erro ('+mot+')':/Failed to fetch|NetworkError|Load failed/i.test(mot)?'sem conexão com o servidor das Rotas':mot;toast('Não foi possível salvar ('+por+'). Nada foi alterado.',true,false);
   }
   S.ocupado=false;
 }
