@@ -413,7 +413,7 @@ function chaveEnd(l){
 }
 function contaEnd(){const c={};S.linhas.forEach(l=>{l._ek=chaveEnd(l);if(l._ek)c[l._ek]=(c[l._ek]||0)+1});S.ends=c}
 const endHTML=l=>{const n=l._ek&&S.ends[l._ek]>1?S.ends[l._ek]:0;return n?'<span class="endr" title="'+n+' sellers neste endereço">'+esc(l.endereco)+'</span>':esc(l.endereco)};
-const ultHTML=l=>{if(!l.ult)return '';const d=new Date(l.ult.t),hj=d.toDateString()===new Date().toDateString(),hh=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div class="ult" title="Antes: '+esc(l.ult.a||'sem motorista')+'">&#9998; '+(hj?'hoje':'ontem')+' '+hh+' &middot; '+esc(l.ult.u)+'</div>'};
+const ultHTML=l=>{return '';if(!l.ult)return '';const d=new Date(l.ult.t),hj=d.toDateString()===new Date().toDateString(),hh=d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});return '<div class="ult" title="Antes: '+esc(l.ult.a||'sem motorista')+'">&#9998; '+(hj?'hoje':'ontem')+' '+hh+' &middot; '+esc(l.ult.u)+'</div>'};
 function celAlt(l){
   if(l.alt)return '<button class="mot alt" data-ua="1">'+esc(curto(l.alt))+'</button>';
   const g=altSug(l);
