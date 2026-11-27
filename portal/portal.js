@@ -42,7 +42,7 @@ if(CFG.pontoUrl&&(a.includes('ponto')||a.includes('pontoadm')))versao();if(a.inc
 if(a.includes('forecast'))setTimeout(()=>loadF().catch(()=>{}),2500);
 if(a.includes('perf')){pf('/portal/performance.html?v=55');pf('/portal/rota-geo.js?v=4')}
 if(a.includes('perf')||a.includes('rotas')){pf('/assets/vendor/leaflet/leaflet.css');pf('/assets/vendor/leaflet/leaflet.js')}
-if(a.includes('rotas'))pf('/portal/rotas.html?v=37')}catch(e){}}
+if(a.includes('rotas'))pf('/portal/rotas.html?v=39')}catch(e){}}
 let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
 async function loadShared(){const gj=f=>PRE&&PRE[f]?PRE[f]:getJSON(f);const ld=(f,d)=>gj(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),gj('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
@@ -452,7 +452,7 @@ $('#flan').onsubmit=async e=>{e.preventDefault();const v=valor($('#fl-v').value)
 $('#fcsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';const f=v=>(+v).toFixed(2).replace('.',',');const csv='﻿'+[['Motorista','Dias','Pacotes','Diárias','Pacotes R$','Ajudante','Bônus','Vales/descontos','Total a pagar'].map(q).join(';'),...LIN.map(o=>[q(o.m),o.dias,o.t,f(o.vd),f(o.vp),f(o.va),f(o.bo),f(o.de),f(o.tot)].join(';'))].join('\n');const [a,b]=periodRange($('#fper'));const l=document.createElement('a');l.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));l.download=`pagamento_${a}_${b}.csv`;l.click()};
 $$('#fper select,#fper input').forEach(e=>e&&e.addEventListener('change',run));let tm;$('#fsr').addEventListener('input',()=>{clearTimeout(tm);tm=setTimeout(run,180)});run()};
 // Performance: página própria num quadro que ocupa a área útil e rola por dentro (cabeçalho fixo, sem cortar o final).
-VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rotasUrl||'',token:CFG.rotasToken||''};try{localStorage.setItem('getlog_usuario',ME.name)}catch(e){}M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/rotas.html?v=37" title="Rotas" id="rt"></iframe></div>`;
+VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rotasUrl||'',token:CFG.rotasToken||''};try{localStorage.setItem('getlog_usuario',ME.name)}catch(e){}M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/rotas.html?v=39" title="Rotas" id="rt"></iframe></div>`;
   // Altura exata da área visível deste aparelho (descontando topo e menu de baixo), para a barra de ações nunca ficar escondida
   let fw=0;const fit=()=>{const f=document.getElementById('rt');if(!f){removeEventListener('resize',fit);return}
     // teclado aberto muda só a altura: não encolher a tela
