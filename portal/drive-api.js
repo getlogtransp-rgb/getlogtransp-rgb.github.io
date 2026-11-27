@@ -8,7 +8,11 @@ const sess=()=>{try{return JSON.parse(localStorage.getItem('getlog_sessao')||ses
 // Token do script do Drive (guardado criptografado no config do portal; só existe depois do login).
 let TOKEN='';
 const velha=(m,sig)=>!!m&&!!sig&&new Date(m).getTime()<new Date(sig).getTime();
-const get=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
+// Servidor rápido (Cloudflare, docs/cloudflare-worker.js): quando configurado, tudo é lido de lá em milésimos; se faltar algo, cai no Apps Script.
+let BASE='';
+const getRapido=async q=>{if(!BASE||!TOKEN)return null;try{const r=await fetch(BASE+'/?'+q+'&t='+encodeURIComponent(TOKEN),{credentials:'omit',cache:'no-store'});if(!r.ok)return null;const j=await r.json();return j&&j.ok?j:null}catch(e){return null}};
+const get=async(q,force)=>{const rp=await getRapido(q);if(rp)return rp;return getDrive(q,force)};
+const getDrive=async(q,force)=>{const r=await fetch(URL_API+'?'+q+(force?'&force=1':'')+(TOKEN?'&t='+encodeURIComponent(TOKEN):''),{credentials:'omit',cache:'no-store'});if(!r.ok)throw new Error('http '+r.status);return r.json()};
 let LISTA=null,LISTA_EM=0;
 // Lista de dias publicados ({dia:'dd.mm.aaaa',modificadoEm}). Só é consultada de novo quando pedido (verificação/atualizar).
 // Abre na hora com a última lista guardada no aparelho e confere a nova em segundo plano (quem está na tela é avisado se mudou).
@@ -57,5 +61,5 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeo
 const listaVelha=()=>{try{const o=JSON.parse(localStorage.getItem(LKEY));return o&&Array.isArray(o.d)?o.d:[]}catch(e){return []}};
 const diaVelho=async x=>{const I=window.GL_IDB;if(!I)return null;const h=await I.lerDia(x.dia,null);return h?{json:h,lm:new Date(x.modificadoEm||Date.now()),sig:x.modificadoEm}:null};
 const colVelho=async d=>{const I=window.GL_IDB;return I?I.lerDia('col:'+d,null):null};
-window.GL_API={listaVelha,diaVelho,colVelho,listaCol,col,setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
+window.GL_API={listaVelha,diaVelho,colVelho,listaCol,col,setToken:t=>{TOKEN=t||''},setBase:b=>{BASE=/^https:\/\/[\w.-]+(\/)?$/.test(b||'')?b.replace(/\/$/,''):''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
 })();
