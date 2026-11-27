@@ -18,12 +18,13 @@ async function kek(pw,salt,iter){const base=await crypto.subtle.importKey('raw',
 async function seal(obj){const iv=rnd(12);return {iv:u2b(iv),ct:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},MASTER,enc.encode(JSON.stringify(obj))))}}
 async function open_(o){return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b2u(o.iv)},MASTER,b2u(o.ct))))}
 async function wrapFor(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,MASTER_RAW))}}
-const getJSON=async p=>{const r=await fetch(p+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('db');return r.json()};
+const getJSON=async p=>{const r=await fetch(p,{cache:'no-cache'});if(!r.ok)throw new Error('db');return r.json()};
 // Recarregar a lista não pode perder os perfis já abertos (escala, nome): reaproveita pelo conteúdo cifrado.
 async function loadDB(){const n=await getJSON('/data/users.json');if(DB)for(const u of n.users){const o=DB.users.find(x=>x.login===u.login);if(o&&o._p&&o.p&&u.p&&o.p.ct===u.p.ct)u._p=o._p}DB=n}
 // Cadastro/reset recém-salvo: o site (GitHub Pages) leva minutos para publicar; o GitHub já tem a versão nova.
 async function loadDBFresco(){try{const r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data/users.json?ref=main',{headers:{Accept:'application/vnd.github.raw'},cache:'no-store'});if(r.ok){DB=await r.json();return true}}catch(e){}return false}
-async function profiles(){for(const u of DB.users){if(u._p)continue;try{u._p=u.ck?await openCli(u.p):await open_(u.p)}catch(e){try{u._p=await open_(u.p)}catch(x){u._p={}}}}}
+async function perfil(u){if(u._p)return;try{u._p=u.ck?await openCli(u.p):await open_(u.p)}catch(e){try{u._p=await open_(u.p)}catch(x){u._p={}}}}
+let PRO=null;async function profiles(){if(!PRO)PRO=Promise.all(DB.users.map(perfil)).finally(()=>{PRO=null});return PRO}
 // Chave dos CLIENTES (fornecedor): separada da chave mestra. O login do cliente só destranca esta chave, que abre o próprio perfil
 // e data/config-cliente.json (token do Drive) — nunca os arquivos internos. Ela fica guardada dentro do config.json (cifrado com a mestra).
 let CK=null;
@@ -35,7 +36,8 @@ async function salvaCfgCli(){await saveFile('data/config-cliente.json',await sea
 async function wrapCli(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,await chaveCli())),ck:1}}
 const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
-async function loadShared(){const ld=(f,d)=>getJSON(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),getJSON('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
+let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
+async function loadShared(){const gj=f=>PRE&&PRE[f]?PRE[f]:getJSON(f);const ld=(f,d)=>gj(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),gj('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
 // erro/tempo esgotado devolve {erro:true} (não é "sem senha nova") para o login tentar de novo com mais tempo.
 const SP=new Map();
@@ -66,13 +68,13 @@ if(!raw){if(!fresco)return login(u,pw,true);throw new Error('cred')}if(usr.activ
 return {usr,raw,x:{troca:pw===PW_PADRAO,av:await credencial(usr.login,pw)}}}
 async function start(usr,raw,x){
 MASTER_RAW=raw;MASTER=await crypto.subtle.importKey('raw',raw,{name:'AES-GCM'},false,['encrypt','decrypt']);IDB.chave=MASTER;IDB.dono=usr.login;
-await profiles();const p=usr._p||{};
+await perfil(usr);const p=usr._p||{};
 ME={login:usr.login,role:usr.role,name:p.name||usr.login,ref:p.ref||'',cliente:p.cliente||''};
 SESS={...ME,k:await wrapSess(raw),exp:x.exp||fimDoDia(),pwEm:usr.pwEm||'',av:x.av||'',troca:!!x.troca};sessSet(SESS);
 if(ME.role==='fornecedor'){location.replace('/cliente/');return}
 await loadShared();GL_API.setToken(CFG.driveToken||'');$('#login').hidden=true;$('#app').hidden=false;$('#boot')?.remove();
 if(SESS.troca){BLOQ=true;$('#app').innerHTML='';await trocarSenha(true);BLOQ=false;SESS.troca=false;sessSet(SESS)}
-document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pontoSave(pontoAll());
+document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pontoSave(pontoAll());setTimeout(()=>profiles().catch(()=>{}),0);
 }
 // Encerra a sessão (saída, revogação ou senha redefinida) recarregando a página: nada do estado anterior sobrevive.
 function encerrar(motivo){sessDel();try{if(motivo)sessionStorage.setItem('getlog_msg',motivo)}catch(e){}location.replace('/portal/')}
@@ -89,7 +91,7 @@ try{const {usr,raw,x}=await login(u,p);await start(usr,raw,x)}catch(err){console
 (async()=>{let m='';try{m=sessionStorage.getItem('getlog_msg')||'';sessionStorage.removeItem('getlog_msg')}catch(e){}if(m){msg.className='msg err';msg.textContent=m}
 const fim=()=>{document.documentElement.classList.remove('sess');$('#boot')?.remove();sessDel();$('#u').focus()};
 const x=sessGet();if(!x){fim();return}
-try{await loadDB();const ok=u=>u&&u.active!==false&&u.role===x.role&&(u.pwEm||'')===(x.pwEm||'');let usr=DB.users.find(u=>u.login===x.login);
+try{preShared();await loadDB();const ok=u=>u&&u.active!==false&&u.role===x.role&&(u.pwEm||'')===(x.pwEm||'');let usr=DB.users.find(u=>u.login===x.login);
 if(!ok(usr)&&await loadDBFresco())usr=DB.users.find(u=>u.login===x.login);if(!ok(usr))throw new Error('revogado');
 await start(usr,typeof x.k==='string'?b2u(x.k):await unwrapSess(x.k),x)}catch(e){console.warn('sessão',e);fim()}})();
 // ---- Autorização no servidor do ponto (Apps Script) ----
@@ -202,7 +204,7 @@ const diaKey=s=>s.split('.').reverse().join('-');
 function loadReal(){return LOADING||(LOADING=(async()=>{const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
 const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
 // Abre com hoje e ontem (comparação); o resto da semana e do histórico chega em segundo plano.
-await take(ds.slice(0,2));await loadCol(ds.slice(0,2)).catch(()=>{});if(ds.length>2)take(ds.slice(2)).then(()=>loadCol(ds.slice(2)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
+await Promise.all([take(ds.slice(0,2)),loadCol(ds.slice(0,2)).catch(()=>{})]);if(ds.length>2)take(ds.slice(2)).then(()=>loadCol(ds.slice(2)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
 if(!L.length)LOADING=null})())}
 function assinarDados(){const un=GL_API.assinar(async(est,mud)=>{AGENDA=est;let ch=false;
 const min=[...DIAS.keys()].map(diaKey).sort()[0]||'';for(const s of mud){if(!DIAS.has(s)&&diaKey(s)<min)continue;try{const r=await GL_API.dia(s);if(r){ingestDia(s,r);ch=true}}catch(e){console.warn('atualização',s,e)}}
