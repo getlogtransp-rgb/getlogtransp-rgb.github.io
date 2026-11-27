@@ -515,7 +515,7 @@ function filaLer(b=S.base){try{return JSON.parse(localStorage.getItem(FK(b))||'{
 function filaGravar(o,b=S.base){try{Object.keys(o).length?localStorage.setItem(FK(b),JSON.stringify(o)):localStorage.removeItem(FK(b))}catch(e){}}
 function aplicarMud(m){const l=S.linhas.find(l=>l.k===m.k);if(!l)return;l[m.campo==='alt'?'alt':'motorista']=m.motorista;if(m.campo!=='alt'&&S.veic&&S.veic[m.motorista]){l.cpf=S.veic[m.motorista][0];l.placa=S.veic[m.motorista][1]}}
 function reaplicarFila(){Object.values(filaLer()).forEach(aplicarMud);mostrarFila()}
-function mostrarFila(){const n=Object.keys(filaLer()).length,e=$('fila');e.hidden=!n;if(n)e.textContent=n+(n===1?' troca salva neste navegador, enviando para a planilha...':' trocas salvas neste navegador, enviando para a planilha...')}
+function mostrarFila(){const n=Object.keys(filaLer()).length,e=$('fila');e.hidden=true;if(0)e.textContent=n+(n===1?' troca salva neste navegador, enviando para a planilha...':' trocas salvas neste navegador, enviando para a planilha...')}
 $('fila').onclick=()=>{clearTimeout(S.rt);enviarFila()};
 const ATRASOS=[5000,15000,30000,60000,120000];
 function motivoErro(e){const mot=String(e&&e.message||e);return /abort/i.test(mot)?'demorou demais':/acesso/.test(mot)?'token recusado':/http [45]/.test(mot)?'servidor respondeu erro ('+mot+')':/Failed to fetch|NetworkError|Load failed/i.test(mot)?'sem conexão':mot}
@@ -523,7 +523,7 @@ async function enviarFila(msg){
   const base=S.base,f=filaLer(base),lst=Object.values(f);
   if(!lst.length){mostrarFila();return}
   if(S.ocupado||!CONFIGURADO){S.rt=setTimeout(enviarFila,3000);return}
-  const toast=(t,er,u)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
+  const toast=(t,er,u,ms)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',ms||9000)};
   S.ocupado=true;
   try{
     // gravar o mesmo motorista duas vezes não muda nada, então reenviar é seguro
@@ -532,10 +532,9 @@ async function enviarFila(msg){
     const g=filaLer(base);lst.forEach(m=>{const k=m.k+'|'+m.campo;if(g[k]&&g[k].motorista===m.motorista)delete g[k]});filaGravar(g,base);
     S.tent=0;mostrarFila();
     if(r.rejeitados.length){toast('Salvo, mas '+r.rejeitados.length+(r.rejeitados.length===1?' não foi aceito':' não foram aceitos')+'. Lista atualizada.',true,false);S.ocupado=false;await recarregar()}
-    else{toast('Salvo na planilha'+(msg?': '+msg:''),false,!!msg&&S.tent===0&&!S.reenvio)}
+    else toast('Enviado',false,!!msg&&S.tent===0&&!S.reenvio,2000)
   }catch(e){
     S.tent=(S.tent||0)+1;const d=ATRASOS[Math.min(S.tent-1,ATRASOS.length-1)];
-    toast('Salvo neste navegador. A planilha não respondeu ('+motivoErro(e)+'). Vou tentar de novo em '+Math.round(d/1000)+' s até conseguir.',true,false);
     clearTimeout(S.rt);S.rt=setTimeout(()=>{S.reenvio=1;enviarFila()},d);
   }
   S.ocupado=false;mostrarFila();
