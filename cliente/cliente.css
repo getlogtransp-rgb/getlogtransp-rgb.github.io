@@ -215,7 +215,7 @@ th,td{padding:9px 10px}.hide-m{display:none}.tks{grid-template-columns:1fr;paddi
 .lang button{display:flex;align-items:center;gap:6px;border:0;background:none;color:#fff;font-weight:700;font-size:.8rem;padding:6px 9px;border-radius:7px;cursor:pointer;opacity:.75}.lang button.on{background:#fff;color:var(--deep);opacity:1}.lang svg{border-radius:3px;flex:none}
 .lg-lang{float:right;background:var(--soft);border-color:var(--line)}.lg-lang button{color:var(--slate)}.lg-lang button.on{background:var(--navy);color:#fff}
 .chip-logo.cli{margin-left:-6px}.wm{font-family:var(--d);font-size:1.35rem;font-weight:800;color:#0a2f8f;letter-spacing:-.02em;padding:0 4px;line-height:34px}
-.lang span{display:none}.lang{padding:2px;gap:2px;border-radius:8px}.lang button{padding:4px 5px;gap:0}.lang svg{width:18px;height:12px}
+.lang{align-items:center;padding:3px 4px;gap:3px;border-radius:9px}.lang .lbl{font-style:normal;font-weight:700;font-size:.72rem;letter-spacing:.02em;padding:0 5px 0 6px;color:inherit;opacity:.75;white-space:nowrap}.lang button{padding:4px 5px;gap:0;line-height:0}.lang svg{width:20px;height:14px}.lg-lang .lbl{color:var(--slate)}
 
 /* Rodapé */
 .fz{background:#061433;color:#c3cfe6;margin-top:30px;padding:34px 0 18px;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
