@@ -54,5 +54,8 @@ function programar(){clearTimeout(TMR);if(!SUBS.size||document.hidden)return;con
 TMR=setTimeout(verificar,falta>0?Math.min(falta+60000,6*3600000):(a.estado==='atrasada'?5:2)*60000)}
 const assinar=f=>{SUBS.add(f);if(LISTA)LISTA.then(L=>{if(!ULT){ULT=ultimaMod(L)}const m=PEND;PEND=[];try{f(estado(),m)}catch(e){}});else lista().then(L=>{ULT=ultimaMod(L);avisar([])});programar();return ()=>{SUBS.delete(f);if(!SUBS.size)clearTimeout(TMR)}};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(TMR);return}if(!SUBS.size)return;const a=C().agenda(ULT);if(a.estado!=='prevista'||Date.now()-LISTA_EM>15*60000)verificar();else programar()});
-window.GL_API={listaCol,col,setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
+const listaVelha=()=>{try{const o=JSON.parse(localStorage.getItem(LKEY));return o&&Array.isArray(o.d)?o.d:[]}catch(e){return []}};
+const diaVelho=async x=>{const I=window.GL_IDB;if(!I)return null;const h=await I.lerDia(x.dia,null);return h?{json:h,lm:new Date(x.modificadoEm||Date.now()),sig:x.modificadoEm}:null};
+const colVelho=async d=>{const I=window.GL_IDB;return I?I.lerDia('col:'+d,null):null};
+window.GL_API={listaVelha,diaVelho,colVelho,listaCol,col,setToken:t=>{TOKEN=t||''},lista,dia,geral,pool,ordem,verificar,assinar,estado,PASTA_COLETADOS:'https://drive.google.com/drive/folders/1ZiJ-SJaMvL_qJIiYQdLxZWVhR-2Aan_A'};
 })();

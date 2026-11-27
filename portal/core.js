@@ -123,7 +123,7 @@ const I={chave:null,dono:"",
   get:k=>tx("readonly",s=>s.get(k)).catch(()=>undefined),
   put:(k,v)=>tx("readwrite",s=>s.put(v,k)).catch(()=>{}),
   limpar(){I.chave=null;try{DB&&DB.then(d=>d.close()).catch(()=>{})}catch(e){}DB=null;try{indexedDB.deleteDatabase("getlog")}catch(e){}},
-  async lerDia(dia,sig){const k=I.chave;if(!k)return null;const o=await I.get("d:"+I.dono+":"+dia);if(!o||o.sig!==sig)return null;
+  async lerDia(dia,sig){const k=I.chave;if(!k)return null;const o=await I.get("d:"+I.dono+":"+dia);if(!o||(sig!==null&&o.sig!==sig))return null;
     try{const pl=new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:o.iv},k,o.ct));return JSON.parse(td.decode(o.z&&window.DecompressionStream?await desc(pl):pl))}catch(e){return null}},
   async gravaDia(dia,sig,json){const k=I.chave;if(!k)return;try{const z=!!window.CompressionStream;const iv=crypto.getRandomValues(new Uint8Array(12));
     const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,await comp(te.encode(JSON.stringify(json))));await I.put("d:"+I.dono+":"+dia,{sig,iv,ct,z})}catch(e){}}};

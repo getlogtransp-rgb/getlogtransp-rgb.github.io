@@ -38,9 +38,9 @@ const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
 // Aquece em segundo plano o que o usuário provavelmente vai abrir: dados do Drive, Forecast e as telas em iframe (Performance/Rotas) — o clique depois abre quase instantâneo.
 function preaquece(){try{const a=accDe(ME.role),pf=u=>{const l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l)};
-if(a.includes('perf')||a.some(v=>LIVE.includes(v)))loadReal().catch(()=>{});
+if(CFG.pontoUrl&&(a.includes('ponto')||a.includes('pontoadm')))versao();if(a.includes('perf')||a.some(v=>LIVE.includes(v)))loadReal().catch(()=>{});
 if(a.includes('forecast'))setTimeout(()=>loadF().catch(()=>{}),2500);
-if(a.includes('perf')){pf('/portal/performance.html?v=52');pf('/portal/rota-geo.js?v=4')}
+if(a.includes('perf')){pf('/portal/performance.html?v=53');pf('/portal/rota-geo.js?v=4')}
 if(a.includes('perf')||a.includes('rotas')){pf('/assets/vendor/leaflet/leaflet.css');pf('/assets/vendor/leaflet/leaflet.js')}
 if(a.includes('rotas'))pf('/portal/rotas.html?v=37')}catch(e){}}
 let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
@@ -103,7 +103,7 @@ if(!ok(usr)&&await loadDBFresco())usr=DB.users.find(u=>u.login===x.login);if(!ok
 await start(usr,typeof x.k==='string'?b2u(x.k):await unwrapSess(x.k),x)}catch(e){console.warn('sessão',e);fim()}})();
 // ---- Autorização no servidor do ponto (Apps Script) ----
 const PLAN=()=>CFG.pontoUrl&&CFG.pontoToken;
-let PV=null;const versao=()=>PV||(PV=fetch(CFG.pontoUrl+'?versao=1',{cache:'no-store'}).then(r=>r.json()).then(j=>j.versao||1).catch(()=>{PV=null;return 0}));
+let PV=null;const versao=()=>PV||(PV=(()=>{let c=0;try{c=+localStorage.getItem('getlog_pv')||0}catch(e){}const f=fetch(CFG.pontoUrl+'?versao=1',{cache:'no-store'}).then(r=>r.json()).then(j=>{const v=j.versao||1;try{localStorage.setItem('getlog_pv',v)}catch(e){}return v}).catch(()=>{PV=null;return c});return c?(f.catch(()=>{}),Promise.resolve(c)):f})());
 const v2=async()=>PLAN()&&await versao()>=2;
 const NOMEV=Object.fromEntries(NAV_ALL());
 function NAV_ALL(){return [['dash','Dashboard'],['coletados','Pacotes coletados'],['perf','Performance'],['forecast','Forecast'],['rotas','Rotas'],['ponto','Bater ponto'],['pontoadm','Controle de ponto'],['equipe','Tempo de operação'],['escalas','Escalas'],['avisos','Avisos'],['financeiro','Financeiro'],['penal','Penalidades'],['app','App GETLOG']]}
@@ -207,8 +207,12 @@ for(const [s,R] of COLD)if(!DIAS.has(s))out.push(...R);ROWS=out.sort((a,b)=>a.d<
 const usaCol=()=>C.veTudo(ME.role);
 const loadCol=async ds=>{if(!usaCol())return;const L=await GL_API.listaCol();const tem=new Set(L.map(x=>x.dia));await GL_API.pool(ds.filter(x=>tem.has(x.dia)),3,async x=>{const r=await GL_API.col(x.dia);if(r)ingestCol(x.dia,r)})};
 const diaKey=s=>s.split('.').reverse().join('-');
+// Abre NA HORA com o que já está guardado (cifrado) no aparelho, mesmo de ontem; o Drive confirma e atualiza em seguida.
+async function mostraGuardado(){try{if(DIAS.size)return;const lim=keyD(new Date(Date.now()-62*864e5));const V=GL_API.ordem(GL_API.listaVelha()).filter(x=>diaKey(x.dia)>=lim).slice(0,7);if(!V.length)return;
+await Promise.all(V.map(async x=>{const r=await GL_API.diaVelho(x);if(r)ingestDia(x.dia,r);if(usaCol()){const c=await GL_API.colVelho(x.dia);if(c)ingestCol(x.dia,c)}}));
+if(DIAS.size&&LIVE.includes(CUR))VIEWS[CUR]()}catch(e){console.warn('guardado',e)}}
 // Abre a semana mais recente e mostra; o restante do histórico entra em segundo plano e atualiza só a tela aberta.
-function loadReal(){return LOADING||(LOADING=(async()=>{const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
+function loadReal(){return LOADING||(LOADING=(async()=>{await mostraGuardado();const L=GL_API.ordem(await GL_API.lista());const lim=keyD(new Date(Date.now()-62*864e5));const ds=L.filter(x=>diaKey(x.dia)>=lim);
 const take=list=>GL_API.pool(list,6,async x=>{const r=await GL_API.dia(x.dia);if(r)ingestDia(x.dia,r)});
 // Abre com hoje e ontem (comparação); o resto da semana e do histórico chega em segundo plano.
 await Promise.all([take(ds.slice(0,2)),loadCol(ds.slice(0,2)).catch(()=>{})]);if(ds.length>2)take(ds.slice(2)).then(()=>loadCol(ds.slice(2)).catch(()=>{})).then(()=>{ROWS=null;if(LIVE.includes(CUR))VIEWS[CUR]()});
@@ -455,7 +459,7 @@ VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rota
       vh=innerHeight,top=f.getBoundingClientRect().top+scrollY;
     f.style.height=Math.max(320,Math.floor(vh-top-nh))+'px'};
   fit();setTimeout(fit,150);addEventListener('resize',fit);addEventListener('orientationchange',fit);};
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=52" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=53" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
@@ -617,10 +621,12 @@ const SIT_CLS={Pendente:'warn',Aprovado:'ok',Rejeitado:'off'};
 async function minhasSolicitacoes(){const el=$('#ajx');if(!el||!await v2())return;try{const it=(await api('ajustes',{})).itens.filter(a=>a.login===ME.login).slice(0,10);if(!it.length||!el.isConnected)return;
 el.innerHTML=`<div class="box mt"><div class="box-head"><div><h3>Minhas solicitações de ajuste</h3><p>As 10 mais recentes</p></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Hora</th><th>Marcação</th><th>Motivo</th><th>Situação</th></tr></thead><tbody>${it.map(a=>`<tr><td>${lblD(a.dia)}</td><td>${esc(a.hora)}</td><td>${esc(TIPO_LBL[a.tipo]||a.tipo)}</td><td class="loc">${esc(a.motivo)}</td><td><span class="st ${SIT_CLS[a.situacao]||''}">${esc(a.situacao)}</span>${a.obs?`<small class="hint"> ${esc(a.obs)}</small>`:''}</td></tr>`).join('')}</tbody></table></div></div>`}catch(e){console.warn('ajustes',e)}}
 const PF={};
-VIEWS.pontoadm=async()=>{const g=GEN;M().innerHTML=SKEL;let all=[],erro='';const nova=await v2();
+const PT_K=()=>'pt:adm:'+ME.login;
+VIEWS.pontoadm=async(fresh,nocache)=>{const g=GEN;if(!fresh)M().innerHTML=SKEL;let all=[],erro='',cacheado=false;const nova=await v2();
 if(!PLAN())erro='A planilha do ponto não está conectada. Conecte em Usuários e acessos → Configurações do sistema.';
-else{await syncPonto();try{const d=new Date();d.setDate(d.getDate()-62);all=await listar(keyD(d))}catch(e){console.warn('ponto',e);erro='Não foi possível ler a planilha do ponto agora. Tente de novo em instantes.'}}
-if(!vivo(g))return;const names=[...new Set(all.map(p=>p.name))].sort();
+else if(fresh)all=fresh;
+else{let c=null;if(!nocache)try{c=await GL_IDB?.lerDia(PT_K(),null)}catch(e){}if(c){all=c;cacheado=true}else{await syncPonto();try{const d=new Date();d.setDate(d.getDate()-62);all=await listar(keyD(d));GL_IDB?.gravaDia(PT_K(),'x',all)}catch(e){console.warn('ponto',e);erro='Não foi possível ler a planilha do ponto agora. Tente de novo em instantes.'}}}
+if(!vivo(g))return;if(cacheado)(async()=>{try{await syncPonto();const d=new Date();d.setDate(d.getDate()-62);const l=await listar(keyD(d));GL_IDB?.gravaDia(PT_K(),'x',l);if(vivo(g)&&JSON.stringify(l)!==JSON.stringify(all))VIEWS.pontoadm(l)}catch(e){}})();const names=[...new Set(all.map(p=>p.name))].sort();
 M().innerHTML=top('Controle de ponto','Marcações com foto, localização e horário · ajustes e correções')+`${erro?`<div class="banner">${erro}</div>`:''}${PLAN()&&!nova?'<div class="banner">Para liberar solicitações de ajuste, correções com auditoria e bloqueio imediato de acessos, atualize o código do Apps Script da planilha do ponto (arquivo ponto-apps-script.gs) e publique uma nova versão.</div>':''}
 <div id="ajpend"></div><div id="faltam"></div><div class="filters">${periodUI('pp',['dia','semana','quinzena','mes'])}<select id="pn" aria-label="Pessoa"><option value="">Todas as pessoas</option>${names.map(n=>`<option>${esc(n)}</option>`).join('')}</select>${nova?'<button class="btn btn-ghost btn-sm" id="inc" type="button">Incluir marcação</button>':''}<button class="btn btn-ghost btn-sm" id="prt" type="button">Gerar relatório</button></div><div id="pout"></div>
 ${nova?'<details class="box mt" id="aud"><summary>Histórico de alterações (auditoria)</summary><div id="audl"><p class="hint">Carregando…</p></div></details>':''}`;
@@ -642,7 +648,7 @@ $('#pout').innerHTML=`<div class="kpi-grid"><div class="kpi"><small>Pessoas que 
 <div class="box mt" id="rep"><div class="box-head"><div><h3>Relatório de ponto</h3><p>${esc(lbl)}${pn?' · '+esc(pn):''} · toque em uma linha para ver fotos e localização${nova?' ou corrigir':''}</p></div></div><div class="table-wrap"><table><thead><tr><th>Data</th><th>Pessoa</th><th>Tipo</th><th>Início</th><th>Almoço</th><th>Retorno</th><th>Fim</th><th class="n">Horas</th><th class="n">Previsto</th><th class="n">Extra</th><th class="n">Pacotes bipados</th><th>Local do início</th></tr></thead><tbody>
 ${lin.map((l,i)=>`<tr data-i="${i}" class="clk-row" tabindex="0"><td>${lblD(l.dia)}</td><td>${esc(l.name)}</td><td>${ROLE_LBL[l.role]||''}</td>${TIPOS.map(([t])=>`<td>${l.m[t]?hm(l.m[t].ts)+(l.m[t].origem&&l.m[t].origem!=='App'?' <small class="hint" title="'+esc(l.m[t].origem)+'">*</small>':''):'<span class="miss">—</span>'}</td>`).join('')}<td class="n">${fmtH(hrs(l))}</td><td class="n">${fmtH(previstoDe(l.login))}</td><td class="n">${extraDe(hrs(l),previstoDe(l.login))?fmtH(extraDe(hrs(l),previstoDe(l.login))):'—'}</td><td class="n">${bip(l)==null?'—':N(bip(l))}</td><td class="loc">${esc(l.m.entrada?.end||'—')}</td></tr>`).join('')||'<tr><td colspan="12" class="empty">Nenhuma marcação no período.</td></tr>'}</tbody></table></div>${nova?'<p class="hint mt">* marcação incluída ou corrigida pelo administrador ou por ajuste aprovado.</p>':''}</div>`;
 $$('.clk-row').forEach(tr=>tr.onclick=tr.onkeydown=async e=>{if(e.type==='keydown'&&e.key!=='Enter')return;const l=lin[+tr.dataset.i];tr.style.opacity=.5;await Promise.all(Object.values(l.m).map(async p=>{if(!p.foto&&p.fotoUrl)try{p.foto=await fotoDe(p.fotoUrl)}catch(x){}}));tr.style.opacity='';detail(l)})};
-const recarregar=()=>{if(vivo(g))VIEWS.pontoadm()};
+const recarregar=()=>{if(vivo(g))VIEWS.pontoadm(0,1)};
 // Correção administrativa direta: sem foto/localização, sempre com motivo e auditoria no servidor.
 const corrigir=async(op,dados,titulo,html)=>{const v=await pedir(titulo,html+'<div class="field"><label for="ad-m">Motivo</label><textarea id="ad-m" required maxlength="300"></textarea></div>');if(!v)return;
 if(!await conferirAcesso(true))return;try{await api('adm',{op,...dados(v),motivo:v['ad-m']});toast('Alteração registrada.');recarregar()}catch(e){if(!NEGADO[e.code])toast(e.code==='duplicada'?'Essa pessoa já tem essa marcação no dia.':'Não foi possível salvar a alteração. Tente de novo.')}};
