@@ -24,3 +24,5 @@ const fv=document.getElementById('funcao'),veh=document.getElementById('veiculo-
 if(fv&&veh){const u=()=>{const on=fv.value==='Motorista';veh.hidden=!on;veh.querySelector('select').required=on};fv.addEventListener('change',u);u()}
 const y=document.getElementById('ano');if(y)y.textContent=new Date().getFullYear();
 })();
+
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}catch(e){}

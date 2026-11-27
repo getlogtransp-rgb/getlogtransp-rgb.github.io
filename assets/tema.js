@@ -9,3 +9,5 @@ document.addEventListener('click',e=>{if(!e.target.closest('[data-tema]'))return
 try{for(const f of document.querySelectorAll('iframe'))f.contentWindow.document.documentElement.dataset.theme=t}catch(e){}});
 addEventListener('storage',e=>{if(e.key===K)ap(e.newValue)});
 })();
+
+try{if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}))}catch(e){}
