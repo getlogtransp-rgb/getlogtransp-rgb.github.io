@@ -36,6 +36,13 @@ async function salvaCfgCli(){await saveFile('data/config-cliente.json',await sea
 async function wrapCli(pw){const salt=rnd(16),iv=rnd(12);const k=await kek(pw,salt,DB.iter);return {salt:u2b(salt),iv:u2b(iv),key:u2b(await crypto.subtle.encrypt({name:'AES-GCM',iv},k,await chaveCli())),ck:1}}
 const sealRole=(obj,role)=>role==='fornecedor'?sealCli(obj):seal(obj);
 // Arquivos compartilhados em paralelo (antes era um depois do outro).
+// Aquece em segundo plano o que o usuário provavelmente vai abrir: dados do Drive, Forecast e as telas em iframe (Performance/Rotas) — o clique depois abre quase instantâneo.
+function preaquece(){try{const a=accDe(ME.role),pf=u=>{const l=document.createElement('link');l.rel='prefetch';l.href=u;document.head.appendChild(l)};
+if(a.includes('perf')||a.some(v=>LIVE.includes(v)))loadReal().catch(()=>{});
+if(a.includes('forecast'))setTimeout(()=>loadF().catch(()=>{}),2500);
+if(a.includes('perf')){pf('/portal/performance.html?v=52');pf('/portal/rota-geo.js?v=4')}
+if(a.includes('perf')||a.includes('rotas')){pf('/assets/vendor/leaflet/leaflet.css');pf('/assets/vendor/leaflet/leaflet.js')}
+if(a.includes('rotas'))pf('/portal/rotas.html?v=37')}catch(e){}}
 let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
 async function loadShared(){const gj=f=>PRE&&PRE[f]?PRE[f]:getJSON(f);const ld=(f,d)=>gj(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),gj('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
@@ -74,7 +81,7 @@ SESS={...ME,k:await wrapSess(raw),exp:x.exp||fimDoDia(),pwEm:usr.pwEm||'',av:x.a
 if(ME.role==='fornecedor'){location.replace('/cliente/');return}
 await loadShared();GL_API.setToken(CFG.driveToken||'');$('#login').hidden=true;$('#app').hidden=false;$('#boot')?.remove();
 if(SESS.troca){BLOQ=true;$('#app').innerHTML='';await trocarSenha(true);BLOQ=false;SESS.troca=false;sessSet(SESS)}
-document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pontoSave(pontoAll());setTimeout(()=>profiles().catch(()=>{}),0);
+document.title='Portal | GETLOG Transportes';shell();popupAvisos();vigiar();pontoSave(pontoAll());setTimeout(()=>profiles().catch(()=>{}),0);setTimeout(preaquece,400);
 }
 // Encerra a sessão (saída, revogação ou senha redefinida) recarregando a página: nada do estado anterior sobrevive.
 function encerrar(motivo){sessDel();try{if(motivo)sessionStorage.setItem('getlog_msg',motivo)}catch(e){}location.replace('/portal/')}
@@ -448,7 +455,7 @@ VIEWS.rotas=()=>{window.GETLOG_USUARIO=ME.name;window.GETLOG_ROTAS={api:CFG.rota
       vh=innerHeight,top=f.getBoundingClientRect().top+scrollY;
     f.style.height=Math.max(320,Math.floor(vh-top-nh))+'px'};
   fit();setTimeout(fit,150);addEventListener('resize',fit);addEventListener('orientationchange',fit);};
-VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=51" title="Performance de coleta" id="pf"></iframe></div>`};
+VIEWS.perf=()=>{M().innerHTML=`<div class="perf-wrap"><iframe src="/portal/performance.html?v=52" title="Performance de coleta" id="pf"></iframe></div>`};
 const PAL=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#9a6324','#469990','#800000','#808000','#000075','#bfef45','#dcbeff','#fabed4','#ffd8b1','#aaffc3','#a9a9a9'];
 const loadOnce=(()=>{const c={};return u=>c[u]||(c[u]=new Promise((ok,no)=>{const e=u.endsWith('.css')?Object.assign(document.createElement('link'),{rel:'stylesheet',href:u}):Object.assign(document.createElement('script'),{src:u});e.onload=ok;e.onerror=no;document.head.appendChild(e)}))})();
 const GEO_KEY='getlog_geo';let GEO={};try{GEO=JSON.parse(localStorage.getItem(GEO_KEY))||{}}catch(e){}
