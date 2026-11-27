@@ -436,7 +436,7 @@ async function loadAll(){
   if(!L.length){if(location.protocol==="file:"){S.src="local";return showPicker()}return showEmpty()}
   const lim=keyD(new Date(Date.now()-CONFIG.DIAS_HISTORICO*864e5)),de=new URLSearchParams(location.search).get("de");
   const ds=L.map(x=>dDia(x.dia)).filter(d=>keyD(d)>=lim);
-  const first=ds.filter((d,i)=>i<2||(de&&keyD(d)>=de)),rest=ds.filter(d=>!first.includes(d));
+  const first=ds.filter((d,i)=>i<1||(de&&keyD(d)>=de)),rest=ds.filter(d=>!first.includes(d));
   const take=async list=>{let n=0;await window.GL_API.pool(list,6,async d=>{const x=await fetchDay(d);if(x.miss)return;try{ingest(keyD(d),x.json,x.lm).forEach(k=>S.meta.get(k).sig=x.sig);n++}catch(e){console.warn("Dia ilegível",fmtD(d),e)}});return n};
   const found=await take(first);
   if(found)afterLoad();
