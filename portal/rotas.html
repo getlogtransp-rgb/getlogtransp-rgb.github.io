@@ -213,6 +213,7 @@ body{padding-bottom:140px}
 <div class="lista" id="dl"></div>
 <button class="btn sec" id="dx">Cancelar</button>
 </div></dialog>
+<div id="fila" hidden style="position:fixed;left:12px;bottom:12px;z-index:50;background:#b45309;color:#fff;padding:8px 12px;border-radius:8px;font:600 13px system-ui;cursor:pointer" title="Clique para enviar agora"></div>
 <div id="toast"><span id="tm"></span><button id="tu">Desfazer</button></div>
 <script>
 const PP=(()=>{try{return window.parent!==window?window.parent:null}catch(e){return null}})();
@@ -317,7 +318,7 @@ async function buscar(){
   const r=await chamar(CFG.api+'?token='+encodeURIComponent(CFG.token)+'&base='+b,{},2,30000);
   if(r.erro||!Array.isArray(r.linhas))throw new Error(r.erro||'resposta inválida');
   if(b!==S.base)return false;
-  aplicar(r);
+  aplicar(r);reaplicarFila();
   S.em=Date.now();
   try{sessionStorage.setItem(CK(b),JSON.stringify({colunas:r.colunas||null,linhas:r.linhas,motoristas:r.motoristas,veiculos:r.veiculos||null}))}catch(e){}
   return true;
@@ -336,7 +337,7 @@ async function carregar(){
   if(!CONFIGURADO){mostrar('A tela Rotas ainda não foi configurada. Peça ao administrador para informar a URL e o token em Usuários e acessos &gt; Configurações do sistema.');return}
   S.sel.clear();S.pag=1;
   let rapido=false;
-  try{const c=JSON.parse(sessionStorage.getItem(CK())||'null');if(c&&Array.isArray(c.linhas)){aplicar(c);rapido=true;mostrar('');desenharFiltros();desenhar();S.em=Date.now()-240000}}catch(e){}
+  try{const c=JSON.parse(sessionStorage.getItem(CK())||'null');if(c&&Array.isArray(c.linhas)){aplicar(c);reaplicarFila();rapido=true;mostrar('');desenharFiltros();desenhar();S.em=Date.now()-240000}}catch(e){}
   if(!rapido)mostrar('Carregando...');
   try{
     if(!await buscar())return;
@@ -508,24 +509,46 @@ function desenharOps(){
   });
   $('dl').innerHTML=o||'<div class="vazio">Nenhum motorista encontrado.</div>';
 }
-async function salvar(mudancas,msg){
+// Fila de envio: toda troca fica gravada neste navegador e é reenviada à planilha até ser confirmada
+const FK=b=>'rotas_fila_'+b;
+function filaLer(b=S.base){try{return JSON.parse(localStorage.getItem(FK(b))||'{}')||{}}catch(e){return {}}}
+function filaGravar(o,b=S.base){try{Object.keys(o).length?localStorage.setItem(FK(b),JSON.stringify(o)):localStorage.removeItem(FK(b))}catch(e){}}
+function aplicarMud(m){const l=S.linhas.find(l=>l.k===m.k);if(!l)return;l[m.campo==='alt'?'alt':'motorista']=m.motorista;if(m.campo!=='alt'&&S.veic&&S.veic[m.motorista]){l.cpf=S.veic[m.motorista][0];l.placa=S.veic[m.motorista][1]}}
+function reaplicarFila(){Object.values(filaLer()).forEach(aplicarMud);mostrarFila()}
+function mostrarFila(){const n=Object.keys(filaLer()).length,e=$('fila');e.hidden=!n;if(n)e.textContent=n+(n===1?' troca salva neste navegador, enviando para a planilha...':' trocas salvas neste navegador, enviando para a planilha...')}
+$('fila').onclick=()=>{clearTimeout(S.rt);enviarFila()};
+const ATRASOS=[5000,15000,30000,60000,120000];
+function motivoErro(e){const mot=String(e&&e.message||e);return /abort/i.test(mot)?'demorou demais':/acesso/.test(mot)?'token recusado':/http [45]/.test(mot)?'servidor respondeu erro ('+mot+')':/Failed to fetch|NetworkError|Load failed/i.test(mot)?'sem conexão':mot}
+async function enviarFila(msg){
+  const base=S.base,f=filaLer(base),lst=Object.values(f);
+  if(!lst.length){mostrarFila();return}
+  if(S.ocupado||!CONFIGURADO){S.rt=setTimeout(enviarFila,3000);return}
   const toast=(t,er,u)=>{$('tm').textContent=t;$('toast').className=er?'er':'';$('tu').hidden=!u;$('toast').style.display='flex';clearTimeout(S.tt);S.tt=setTimeout(()=>$('toast').style.display='none',9000)};
-  const ant=mudancas.map(m=>{const l=S.linhas.find(l=>l.k===m.k);return {k:m.k,campo:m.campo,motorista:l[m.campo==='alt'?'alt':'motorista'],ult:l.ult}});
-  const aplicar=lst=>lst.forEach(m=>{const l=S.linhas.find(l=>l.k===m.k);if(m.campo!=='alt'){if(lst===ant)l.ult=m.ult;else if(l.motorista!==m.motorista)l.ult={u:usuario,t:Date.now(),a:l.motorista}}l[m.campo==='alt'?'alt':'motorista']=m.motorista;if(m.campo!=='alt'&&S.veic&&S.veic[m.motorista]){l.cpf=S.veic[m.motorista][0];l.placa=S.veic[m.motorista][1]}});
-  aplicar(mudancas);S.reg&&aplicar0();desenharFiltros();desenhar();
   S.ocupado=true;
   try{
-    // gravar o mesmo motorista duas vezes não muda nada, então repetir uma vez é seguro
-    const r=await chamar(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,base:S.base,usuario,mudancas})},1,40000);
+    // gravar o mesmo motorista duas vezes não muda nada, então reenviar é seguro
+    const r=await chamar(CFG.api,{method:'POST',body:JSON.stringify({token:CFG.token,base,usuario,mudancas:lst})},1,60000);
     if(!r.ok)throw new Error(r.erro||'falha');
+    const g=filaLer(base);lst.forEach(m=>{const k=m.k+'|'+m.campo;if(g[k]&&g[k].motorista===m.motorista)delete g[k]});filaGravar(g,base);
+    S.tent=0;mostrarFila();
     if(r.rejeitados.length){toast('Salvo, mas '+r.rejeitados.length+(r.rejeitados.length===1?' não foi aceito':' não foram aceitos')+'. Lista atualizada.',true,false);S.ocupado=false;await recarregar()}
-    else toast('Salvo: '+msg,false,true);
-    S.desfazer=ant;
+    else{toast('Salvo na planilha'+(msg?': '+msg:''),false,!!msg&&S.tent===0&&!S.reenvio)}
   }catch(e){
-    aplicar(ant);aplicar0();desenharFiltros();desenhar();
-    const mot=String(e&&e.message||e);const por=/abort/i.test(mot)?'demorou demais (mais de 40 s)':/acesso/.test(mot)?'token do servidor das Rotas recusado':/http 4|http 5/.test(mot)?'servidor respondeu erro ('+mot+')':/Failed to fetch|NetworkError|Load failed/i.test(mot)?'sem conexão com o servidor das Rotas':mot;toast('Não foi possível salvar ('+por+'). Nada foi alterado.',true,false);
+    S.tent=(S.tent||0)+1;const d=ATRASOS[Math.min(S.tent-1,ATRASOS.length-1)];
+    toast('Salvo neste navegador. A planilha não respondeu ('+motivoErro(e)+'). Vou tentar de novo em '+Math.round(d/1000)+' s até conseguir.',true,false);
+    clearTimeout(S.rt);S.rt=setTimeout(()=>{S.reenvio=1;enviarFila()},d);
   }
-  S.ocupado=false;
+  S.ocupado=false;mostrarFila();
+}
+window.addEventListener('online',()=>{clearTimeout(S.rt);enviarFila()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Object.keys(filaLer()).length){clearTimeout(S.rt);enviarFila()}});
+async function salvar(mudancas,msg){
+  const ant=mudancas.map(m=>{const l=S.linhas.find(l=>l.k===m.k);return {k:m.k,campo:m.campo,motorista:l[m.campo==='alt'?'alt':'motorista'],ult:l.ult}});
+  mudancas.forEach(m=>{const l=S.linhas.find(l=>l.k===m.k);if(m.campo!=='alt'&&l.motorista!==m.motorista)l.ult={u:usuario,t:Date.now(),a:l.motorista};aplicarMud(m)});
+  S.reg&&aplicar0();desenharFiltros();desenhar();
+  const f=filaLer();mudancas.forEach(m=>{f[m.k+'|'+m.campo]={k:m.k,campo:m.campo,motorista:m.motorista}});filaGravar(f);mostrarFila();
+  S.desfazer=ant;S.reenvio=0;S.tent=0;clearTimeout(S.rt);
+  await enviarFila(msg);
 }
 $('lista').addEventListener('click',e=>{
   const c=e.target.closest('tr[data-k]');if(!c)return;
@@ -636,7 +659,7 @@ $('sinc').onclick=async()=>{
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-(S.em||0)>120000&&!$('dlg').open)recarregar()});
 setInterval(()=>{if(!document.hidden&&!S.sel.size&&!$('dlg').open)recarregar()},300000);
 limaBase();
-carregar();
+carregar().then(()=>enviarFila());
 </script>
 </body>
 </html>
