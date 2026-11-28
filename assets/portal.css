@@ -425,3 +425,26 @@ body.side-hid .side-tg{left:16px;top:18px}
 .msel summary::-webkit-details-marker{display:none}.msel summary::after{content:'▾';float:right;margin-left:10px}
 .msel-box{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:260px;max-height:320px;overflow:auto;background:var(--card,#fff);border:1px solid var(--line,#dfe3ea);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:6px}
 .msel-box label{display:flex;gap:8px;align-items:center;padding:6px 8px;font-size:14px;cursor:pointer;border-radius:6px}.msel-box label:hover{background:rgba(127,127,127,.12)}.msel-act{padding:2px 2px 6px;border-bottom:1px solid var(--line,#dfe3ea);margin-bottom:4px}
+
+/* Operações em lote no IMILE (portal/imile.js) */
+.im-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.im-regras{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 14px}
+.im-regras div{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:10px;background:rgba(128,140,160,.12)}
+.im-regras span{font-size:.8rem;opacity:.75}
+.im-botoes{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
+.im-prog{margin-top:16px}
+.im-info{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:.9rem}
+.im-bar{height:10px;border-radius:20px;overflow:hidden;background:rgba(128,140,160,.25)}
+.im-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#002265,#fe6801);transition:width .2s}
+.im-log{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:14px}
+.im-log th,.im-log td{text-align:left;padding:8px 6px;border-bottom:1px solid rgba(128,140,160,.25);vertical-align:top}
+.im-p{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.72rem;font-weight:700;background:rgba(128,140,160,.2)}
+.im-SUCESSO{background:rgba(19,150,90,.18);color:#13965a}
+.im-PARCIAL{background:rgba(224,150,0,.2);color:#b87400}
+.im-ERRO{background:rgba(198,40,40,.18);color:#c62828}
+.im-auto{display:flex;flex-direction:column;gap:8px;padding:14px 16px;border-left:4px solid #fe6801;border-radius:10px;background:rgba(128,140,160,.1)}
+.im-sw{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.im-sw input{width:18px;height:18px;cursor:pointer}
+.im-ult{font-size:.85rem;line-height:1.5;white-space:pre-wrap}
+.im-ult.ok{color:#13965a}.im-ult.falha{color:#c62828}
+@media (max-width:640px){.im-regras{grid-template-columns:1fr}}
