@@ -177,7 +177,7 @@
   const tokens = (n) => norm(n).replace(/^[A-Z]{2,4}\s*-\s*/, '').replace(/\(\s*AJ\s*\)/g, ' ').replace(/-\s*A\s*$/, ' ').replace(/[^A-Z0-9 ]/g, ' ').split(/\s+/).filter((t) => t && !PART.has(t));
   const tokOk = (a, b) => a === b || (a.length === 1 && b.startsWith(a)) || (b.length === 1 && a.startsWith(b));
   const nivel = (a0, b0) => {
-    if (prefixo(a0) !== prefixo(b0)) return 0;
+    if (prefixo(a0) && prefixo(a0) !== prefixo(b0)) return 0; // prefixo (ex.: GET -) é opcional ao digitar
     const a = tokens(a0), b = tokens(b0);
     if (!a.length || !b.length || a[0] !== b[0]) return 0;
     const m = Math.min(a.length, b.length);
@@ -204,7 +204,7 @@
       if (a.length === 1) return { encontrado: true, userCode: a[0].userCode, userName: a[0].userName };
       if (a.length > 1) return { encontrado: false, motivo: `O nome "${nome}" bate com mais de um motorista no IMILE: ${a.map((m) => `${m.userName} (${m.userCode})`).join('; ')}. Ajuste o nome para o nome exato do IMILE.` };
     }
-    const par = lista.filter((m) => prefixo(m.userName || '') === prefixo(nome)).slice(0, 8).map((m) => m.userName);
+    const par = lista.filter((m) => !prefixo(nome) || prefixo(m.userName || '') === prefixo(nome)).slice(0, 8).map((m) => m.userName);
     return { encontrado: false, motivo: `Motorista "${nome}" não existe no IMILE (${ESTACAO}).${par.length ? ' Parecidos: ' + par.join('; ') + '.' : ''} Ajuste o nome.` };
   };
   const buscarMotoristaAtrib = async (nome) => {
@@ -261,6 +261,88 @@
     if (!sucesso(r)) return { restantes: null };
     const t = r.json.resultObject?.pagination?.totalResult;
     return { restantes: typeof t === 'number' ? t : null };
+  };
+
+  // --- troca por seller: lista os atribuídos, filtra o seller e troca (cada chamada vai separada pelo robô) ---
+  const CH_SELLER = /(consignor|seller|shipper|sender|customer|merchant|client|store|shop|vendor)/i;
+  const CH_FORA = /(zip|code|phone|mobile|tel|mail|address|addr|city|province|district|street|id$|no$|date|time|type|count|status)/i;
+  const valoresSeller = (x) => { const v = []; for (const k of Object.keys(x)) if (CH_SELLER.test(k) && !CH_FORA.test(k) && typeof x[k] === 'string' && x[k].trim()) v.push(norm(x[k])); return v; };
+  const listarAtribuidos = async (dias, prog) => {
+    const mapa = new Map();
+    for (let pagina = 1; pagina <= 200; pagina++) {
+      const r = await chamar('emTransito', { currentPage: pagina, showCount: 1000, numberSearchType: 'waybillNo', numbers: [], startDate: iniDia(dias), endDate: fimDia(), dateSearchType: 'createDate', queryType: 'waybillNo', consignorZipCodes: [] });
+      if (!sucesso(r)) throw new Error('Não consegui listar os pacotes atribuídos: ' + motivo(r, 'listar'));
+      const ro = r.json.resultObject || {}, lista = ro.results || [];
+      for (const x of lista) if (x && x.id != null) mapa.set(String(x.id), x);
+      if (prog) prog(mapa.size);
+      if (!lista.length || lista.length < 1000 || mapa.size >= Number(ro.pagination?.totalResult || 0)) break;
+    }
+    return [...mapa.values()];
+  };
+  const filtrarSeller = (lista, seller) => {
+    const qn = norm(seller), exato = new Set(), parcial = new Set();
+    for (const x of lista) for (const v of valoresSeller(x)) { if (v === qn) exato.add(v); else if (v.includes(qn) || (qn.includes(v) && v.length > 3)) parcial.add(v); }
+    const nomes = exato.size ? exato : parcial;
+    if (!nomes.size) {
+      const cont = new Map();
+      for (const x of lista) for (const v of valoresSeller(x)) cont.set(v, (cont.get(v) || 0) + 1);
+      const top = [...cont.entries()].sort((a, b) => b[1] - a[1]).slice(0, 15).map(([n, c]) => `${n} (${c})`);
+      throw new Error(`Seller "${seller}" não encontrado entre os pacotes atribuídos. ` + (top.length ? 'Sellers encontrados: ' + top.join('; ') : 'Não achei o campo do seller. Campos da resposta: ' + Object.keys(lista[0] || {}).join(', ')));
+    }
+    if (nomes.size > 1) throw new Error(`"${seller}" bate com mais de um seller: ${[...nomes].slice(0, 10).join('; ')}. Digite o nome completo.`);
+    const nome = [...nomes][0];
+    return { nome, itens: lista.filter((x) => valoresSeller(x).includes(nome)) };
+  };
+  const certoPara = (dest) => (x) => norm(x.driverName) === norm(dest.userName) || (x.driverCode && x.driverCode === dest.userCode);
+  const planejarSeller = async (seller, motorista, aviso) => {
+    aviso('Buscando o motorista no IMILE...');
+    const dest = await buscarMotorista(motorista);
+    if (!dest.encontrado) return { ok: false, erro: dest.motivo };
+    aviso('Listando os pacotes atribuídos...');
+    const todos = await listarAtribuidos(DIAS_TRANSITO, (n) => aviso(`Listando os pacotes atribuídos: ${n}...`));
+    const s = filtrarSeller(todos, seller), certo = certoPara(dest), aTrocar = s.itens.filter((x) => !certo(x)), por = {};
+    for (const x of aTrocar) por[x.driverName || '(sem nome)'] = (por[x.driverName || '(sem nome)'] || 0) + 1;
+    return { ok: true, seller: s.nome, dest, itens: s.itens, aTrocar, jaCorretos: s.itens.length - aTrocar.length, total: s.itens.length, porMotorista: por, motorista: dest.userName };
+  };
+  const executarSeller = async (p, aviso) => {
+    const regs = p.aTrocar.map((x) => ({ id: x.id, waybill: String(x.waybillNo) }));
+    const falhas = await desatribuirRegistros(regs, (f) => aviso(`Desatribuindo do motorista atual: ${f} de ${regs.length}`));
+    const paraAtribuir = regs.map((x) => x.waybill).filter((w) => !falhas.has(w));
+    let erroAtrib = '';
+    for (let k = 0; k < paraAtribuir.length; k += 300) {
+      aviso(`Atribuindo ${Math.min(k + 300, paraAtribuir.length)} de ${paraAtribuir.length} ao novo motorista...`);
+      const a = await atribuir(paraAtribuir.slice(k, k + 300), p.dest);
+      if (!a.sucesso) erroAtrib = a.motivo;
+    }
+    aviso('Conferindo no IMILE...');
+    const depois = await listarAtribuidos(DIAS_TRANSITO), nosso = new Set(p.itens.map((x) => String(x.waybillNo))), ficou = depois.filter((x) => nosso.has(String(x.waybillNo))), certo = certoPara(p.dest);
+    return { ok: true, seller: p.seller, motorista: p.motorista, total: p.total, confirmados: ficou.filter(certo).length, comOutro: ficou.filter((x) => !certo(x)).map((x) => `${x.waybillNo} (${x.driverName})`).slice(0, 20), falhas: [...falhas.entries()].slice(0, 20), erroAtribuicao: erroAtrib };
+  };
+  // --- desatribuição dos últimos 21 dias (manual, com progresso) ---
+  const desatribuir21 = async (ui) => {
+    const res = { origem: 'MANUAL', inicio: Date.now(), fim: null, periodo: { inicio: iniDia(20), fim: fimDia() }, total: 0, desatribuidos: 0, itens: [], erro: '' };
+    try {
+      ui.prog(0, 1, 'Listando os pacotes atribuídos...');
+      const antes = await listarAtribuidos(20), regs = antes.map((x) => ({ id: x.id, waybill: String(x.waybillNo || '') }));
+      res.total = antes.length;
+      if (antes.length) {
+        const falhas = await desatribuirRegistros(regs, (f) => ui.prog(f, regs.length, `Desatribuindo: ${f} de ${regs.length}`));
+        ui.prog(regs.length, regs.length, 'Conferindo no IMILE...');
+        const ainda = async () => { const at = new Set((await listarAtribuidos(20)).map((x) => String(x.id))); return regs.filter((x) => at.has(String(x.id))); };
+        let rest = await ainda();
+        if (rest.length) {
+          for (const [k, v] of await desatribuirRegistros(rest, (f) => ui.prog(f, rest.length, `Repetindo para os que ficaram: ${f} de ${rest.length}`))) falhas.set(k, v);
+          ui.prog(1, 1, 'Conferindo no IMILE...');
+          rest = await ainda();
+        }
+        const pend = new Set(rest.map((x) => String(x.id)));
+        for (const x of antes) { const p = pend.has(String(x.id)); res.itens.push({ item: String(x.waybillNo || ''), motorista: x.driverName || '', status: p ? 'ERRO' : 'SUCESSO', detalhe: p ? falhas.get(String(x.waybillNo)) || 'Continua atribuído após a desatribuição.' : 'Desatribuído.' }); }
+        res.desatribuidos = antes.length - pend.size;
+      }
+    } catch (e) { res.erro = e.message || String(e); }
+    res.fim = Date.now();
+    robo({ acao: 'ultimaSet', ultima: res });
+    return res;
   };
 
   // ---------- fluxos (devolvem a lista de resultados) ----------
@@ -582,16 +664,20 @@ ${blocoProgresso}${tabelaLog}</div>`;
       if (busy) return;
       const s = q('#tr-s', raiz).value.trim(), m = q('#tr-m', raiz).value.trim();
       trava(true, 'Buscando os pacotes no IMILE...');
-      const p = await robo({ acao: 'prever', seller: s, motorista: m }, 170000);
+      const aviso = (t) => { R.innerHTML = `<p class="msg">${esc(t)}</p>`; };
+      let p;
+      try { p = await planejarSeller(s, m, aviso); } catch (err) { p = { ok: false, erro: err.message || String(err) }; }
       trava(false);
       if (!p.ok) { R.innerHTML = `<p class="msg err">${esc(p.erro || 'Não consegui buscar.')}</p>`; return; }
-      if (!p.aTrocar) { R.innerHTML = `<p class="msg ok">${esc(p.seller)}: os ${p.total} pacote(s) já estão com ${esc(p.motorista)}. Nada a trocar.</p>`; return; }
-      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${p.aTrocar}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p><p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${p.aTrocar} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
+      const n = p.aTrocar.length;
+      if (!n) { R.innerHTML = `<p class="msg ok">${esc(p.seller)}: os ${p.total} pacote(s) já estão com ${esc(p.motorista)}. Nada a trocar.</p>`; return; }
+      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${n}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p><p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${n} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
       q('#tr-no', raiz).onclick = () => { R.innerHTML = ''; };
       q('#tr-ok', raiz).onclick = async () => {
         if (busy) return;
         trava(true, 'Trocando os pacotes... não feche esta tela.');
-        const x = await robo({ acao: 'executar', seller: s, motorista: m }, 170000);
+        let x;
+        try { x = await executarSeller(p, (t) => { R.innerHTML = `<p class="msg">${esc(t)} Não feche esta tela.</p>`; }); } catch (err) { x = { ok: false, erro: err.message || String(err) }; }
         trava(false);
         if (!x.ok) { R.innerHTML = `<p class="msg err">${esc(x.erro || 'A troca falhou.')} Confira no IMILE antes de repetir.</p>`; return; }
         const faltam = x.total - x.confirmados;
@@ -623,7 +709,7 @@ ${blocoProgresso}${tabelaLog}</div>`;
     const estado = (g) => {
       if (!g.ok) { ult.textContent = g.erro || 'Não consegui ler o estado do robô.'; return; }
       chk.checked = !!g.ligado;
-      prox.textContent = g.kv === false ? 'O robô ainda não tem o armazenamento (KV "SESSAO"): o automático só funciona depois de ligar.' : g.ligado ? 'Próxima execução: ' + proxima() + '.' : 'Automático desligado.';
+      prox.textContent = g.kv === false ? 'O robô ainda não tem o armazenamento (KV "SESSAO"): o automático só funciona depois de ligar.' : g.andamento ? 'Desatribuição automática em andamento no robô...' : g.ligado ? 'Próxima execução: ' + proxima() + '.' : 'Automático desligado.';
       mostra(g.ultima);
     };
     if (ok) robo({ acao: 'autoGet' }).then(estado);
@@ -631,10 +717,9 @@ ${blocoProgresso}${tabelaLog}</div>`;
     bres.onclick = () => baixarXlsx('RESUMO', [['ITEM', 'MOTORISTA', 'STATUS', 'DETALHE'], ...itens.map((r) => [r.item, r.motorista, r.status, r.detalhe || ''])], [22, 38, 14, 90], MODOS.desatribuir_resumo);
     ini.onclick = async () => {
       if (!confirm('Desatribuir TODOS os pacotes em Pickup In-Transit dos últimos 21 dias?')) return;
-      ini.disabled = true; ui.limpar(); ui.prog(1, 4, 'Desatribuindo... pode levar alguns minutos, não feche esta tela.');
-      const r = await robo({ acao: 'desatribuirAgora' }, 600000);
+      ini.disabled = true; ui.limpar();
+      const r = await desatribuir21(ui);
       ini.disabled = false; ui.prog(1, 1, 'Concluído');
-      if (!r.ok) { ui.msg(r.erro || 'Falhou.', 'err'); return; }
       mostra(r);
       ui.msg(r.erro ? r.erro : r.total ? `${r.desatribuidos} de ${r.total} pacote(s) desatribuído(s).` : 'Nenhum pacote atribuído no período. Nada para desatribuir.', r.erro || r.desatribuidos < r.total ? 'err' : 'ok');
     };
