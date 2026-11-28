@@ -42,7 +42,8 @@ if(CFG.pontoUrl&&(a.includes('ponto')||a.includes('pontoadm')))versao();if(a.inc
 if(a.includes('forecast'))setTimeout(()=>loadF().catch(()=>{}),2500);
 if(a.includes('perf')){pf('/portal/performance.html?v=56');pf('/portal/rota-geo.js?v=4')}
 if(a.includes('perf')||a.includes('rotas')){pf('/assets/vendor/leaflet/leaflet.css');pf('/assets/vendor/leaflet/leaflet.js')}
-if(a.includes('rotas'))pf('/portal/rotas.html?v=42')}catch(e){}}
+if(a.includes('rotas'))pf('/portal/rotas.html?v=42');
+if(a.includes('troca')&&CFG.imileUrl&&CFG.imileToken)setTimeout(()=>imLoad().then(()=>GL_IMILE.preaquecer({CFG,ME})).catch(()=>{}),2000)}catch(e){}}
 let PRE=null;const preShared=()=>{PRE={};for(const f of ['/data/avisos.json','/data/escalas.json','/data/config.json']){const p=getJSON(f);p.catch(()=>{});PRE[f]=p}};
 async function loadShared(){const gj=f=>PRE&&PRE[f]?PRE[f]:getJSON(f);const ld=(f,d)=>gj(f).then(open_).catch(()=>d);[AVISOS,ESCALAS,CFG,FIN]=await Promise.all([ld('/data/avisos.json',[]),ld('/data/escalas.json',[]),gj('/data/config.json').then(open_).then(c=>{CFG_OK=true;return c}).catch(()=>{CFG_OK=false;return {}}),ME?.role==='admin'?ld('/data/financeiro.json',null):null])}
 // Senha guardada no servidor do ponto (quem trocou a senha). O Apps Script às vezes demora para "acordar":
@@ -495,7 +496,7 @@ $('#xreg').innerHTML=hbars(group(S,x=>x.r+' · '+S.filter(y=>y.r===x.r).length+'
 $('#xcli').innerHTML=hbars(group(S,x=>x.c,x=>x.p).sort((a,b)=>b[1]-a[1]));
 try{await loadOnce('/assets/vendor/leaflet/leaflet.css');await loadOnce('/assets/vendor/leaflet/leaflet.js')}catch(e){$('#xmap').innerHTML='<p class="hint">Não foi possível carregar o mapa.</p>';return}
 if(id!==run_id||!$('#xmap'))return;
-if(!map||!document.body.contains(map.getContainer())){map=L.map('xmap').setView([-23.55,-46.63],10);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);layer=L.layerGroup().addTo(map)}
+if(!map||!document.body.contains(map.getContainer())){map=L.map('xmap').setView([-23.55,-46.63],10);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,referrerPolicy:'strict-origin-when-cross-origin',attribution:'© OpenStreetMap'}).addTo(map);layer=L.layerGroup().addTo(map)}
 layer.clearLayers();const pts=[];let miss=0,done=0;const tot=S.length;
 for(const x of S){const c=await geo(x.b,x.ci);if(id!==run_id)return;done++;
 if(!c){miss++}else{const h=hsh(x.s);const ll=[c[0]+((h&1023)/1023-.5)*.012,c[1]+(((h>>10)&1023)/1023-.5)*.012];pts.push(ll);
@@ -796,7 +797,7 @@ M().innerHTML=top('Escalas','Horários de trabalho usados no controle de ponto')
 <div class="box mt"><div class="table-wrap"><table><thead><tr><th>Escala</th><th>Horário</th><th>Almoço</th><th>Dias</th><th></th></tr></thead><tbody>${ESCALAS.map(e=>`<tr><td>${esc(e.nome)}</td><td>${e.ent} às ${e.sai}</td><td>${e.alm?e.alm+' às '+e.ret:'—'}</td><td>${e.dias.map(i=>D[i]).join(', ')}</td><td><div class="row-actions"><button class="btn btn-danger btn-sm" data-e="${e.id}">Excluir</button></div></td></tr>`).join('')||'<tr><td colspan="5" class="empty">Nenhuma escala criada.</td></tr>'}</tbody></table></div></div>`;
 $('#ef').onsubmit=async e=>{e.preventDefault();ESCALAS.push({id:u2b(rnd(6)),nome:$('#e-n').value.trim(),ent:$('#e-1').value,alm:$('#e-2').value,ret:$('#e-3').value,sai:$('#e-4').value,dias:$$('.days input:checked').map(x=>+x.value)});await saveFile('data/escalas.json',await seal(ESCALAS),'Escala criada.');keepMsg(VIEWS.escalas)};
 $$('[data-e]').forEach(b=>b.onclick=async()=>{if(!confirm('Excluir esta escala?'))return;ESCALAS=ESCALAS.filter(x=>x.id!==b.dataset.e);await saveFile('data/escalas.json',await seal(ESCALAS),'Escala excluída.');keepMsg(VIEWS.escalas)})};
-const imLoad=()=>window.GL_IMILE?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='/portal/imile.js?v=6';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+const imLoad=()=>window.GL_IMILE?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement('script');s.src='/portal/imile.js?v=7';s.onload=ok;s.onerror=no;document.head.appendChild(s)});
 const imTela=v=>()=>{const g=GEN;M().innerHTML=top(TITULO[v]||v,'Carregando...')+'<div class="box"><p class="msg">Carregando...</p></div>';imLoad().then(()=>{if(vivo(g))GL_IMILE.montar(v,{M,top,esc,$,toast,CFG,ME})}).catch(()=>{if(vivo(g))M().innerHTML=top(TITULO[v]||v,'')+'<div class="box"><p class="msg err">Não consegui carregar esta tela. Atualize a página.</p></div>'})};
 VIEWS.troca=imTela('troca');VIEWS.atrib=imTela('atrib');VIEWS.moto=imTela('moto');VIEWS.desat=imTela('desat');
 VIEWS.app=()=>{const scr={inicio:`<div class="ph-h"><b>Olá, ${esc(ME.name.split(' ')[0])}</b><small>Rota de hoje</small></div><div class="ph-k"><div><b>18</b><small>Sellers</small></div><div><b>342</b><small>Pacotes</small></div></div><div class="ph-l"><span>Loja Aurora · Brás</span><span>Bella Moda · Tatuapé</span><span>Casa Prime · Osasco</span></div><div class="ph-b">Iniciar rota</div>`,

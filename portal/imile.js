@@ -613,33 +613,54 @@ ${blocoProgresso}${tabelaLog}</div>`;
   };
   // Troca de motorista: escolher seller + motorista e trocar. Listas, troca e conferência ficam no robô;
   // a página só pede a lista pronta, manda "trocar" e mostra o histórico do dia.
+  const CK_CAT = 'getlog_im_cat';
   const hh = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const statusTxt = (e) => (e.estado === 'concluido' ? '100%' : e.estado === 'andamento' ? `${e.pct}% (trocando)` : e.estado === 'erro' ? `Erro: ${e.msg || 'falhou'}` : `${e.pct}%${e.msg ? ' — ' + e.msg : ''}`);
   const montarSeller = (raiz) => {
     const ok = !!(CF.url && CF.token);
-    raiz.innerHTML = `<div class="box im-troca">${aviso(ok)}<form id="im-sf" class="im-linha"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off" placeholder="Escolher seller"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off" placeholder="Escolher motorista"></div><button class="btn btn-primary im-bt" id="tr-b"${ok ? '' : ' disabled'}>Trocar motorista</button></form><p class="msg" id="tr-r" aria-live="polite"></p></div>
+    raiz.innerHTML = `<div class="box im-troca">${aviso(ok)}<form id="im-sf" class="im-linha"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off" placeholder="Escolher seller"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off" placeholder="Escolher motorista"></div><button class="btn btn-primary im-bt" id="tr-b"${ok ? '' : ' disabled'}>Trocar motorista</button></form><p class="msg" id="tr-r" aria-live="polite"></p>
+<div class="im-pg" id="tr-pg" hidden><div class="im-pg-top"><b>Preparando as listas</b><span class="im-pg-pc">0%</span></div><div class="im-pg-bar" role="progressbar" aria-label="Preparando as listas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i class="im-pg-fill"></i></div><div class="im-pg-txt">Conectando ao robô...</div></div>
+<p class="hint im-nota" id="tr-nm"></p></div>
 <div class="box im-hist"><div class="box-head"><div><h3>Histórico de hoje</h3></div><button type="button" class="btn btn-ghost btn-sm" id="tr-x" disabled>Baixar (Excel)</button></div><div id="tr-h"><p class="hint">Carregando...</p></div></div>`;
     const R = q('#tr-r', raiz), B = q('#tr-b', raiz), vivo = () => document.body.contains(raiz);
     const msg = (t, tipo) => { R.className = 'msg' + (tipo ? ' ' + tipo : ''); R.textContent = t || ''; };
     const cbS = combo(q('#tr-s', raiz), { vazio: 'Preparando a lista de sellers...' }), cbM = combo(q('#tr-m', raiz), { vazio: 'Preparando a lista de motoristas...' });
-    // listas prontas (vêm do robô; a última fica guardada para abrir na hora)
-    const CK = 'getlog_im_cat';
+    // listas prontas: abrem na hora da cópia guardada; o robô atualiza em segundo plano e, na 1ª vez, mostra o progresso real
+    const t0 = performance.now(), PG = q('#tr-pg', raiz), nota = q('#tr-nm', raiz), seg = (ms) => (ms / 1000).toFixed(1).replace('.', ',') + ' s';
     const aplica = (c) => { cbS.set(c.sellers.map(([n, k]) => ({ v: n, x: k + ' pacote(s)' }))); cbM.set(c.motoristas.map((n) => ({ v: n }))); };
-    try { const g = JSON.parse(sessionStorage.getItem(CK)); if (g && g.sellers) aplica(g); } catch (e) { /* sem cópia guardada */ }
+    let doCache = false;
+    try { const g = JSON.parse(sessionStorage.getItem(CK_CAT)); if (g && g.sellers) { aplica(g); doCache = true; nota.textContent = `${g.sellers.length} seller(s) · ${g.motoristas.length} motorista(s) · abertos na hora (atualizando...)`; } } catch (e) { /* sem cópia guardada */ }
+    let etaFim = 0, tick = null;
+    const barra = (p) => { // p = progresso informado pelo robô: { pct, eta, texto }
+      PG.hidden = false;
+      const pct = p ? Math.max(2, Math.min(99, Math.round(p.pct))) : 3;
+      q('.im-pg-pc', PG).textContent = pct + '%'; q('.im-pg-fill', PG).style.width = pct + '%'; q('.im-pg-bar', PG).setAttribute('aria-valuenow', pct);
+      if (p && p.eta) etaFim = Date.now() + p.eta * 1000;
+      const texto = p && p.texto ? p.texto : 'Conectando ao robô';
+      const pinta = () => { const f = etaFim ? Math.max(1, Math.ceil((etaFim - Date.now()) / 1000)) : 0; q('.im-pg-txt', PG).textContent = texto + (f ? ` · falta${f > 1 ? 'm' : ''} ~${f} s` : '...'); };
+      pinta(); clearInterval(tick); tick = setInterval(() => { if (!vivo()) clearInterval(tick); else pinta(); }, 500);
+    };
+    const fim = () => { clearInterval(tick); q('.im-pg-pc', PG).textContent = '100%'; q('.im-pg-fill', PG).style.width = '100%'; setTimeout(() => { PG.hidden = true; }, 500); };
     const carregar = async (tent) => {
       if (!ok || !vivo()) return;
       const c = await robo({ acao: 'lista', rotas: A.CFG.rotasUrl && A.CFG.rotasToken ? { url: A.CFG.rotasUrl, token: A.CFG.rotasToken } : undefined });
-      if (c.ok && !c.vazio) { aplica(c); try { sessionStorage.setItem(CK, JSON.stringify(c)); } catch (e) { /* ok */ } return; }
+      if (c.ok && !c.vazio) {
+        aplica(c); try { sessionStorage.setItem(CK_CAT, JSON.stringify(c)); } catch (e) { /* ok */ }
+        if (!PG.hidden) fim();
+        nota.textContent = `${c.sellers.length} seller(s) · ${c.motoristas.length} motorista(s) · ${doCache ? 'atualizados' : 'prontos'} em ${seg(performance.now() - t0)}`;
+        return;
+      }
       if (c.erro === 'ação') { msg('O robô do Cloudflare está na versão antiga: rode o texto TEXTO-ATUALIZAR-ROBO para atualizá-lo.', 'err'); return; }
       if (c.erro && tent >= 3) msg('O robô ainda não montou a lista: ' + c.erro, 'err');
-      if (tent < 25) setTimeout(() => carregar(tent + 1), 4000);
+      if (!doCache) barra(c.progresso || null);
+      if (tent < 90) setTimeout(() => carregar(tent + 1), 1000);
     };
     carregar(0);
     // histórico do dia (só do dia; vive no robô e aparece para todos)
     let ultimo = [], timer = null;
     const desenha = (itens) => {
       ultimo = itens; q('#tr-x', raiz).disabled = !itens.length;
-      q('#tr-h', raiz).innerHTML = itens.length ? `<div class="table-wrap"><table class="im-log"><thead><tr><th>Seller</th><th>Motorista atual</th><th>Horário</th><th>Status</th></tr></thead><tbody>${itens.map((e) => `<tr><td>${esc(e.seller)}</td><td>${esc(e.motorista)}</td><td>${hh(e.hora)}</td><td><span class="im-p im-${e.estado === 'concluido' ? 'SUCESSO' : e.estado === 'erro' ? 'ERRO' : 'PARCIAL'}">${esc(statusTxt(e))}</span></td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nenhuma troca hoje.</p>';
+      q('#tr-h', raiz).innerHTML = itens.length ? `<div class="table-wrap"><table class="im-log"><thead><tr><th>Seller</th><th>Motorista atual</th><th>Horário</th><th>Status</th></tr></thead><tbody>${itens.map((e) => `<tr><td>${esc(e.seller)}</td><td>${esc(e.motorista)}</td><td>${hh(e.hora)}</td><td><span class="im-p im-${e.estado === 'concluido' ? 'SUCESSO' : e.estado === 'erro' ? 'ERRO' : 'PARCIAL'}">${esc(statusTxt(e))}</span>${e.estado === 'andamento' ? `<span class="im-mini" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${e.pct}"><i style="width:${e.pct}%"></i></span>` : ''}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint">Nenhuma troca hoje.</p>';
     };
     const atualiza = async () => {
       if (!ok || !vivo()) return;
@@ -726,6 +747,13 @@ ${blocoProgresso}${tabelaLog}</div>`;
     desat: { titulo: 'Desatribuição', sub: 'Limpa os pacotes atribuídos dos últimos 21 dias, agora ou todo dia às 23:00', abas: null },
   };
   window.GL_IMILE = {
+    // Abre a tela de Troca na hora: guarda a lista pronta do robô enquanto o usuário faz outra coisa
+    async preaquecer(amb) {
+      CF = { url: amb.CFG.imileUrl || '', token: amb.CFG.imileToken || '', usuario: amb.ME.name };
+      if (!CF.url || !CF.token) return;
+      const c = await robo({ acao: 'lista', rotas: amb.CFG.rotasUrl && amb.CFG.rotasToken ? { url: amb.CFG.rotasUrl, token: amb.CFG.rotasToken } : undefined });
+      if (c.ok && !c.vazio) { try { sessionStorage.setItem(CK_CAT, JSON.stringify(c)); } catch (e) { /* ok */ } }
+    },
     montar(view, amb) {
       A = amb;
       CF = { url: amb.CFG.imileUrl || '', token: amb.CFG.imileToken || '', usuario: amb.ME.name };

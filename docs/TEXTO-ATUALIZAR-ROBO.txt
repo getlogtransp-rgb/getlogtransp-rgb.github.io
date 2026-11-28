@@ -1,23 +1,82 @@
-TAREFA: atualizar o robô do IMILE da GETLOG no Cloudflare (Worker "getlog-imile") para a versão nova e conferir. Faça tudo sozinho, clique por clique, sem me perguntar nada.
+TAREFA: atualizar o robô do IMILE da GETLOG no Cloudflare (Worker "getlog-imile") para a versão nova, ligar o LOGIN AUTOMÁTICO no IMILE e conferir. Você é o Claude no Chrome: faça tudo sozinho, clique por clique, sem me perguntar nada. Só pare e me peça quando o texto disser que depende de mim.
 
-PROTEJA O QUE JÁ FUNCIONA: não abra para editar nem altere nenhum projeto do Google Apps Script (nem "GETLOG - Ponto v2" nem "GETLOG - Rotas"), nem planilhas, .xlsx ou .csv, nem o Worker "getlog-dados". Nesta tarefa você PODE e DEVE alterar o código do Worker "getlog-imile" (é o objetivo) e nada além dele. No IMILE (ds.imile.com) somente LEITURA: nunca acionar atribuir, trocar, desativar nem desatribuir. Nunca escreva tokens ou senhas na resposta. NÃO mexa nos Secrets TOKEN, IMILE_TOKEN e IMILE_USERCODE (já estão certos) nem no KV SESSAO (já está ligado).
+DADOS (use exatamente assim; nunca escreva a senha nem o token na sua resposta final)
+- Conta do IMILE: usuário 2103917101 | senha <SENHA DO IMILE>
+- Token do robô (só para o teste do passo 8): <TOKEN DO ROBÔ>
+
+PROTEJA O QUE JÁ FUNCIONA (OBRIGATÓRIO)
+- NÃO abra para editar nem altere nenhum projeto do Google Apps Script (nem "GETLOG - Ponto v2" nem "GETLOG - Rotas"), nem planilhas, .xlsx ou .csv, nem o Worker "getlog-dados" do Cloudflare.
+- Nesta tarefa você PODE alterar SOMENTE o Worker "getlog-imile" (código e variáveis). Não mexa nos Secrets TOKEN, IMILE_TOKEN e IMILE_USERCODE nem no KV SESSAO (já estão certos).
+- No IMILE (ds.imile.com) só LEITURA: pode entrar (login) para ver como o login funciona, mas NUNCA clique em atribuir, trocar, desativar, desatribuir, salvar ou qualquer botão que altere dados.
 
 PASSOS
-1. Abra https://dash.cloudflare.com . Se não estiver logado, entre com a conta da GETLOG (se pedir login/senha/código, é o único passo que depende de mim: me peça e pare só nisso).
-2. Menu esquerdo > Compute (Workers) > Workers & Pages > clique no Worker "getlog-imile" > botão "Edit code". Apague TODO o código atual, cole o CÓDIGO do final deste texto inteiro e clique em "Deploy".
-3. PLANO PAGO (recomendado, US$ 5/mês): o robô agora faz sozinho todo o trabalho pesado (listas, trocas e conferência) e o plano gratuito limita o processamento a 10 ms por pedido, que não aguenta listas grandes do IMILE. Menu esquerdo > Compute (Workers) > Plans (ou "Workers & Pages" > "Plans") > escolha "Workers Paid" e confirme. Se pedir cartão/pagamento, é o único passo que depende de mim: me peça e pare só nisso (se eu recusar o plano pago, pule este passo e o passo 4 e me avise que ficou no gratuito).
-4. Worker getlog-imile > Settings > Variables and Secrets > "Add" > Type = Text (variável comum, NÃO Secret) ; Variable name = PLANO_PAGO ; Value = 1 > Deploy.
-5. Settings > Trigger Events (Gatilhos): confirme que existe o Cron Trigger "* * * * *" (a cada minuto). Se não existir, adicione.
-6. Abra o endereço público do Worker numa aba (topo da página do Worker, formato https://getlog-imile.ALGUMA-COISA.workers.dev). Deve aparecer {"ok":false,"erro":"método"}. Isso confirma que o robô novo está no ar.
-7. TESTE SOMENTE LEITURA: abra https://getlogbr.com.br/portal e entre como administrador (a senha do admin é o único dado que preciso de mim: me peça e pare só nisso). Pressione Ctrl+F5 para limpar o cache. Menu Operação > "Troca de motorista". A tela deve ter só: campo Seller, campo Novo motorista, botão "Trocar motorista" e o quadro "Histórico de hoje". Aguarde até 2 minutos (na primeira vez o robô monta as listas) e clique no campo Seller: deve abrir uma lista com sellers e a quantidade de pacotes de cada um; clique no campo Novo motorista: deve abrir a lista de motoristas. NÃO clique em "Trocar motorista".
-8. Me entregue, em poucas linhas: "robô atualizado: sim/não", "plano pago ativo: sim/não", quantos sellers e quantos motoristas apareceram nas listas e qualquer mensagem de erro vermelha que apareceu na tela (copie o texto). NÃO escreva nenhum token.
+
+1) ENTRAR NO CLOUDFLARE
+Abra https://dash.cloudflare.com . Se não estiver logado, entre com a conta da GETLOG. Se pedir login, senha ou código, esse é o único passo que depende de mim: me peça e pare só nisso.
+
+2) COLOCAR O CÓDIGO NOVO
+Menu esquerdo > Compute (Workers) > Workers & Pages > clique no Worker "getlog-imile" > botão "Edit code". Clique dentro do editor, selecione tudo (Ctrl+A), apague, cole o CÓDIGO que está no final deste texto (inteiro) e clique em "Deploy". Confirme que aparece a mensagem de sucesso.
+
+3) PLANO PAGO (recomendado: US$ 5 por mês)
+O robô agora faz sozinho todo o trabalho pesado (listas, trocas, conferência) e o plano gratuito limita o processamento a 10 ms por pedido, que não aguenta listas grandes do IMILE. Menu esquerdo > Compute (Workers) > "Plans" (ou Workers & Pages > Plans) > escolha "Workers Paid" e confirme. Se pedir cartão ou pagamento, esse é o único passo que depende de mim: me peça e pare só nisso. Se eu recusar, pule o passo 4, siga os demais e me avise que ficou no gratuito.
+
+4) VARIÁVEL DO PLANO PAGO
+Worker getlog-imile > Settings > Variables and Secrets > "Add" > Type = Text (variável comum, NÃO Secret) ; Variable name = PLANO_PAGO ; Value = 1 > Deploy.
+
+5) DESCOBRIR COMO É O LOGIN DO IMILE (janela anônima, para não mexer na sua sessão)
+a) Abra uma janela anônima do Chrome (Ctrl+Shift+N) e acesse https://ds.imile.com . Aperte F12 > aba "Network" (Rede) > marque "Preserve log" (Manter registro) > clique no filtro "Fetch/XHR".
+b) Digite o usuário 2103917101 e a senha <SENHA DO IMILE> e clique no botão de entrar. SE aparecer pedido de código por SMS, captcha ou qualquer verificação extra: PARE e me diga exatamente o que apareceu (isso muda o plano).
+c) Na lista de requisições, ache a do login: método POST, nome com palavras como login, auth, signin, token ou oauth, e cuja resposta traga um token. Clique nela e anote:
+   - Request URL (endereço completo) e método;
+   - o corpo enviado: aba "Payload" > "view source" (texto exato do JSON);
+   - cabeçalhos de requisição incomuns (aba Headers > Request Headers: procure sys-name, sys-portal, lang, timezone, front-sec, resource-code e semelhantes; ignore os padrões do navegador como user-agent, accept, origin, referer, sec-*);
+   - a resposta: aba "Response" (onde está o token, por exemplo resultObject.accessToken). O token também pode vir num cookie chamado IMILE_ACCESS_TOKEN (aba Application > Cookies > https://ds.imile.com).
+d) Veja como a senha foi enviada no corpo: se aparece exatamente "<SENHA DO IMILE>" use {{PASS}}. Se for um texto de 32 letras/números (hexadecimal) provavelmente é MD5 ({{PASS_MD5}}); se tiver 64 é SHA-256 ({{PASS_SHA256}}); se terminar com "=" pode ser Base64 ({{PASS_B64}}). Para conferir SHA-256 e Base64, no Console (F12 > Console) execute:
+(async()=>{const p='<SENHA DO IMILE>',h=async a=>[...new Uint8Array(await crypto.subtle.digest(a,new TextEncoder().encode(p)))].map(x=>x.toString(16).padStart(2,'0')).join('');console.log(JSON.stringify({sha256:await h('SHA-256'),b64:btoa(p)}))})()
+   e compare com o valor do corpo. Se a senha estiver criptografada de outro jeito (valor diferente a cada tentativa, RSA, etc.), PARE e me envie o corpo do login com a senha trocada por "***".
+e) Feche a janela anônima.
+
+6) PREENCHER O LOGIN AUTOMÁTICO NO ROBÔ
+Worker getlog-imile > Settings > Variables and Secrets > "Add" (uma por uma) e depois "Deploy":
+   - Secret: IMILE_USER = 2103917101
+   - Secret: IMILE_PASS = <SENHA DO IMILE>
+   - Text: IMILE_LOGIN_URL = o Request URL do passo 5c
+   - Text: IMILE_LOGIN_BODY = o corpo do login (JSON) trocando o usuário por {{USER}} e a senha por {{PASS}} (ou {{PASS_MD5}}, {{PASS_SHA256}}, {{PASS_B64}} conforme o passo 5d), mantendo todos os outros campos como estavam. Exemplo: {"username":"{{USER}}","password":"{{PASS}}"}
+   - Text: IMILE_TOKEN_PATH = onde está o token na resposta (exemplo: resultObject.accessToken). Se o token vier só em cookie, use: cookie:IMILE_ACCESS_TOKEN
+   - Text (só se o login exigir cabeçalhos especiais do passo 5c): IMILE_LOGIN_HEADERS = JSON com eles, exemplo: {"sys-name":"DS","sys-portal":"DS","lang":"pt_BR"}
+   - Text (opcional): IMILE_LOGIN_METHOD = POST (padrão; só mude se o login não for POST)
+
+7) CRON
+Settings > Trigger Events (Gatilhos): confirme que existe o Cron Trigger "* * * * *" (a cada minuto). Se não existir, adicione.
+
+8) TESTAR O LOGIN AUTOMÁTICO
+Abra o endereço público do Worker numa aba (topo da página do Worker, formato https://getlog-imile.ALGUMA-COISA.workers.dev). Deve aparecer {"ok":false,"erro":"método"}. Nessa mesma aba aperte F12 > Console e execute exatamente:
+fetch(location.href,{method:'POST',body:JSON.stringify({t:'<TOKEN DO ROBÔ>',acao:'loginTeste'})}).then(r=>r.json()).then(j=>console.log(JSON.stringify(j)))
+Resultado esperado: {"ok":true,"login":true,"leitura":true,"motoristasEncontrados":<número>,"erro":"","tamanhoDoToken":<número>}.
+Se vier "ok":false, leia o campo "erro" e corrija a variável certa:
+   - "não devolveu o token" => confira IMILE_TOKEN_PATH e IMILE_LOGIN_BODY (formato da senha);
+   - "HTTP 4xx" ou mensagem de senha/usuário => confira IMILE_LOGIN_URL, IMILE_LOGIN_BODY e IMILE_LOGIN_HEADERS;
+   - "Sessão do IMILE expirou" logo após o login => o token está no caminho errado.
+Depois de cada correção clique em Deploy e rode o teste de novo (máximo de 5 tentativas; se não funcionar, pare e me reporte o campo "erro" completo, sem senha e sem token).
+
+9) TESTE NO PORTAL (SOMENTE LEITURA)
+Abra https://getlogbr.com.br/portal , entre como administrador (a senha do admin é o único dado que preciso de mim: me peça e pare só nisso), aperte Ctrl+F5 e vá em Operação > "Troca de motorista". O aviso vermelho "robô na versão antiga" deve ter sumido. Aguarde até 2 minutos (na primeira vez o robô monta as listas), clique no campo "Seller": deve abrir uma lista com sellers e a quantidade de pacotes; clique em "Novo motorista": deve abrir a lista de motoristas. NÃO clique em "Trocar motorista".
+
+10) RELATÓRIO FINAL (curto; NUNCA escreva senha nem token)
+- robô atualizado: sim/não
+- plano pago ativo: sim/não
+- loginTeste: ok sim/não (e o campo "erro" se não)
+- quantos sellers e quantos motoristas apareceram nas listas
+- qualquer mensagem vermelha da tela (copie o texto)
 
 CÓDIGO DO WORKER (colar inteiro no passo 2):
 // GETLOG – robô do IMILE (Cloudflare Worker). Faz TODO o trabalho pesado: listas prontas, trocas de motorista e desatribuição.
 // A página só pede a lista pronta, manda "trocar" e mostra o histórico do dia; nada de pacote passa pelo navegador.
 // Recomendado: plano Workers Paid (US$ 5/mês) + variável PLANO_PAGO=1. No gratuito o limite de processamento (10 ms) não aguenta listas grandes.
-// Segredos: TOKEN (o mesmo do portal), IMILE_TOKEN (sessão do IMILE), IMILE_USERCODE. Binding KV: SESSAO. Cron: "* * * * *".
-// Ações (POST JSON): ping | lista | trocar | hist | chamar | autoGet | autoSet | desatribuirAgora
+// Segredos: TOKEN (o mesmo do portal), IMILE_USERCODE, IMILE_USER + IMILE_PASS (login automático) ou IMILE_TOKEN (sessão colada, vence). Binding KV: SESSAO. Cron: "* * * * *".
+// Login automático (variáveis de texto): IMILE_LOGIN_URL, IMILE_LOGIN_BODY (modelo JSON com {{USER}}, {{PASS}}, {{PASS_MD5}}, {{PASS_SHA256}}, {{PASS_B64}}),
+// IMILE_TOKEN_PATH (caminho do token na resposta, ex.: resultObject.accessToken, ou cookie:NOME), IMILE_LOGIN_HEADERS (JSON opcional), IMILE_TOKEN_TTL_MIN (padrão 360).
+// Ações (POST JSON): ping | lista | trocar | hist | chamar | autoGet | autoSet | desatribuirAgora | loginTeste
 const SITE = 'https://getlogbr.com.br';
 const BASE = 'https://ds.imile.com/';
 const HUB = 'S21074701';
@@ -57,6 +116,7 @@ export default {
       if (b.acao === 'lista') return json(await lista(env, ctx, b));
       if (b.acao === 'trocar') return json(await trocar(env, ctx, b));
       if (b.acao === 'hist') return json(await hist(env, ctx));
+      if (b.acao === 'loginTeste') return json(await loginTeste(env));
       if (b.acao === 'autoGet') return json(await autoGet(env));
       if (b.acao === 'autoSet') { await env.SESSAO.put('auto', b.ligado ? '1' : '0'); return json(await autoGet(env)); }
       if (b.acao === 'desatribuirAgora') return json(await desatribuirAgora(env, ctx));
@@ -81,14 +141,53 @@ export default {
 };
 
 // ---------- sessão e chamadas ao IMILE ----------
+const loginConfigurado = (env) => !!(env.IMILE_USER && env.IMILE_PASS && env.IMILE_LOGIN_URL);
 async function sessao(env) {
-  let tok = env.SESSAO ? await env.SESSAO.get('token') : null;
-  if (!tok) tok = env.IMILE_TOKEN || (await entrar(env));
-  return tok;
+  const tok = env.SESSAO ? await env.SESSAO.get('token') : null;
+  if (tok) return tok;
+  if (loginConfigurado(env)) return entrar(env);
+  if (env.IMILE_TOKEN) return env.IMILE_TOKEN;
+  throw new Error('Sessão do IMILE ausente: configure o login automático do robô (IMILE_USER, IMILE_PASS, IMILE_LOGIN_URL...) ou o segredo IMILE_TOKEN.');
 }
+// Login automático no IMILE: monta o pedido pelo modelo configurado, guarda o token no KV e o renova sozinho quando vence (401/403).
 async function entrar(env) {
-  // O login do IMILE precisa ser confirmado com a conta do robô; até lá use o segredo IMILE_TOKEN.
-  throw new Error('Sessão do IMILE ausente: configure IMILE_TOKEN (ou o login automático do robô).');
+  if (!loginConfigurado(env)) throw new Error('Login automático do IMILE não configurado (IMILE_USER, IMILE_PASS, IMILE_LOGIN_URL).');
+  if (env.SESSAO) { // evita vários logins ao mesmo tempo
+    if (await env.SESSAO.get('login_lock')) { for (let i = 0; i < 10; i++) { await pausa(1000); const t = await env.SESSAO.get('token'); if (t) return t; } }
+    await env.SESSAO.put('login_lock', '1', { expirationTtl: 60 });
+  }
+  try {
+    const pass = String(env.IMILE_PASS), tpl = env.IMILE_LOGIN_BODY || '{"username":"{{USER}}","password":"{{PASS}}"}';
+    const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+    const dg = async (alg) => hex(await crypto.subtle.digest(alg, new TextEncoder().encode(pass)));
+    const subs = { USER: String(env.IMILE_USER), PASS: pass };
+    if (tpl.includes('{{PASS_MD5}}')) subs.PASS_MD5 = await dg('MD5');
+    if (tpl.includes('{{PASS_SHA256}}')) subs.PASS_SHA256 = await dg('SHA-256');
+    if (tpl.includes('{{PASS_B64}}')) subs.PASS_B64 = btoa(pass);
+    const corpo = tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => (k in subs ? JSON.stringify(subs[k]).slice(1, -1) : ''));
+    let extra = {};
+    try { extra = JSON.parse(env.IMILE_LOGIN_HEADERS || '{}'); } catch (e) { /* ignora */ }
+    const r = await fetch(env.IMILE_LOGIN_URL, { method: env.IMILE_LOGIN_METHOD || 'POST', headers: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json', ...extra }, body: corpo });
+    const tx = await r.text();
+    let j = null;
+    try { j = JSON.parse(tx); } catch (e) { /* sem json */ }
+    const caminho = env.IMILE_TOKEN_PATH || 'resultObject.accessToken';
+    let tok = '';
+    if (caminho.startsWith('cookie:')) { const m = (r.headers.get('set-cookie') || '').match(new RegExp(caminho.slice(7) + '=([^;]+)')); tok = m ? decodeURIComponent(m[1]) : ''; }
+    else tok = caminho.split('.').reduce((o, k) => (o == null ? o : o[k]), j);
+    if (!tok || typeof tok !== 'string') throw new Error(`O login do IMILE não devolveu o token (HTTP ${r.status}${j && j.message ? ': ' + String(j.message).slice(0, 120) : ''}). Confira IMILE_TOKEN_PATH e o corpo do login.`);
+    tok = tok.replace(/^Bearer\s+/i, '');
+    if (env.SESSAO) await env.SESSAO.put('token', tok, { expirationTtl: Math.max(60, Number(env.IMILE_TOKEN_TTL_MIN || 360) * 60) });
+    return tok;
+  } finally { if (env.SESSAO) await env.SESSAO.delete('login_lock'); }
+}
+// Testa o login de ponta a ponta (força um login novo e faz uma leitura inofensiva). Nunca devolve o token.
+async function loginTeste(env) {
+  if (!loginConfigurado(env)) return { ok: false, erro: 'Login automático não configurado (faltam IMILE_USER, IMILE_PASS ou IMILE_LOGIN_URL).' };
+  if (env.SESSAO) await env.SESSAO.delete('token');
+  const tok = await entrar(env), ctx = { env, sessao: tok, n: 0 };
+  const r = await api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 });
+  return { ok: r.ok, login: true, leitura: r.ok, motoristasEncontrados: r.ok ? (r.json.resultObject || []).length : 0, erro: r.ok ? '' : r.motivo, tamanhoDoToken: tok.length };
 }
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 const cab = (ctx, recurso) => ({
@@ -107,10 +206,18 @@ async function proxy(ctx, b) {
     if (!/^[\w-]{1,40}$/.test(id)) return { ok: false, status: 0, erroRede: 'id inválido' };
     url += '?id=' + encodeURIComponent(id);
   }
-  const get = GETS.has(b.u);
+  const get = GETS.has(b.u), recurso = RECURSOS.has(b.rec) ? b.rec : 'LMOrderManage';
+  const enviar = () => fetch(url, { method: get ? 'GET' : 'POST', headers: cab(ctx, recurso), body: get ? undefined : JSON.stringify(b.corpo ?? {}) });
   ctx.n = (ctx.n || 0) + 1;
   try {
-    const r = await fetch(url, { method: get ? 'GET' : 'POST', headers: cab(ctx, RECURSOS.has(b.rec) ? b.rec : 'LMOrderManage'), body: get ? undefined : JSON.stringify(b.corpo ?? {}) });
+    let r = await enviar();
+    if ((r.status === 401 || r.status === 403) && loginConfigurado(ctx.env) && (ctx.relogos || 0) < 3) { // sessão venceu: entra de novo e repete a chamada
+      ctx.relogos = (ctx.relogos || 0) + 1;
+      if (ctx.env.SESSAO) await ctx.env.SESSAO.delete('token');
+      ctx.sessao = await entrar(ctx.env);
+      ctx.n++;
+      r = await enviar();
+    }
     const tx = await r.text();
     let j = null;
     try { j = JSON.parse(tx); } catch (e) {}
@@ -186,21 +293,30 @@ function compacto(x) {
   for (const k of Object.keys(x)) if (CH_SELLER.test(k) && !CH_FORA.test(k) && typeof x[k] === 'string' && x[k].trim()) vs.push(norm(x[k]));
   return { id: x.id, w: String(x.waybillNo || ''), d: x.driverName || '', dc: x.driverCode || '', vs };
 }
-async function escanear(ctx, dias) {
+async function escanear(ctx, dias, prog) {
+  const par = Math.max(1, Number(ctx.env.ESCANEAR_PARALELO || 6));
   let itens = [], total = 0;
   for (let tent = 1; tent <= 3; tent++) {
     const vistos = new Map();
-    total = 0;
-    for (let pagina = 1; pagina <= 300; pagina++) {
+    const pegar = async (pagina) => {
       const r = await api(ctx, 'emTransito', corpoLista(pagina, dias));
       if (!r.ok) throw new Error('Não consegui listar os pacotes atribuídos: ' + r.motivo);
       const ro = r.json.resultObject || {}, lista = ro.results || [];
       for (const x of lista) if (x && x.id != null && !vistos.has(x.id)) vistos.set(x.id, compacto(x));
-      total = Number(ro.pagination?.totalResult || 0);
-      if (!lista.length || lista.length < 1000 || vistos.size >= total) break;
+      return { total: Number(ro.pagination?.totalResult || 0), n: lista.length };
+    };
+    const p1 = await pegar(1); // a 1ª página informa o total; as demais são lidas várias ao mesmo tempo
+    total = p1.total;
+    const paginas = p1.n >= 1000 ? Math.min(300, Math.max(1, Math.ceil(total / 1000))) : 1;
+    if (prog) prog(1, paginas, vistos.size);
+    if (paginas > 1) {
+      let prox = 2, feitas = 1;
+      await Promise.all(Array.from({ length: Math.min(par, paginas - 1) }, async () => {
+        while (prox <= paginas) { const pg = prox++; await pegar(pg); feitas++; if (prog) prog(feitas, paginas, vistos.size); }
+      }));
     }
     itens = [...vistos.values()];
-    if (itens.length >= total) return { itens, incompleto: false };
+    if (itens.length >= total) return { itens, incompleto: false, paginas };
     await pausa(500 * tent);
   }
   return { itens, incompleto: itens.length < total };
@@ -220,17 +336,35 @@ async function atualizarCatalogo(env, forcar) {
   if (!forcar && antigo && Date.now() - antigo.em < 5 * 60000) return antigo;
   if (!forcar && (await env.SESSAO.get('cat_lock'))) return antigo;
   await env.SESSAO.put('cat_lock', '1', { expirationTtl: 120 });
+  const inicio = Date.now();
+  let ultimo = 0;
+  // Progresso real para a barra da tela (só quando ainda não existe lista pronta; depois a atualização é silenciosa)
+  const gravar = (o, forcarGravar) => {
+    if (antigo || (!forcarGravar && Date.now() - ultimo < 600)) return;
+    ultimo = Date.now();
+    env.SESSAO.put('cat_prog', JSON.stringify({ ...o, inicio, em: ultimo }), { expirationTtl: 300 }).catch(() => {});
+  };
   try {
+    gravar({ fase: 'iniciando', pct: 3, eta: 0, texto: 'Conectando ao IMILE' }, true);
     const ctx = { env, sessao: await sessao(env), n: 0 };
-    const { itens } = await escanear(ctx, DIAS_TROCA);
-    const cont = new Map();
-    for (const x of itens) for (const v of new Set(x.vs)) cont.set(v, (cont.get(v) || 0) + 1);
-    const sellers = [...cont.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     const nomes = new Map(), add = (n) => { const t = String(n || '').trim(), k = norm(t); if (k && !nomes.has(k)) nomes.set(k, t); };
-    for (const n of await nomesRotas(env)) add(n);
-    try { const r = await api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 }); if (r.ok) for (const m of r.json.resultObject || []) add(m.userName); } catch (e) { /* segue */ }
-    const cat = { em: Date.now(), sellers, motoristas: [...nomes.values()].sort((a, b) => a.localeCompare(b)) };
+    const [scan, rotas, imile] = await Promise.all([
+      escanear(ctx, DIAS_TROCA, (feitas, paginas, qtd) => {
+        const dec = (Date.now() - inicio) / 1000, falta = Math.max(1, Math.round((dec / feitas) * (paginas - feitas)) + 1);
+        gravar({ fase: 'lendo', feitas, paginas, itens: qtd, pct: Math.min(88, Math.round(5 + 83 * (feitas / paginas))), eta: feitas >= paginas ? 1 : falta, texto: `Lendo pacotes do IMILE: página ${feitas} de ${paginas}` });
+      }),
+      nomesRotas(env).catch(() => []),
+      api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 }).catch(() => ({ ok: false })),
+    ]);
+    gravar({ fase: 'montando', pct: 94, eta: 1, texto: 'Organizando sellers e motoristas' }, true);
+    const cont = new Map();
+    for (const x of scan.itens) for (const v of new Set(x.vs)) cont.set(v, (cont.get(v) || 0) + 1);
+    const sellers = [...cont.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    for (const n of rotas) add(n);
+    if (imile.ok) for (const m of imile.json.resultObject || []) add(m.userName);
+    const cat = { em: Date.now(), ms: Date.now() - inicio, sellers, motoristas: [...nomes.values()].sort((a, b) => a.localeCompare(b)) };
     await env.SESSAO.put('catalogo', JSON.stringify(cat));
+    await env.SESSAO.delete('cat_prog');
     return cat;
   } catch (e) {
     await env.SESSAO.put('cat_erro', String(e.message || e).slice(0, 200), { expirationTtl: 600 });
@@ -257,8 +391,8 @@ async function lista(env, ctx, b) {
     if (!atual || atual.url !== b.rotas.url || atual.token !== b.rotas.token) await env.SESSAO.put('rotas_cfg', JSON.stringify({ url: b.rotas.url, token: b.rotas.token }));
   }
   const cat = await lerJSON(env, 'catalogo');
-  if (!cat || Date.now() - cat.em > 5 * 60000) ctx.waitUntil(atualizarCatalogo(env, !cat));
-  return cat ? { ok: true, em: cat.em, sellers: cat.sellers, motoristas: cat.motoristas } : { ok: true, vazio: true, erro: await env.SESSAO.get('cat_erro') };
+  if (!cat || Date.now() - cat.em > 5 * 60000) ctx.waitUntil(atualizarCatalogo(env, false)); // o cadeado evita montagens em paralelo
+  return cat ? { ok: true, em: cat.em, ms: cat.ms, sellers: cat.sellers, motoristas: cat.motoristas } : { ok: true, vazio: true, progresso: await lerJSON(env, 'cat_prog'), erro: await env.SESSAO.get('cat_erro') };
 }
 async function lerJSON(env, k) { try { const v = await env.SESSAO.get(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
 

@@ -483,3 +483,16 @@ body.side-hid .side-tg{left:16px;top:18px}
 .im-log td{overflow-wrap:anywhere}
 .im-cb input{text-overflow:ellipsis}
 @media (max-width:760px){.im-cb input{padding-right:34px}}
+
+/* Barra de progresso do carregamento das listas (tempo real) e mini barra do histórico */
+.im-pg{margin-top:16px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(128,140,160,.07)}
+.im-pg-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px;font-size:.92rem}
+.im-pg-pc{font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums}
+.im-pg-bar{height:10px;border-radius:999px;background:rgba(128,140,160,.25);overflow:hidden}
+.im-pg-fill{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#002265,#fe6801);transition:width .9s linear;background-size:200% 100%;animation:imsh 1.6s linear infinite}
+@keyframes imsh{from{background-position:100% 0}to{background-position:-100% 0}}
+.im-pg-txt{margin-top:8px;font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.im-nota{margin-top:10px;font-size:.82rem}
+.im-mini{display:block;width:100%;min-width:70px;height:5px;margin-top:6px;border-radius:999px;background:rgba(128,140,160,.25);overflow:hidden}
+.im-mini i{display:block;height:100%;background:linear-gradient(90deg,#002265,#fe6801);transition:width .8s linear}
+@media (prefers-reduced-motion:reduce){.im-pg-fill{animation:none;transition:none}.im-mini i{transition:none}}

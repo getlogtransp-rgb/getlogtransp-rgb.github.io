@@ -1,8 +1,10 @@
 // GETLOG – robô do IMILE (Cloudflare Worker). Faz TODO o trabalho pesado: listas prontas, trocas de motorista e desatribuição.
 // A página só pede a lista pronta, manda "trocar" e mostra o histórico do dia; nada de pacote passa pelo navegador.
 // Recomendado: plano Workers Paid (US$ 5/mês) + variável PLANO_PAGO=1. No gratuito o limite de processamento (10 ms) não aguenta listas grandes.
-// Segredos: TOKEN (o mesmo do portal), IMILE_TOKEN (sessão do IMILE), IMILE_USERCODE. Binding KV: SESSAO. Cron: "* * * * *".
-// Ações (POST JSON): ping | lista | trocar | hist | chamar | autoGet | autoSet | desatribuirAgora
+// Segredos: TOKEN (o mesmo do portal), IMILE_USERCODE, IMILE_USER + IMILE_PASS (login automático) ou IMILE_TOKEN (sessão colada, vence). Binding KV: SESSAO. Cron: "* * * * *".
+// Login automático (variáveis de texto): IMILE_LOGIN_URL, IMILE_LOGIN_BODY (modelo JSON com {{USER}}, {{PASS}}, {{PASS_MD5}}, {{PASS_SHA256}}, {{PASS_B64}}),
+// IMILE_TOKEN_PATH (caminho do token na resposta, ex.: resultObject.accessToken, ou cookie:NOME), IMILE_LOGIN_HEADERS (JSON opcional), IMILE_TOKEN_TTL_MIN (padrão 360).
+// Ações (POST JSON): ping | lista | trocar | hist | chamar | autoGet | autoSet | desatribuirAgora | loginTeste
 const SITE = 'https://getlogbr.com.br';
 const BASE = 'https://ds.imile.com/';
 const HUB = 'S21074701';
@@ -42,6 +44,7 @@ export default {
       if (b.acao === 'lista') return json(await lista(env, ctx, b));
       if (b.acao === 'trocar') return json(await trocar(env, ctx, b));
       if (b.acao === 'hist') return json(await hist(env, ctx));
+      if (b.acao === 'loginTeste') return json(await loginTeste(env));
       if (b.acao === 'autoGet') return json(await autoGet(env));
       if (b.acao === 'autoSet') { await env.SESSAO.put('auto', b.ligado ? '1' : '0'); return json(await autoGet(env)); }
       if (b.acao === 'desatribuirAgora') return json(await desatribuirAgora(env, ctx));
@@ -66,14 +69,53 @@ export default {
 };
 
 // ---------- sessão e chamadas ao IMILE ----------
+const loginConfigurado = (env) => !!(env.IMILE_USER && env.IMILE_PASS && env.IMILE_LOGIN_URL);
 async function sessao(env) {
-  let tok = env.SESSAO ? await env.SESSAO.get('token') : null;
-  if (!tok) tok = env.IMILE_TOKEN || (await entrar(env));
-  return tok;
+  const tok = env.SESSAO ? await env.SESSAO.get('token') : null;
+  if (tok) return tok;
+  if (loginConfigurado(env)) return entrar(env);
+  if (env.IMILE_TOKEN) return env.IMILE_TOKEN;
+  throw new Error('Sessão do IMILE ausente: configure o login automático do robô (IMILE_USER, IMILE_PASS, IMILE_LOGIN_URL...) ou o segredo IMILE_TOKEN.');
 }
+// Login automático no IMILE: monta o pedido pelo modelo configurado, guarda o token no KV e o renova sozinho quando vence (401/403).
 async function entrar(env) {
-  // O login do IMILE precisa ser confirmado com a conta do robô; até lá use o segredo IMILE_TOKEN.
-  throw new Error('Sessão do IMILE ausente: configure IMILE_TOKEN (ou o login automático do robô).');
+  if (!loginConfigurado(env)) throw new Error('Login automático do IMILE não configurado (IMILE_USER, IMILE_PASS, IMILE_LOGIN_URL).');
+  if (env.SESSAO) { // evita vários logins ao mesmo tempo
+    if (await env.SESSAO.get('login_lock')) { for (let i = 0; i < 10; i++) { await pausa(1000); const t = await env.SESSAO.get('token'); if (t) return t; } }
+    await env.SESSAO.put('login_lock', '1', { expirationTtl: 60 });
+  }
+  try {
+    const pass = String(env.IMILE_PASS), tpl = env.IMILE_LOGIN_BODY || '{"username":"{{USER}}","password":"{{PASS}}"}';
+    const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+    const dg = async (alg) => hex(await crypto.subtle.digest(alg, new TextEncoder().encode(pass)));
+    const subs = { USER: String(env.IMILE_USER), PASS: pass };
+    if (tpl.includes('{{PASS_MD5}}')) subs.PASS_MD5 = await dg('MD5');
+    if (tpl.includes('{{PASS_SHA256}}')) subs.PASS_SHA256 = await dg('SHA-256');
+    if (tpl.includes('{{PASS_B64}}')) subs.PASS_B64 = btoa(pass);
+    const corpo = tpl.replace(/\{\{(\w+)\}\}/g, (_, k) => (k in subs ? JSON.stringify(subs[k]).slice(1, -1) : ''));
+    let extra = {};
+    try { extra = JSON.parse(env.IMILE_LOGIN_HEADERS || '{}'); } catch (e) { /* ignora */ }
+    const r = await fetch(env.IMILE_LOGIN_URL, { method: env.IMILE_LOGIN_METHOD || 'POST', headers: { accept: 'application/json, text/plain, */*', 'content-type': 'application/json', ...extra }, body: corpo });
+    const tx = await r.text();
+    let j = null;
+    try { j = JSON.parse(tx); } catch (e) { /* sem json */ }
+    const caminho = env.IMILE_TOKEN_PATH || 'resultObject.accessToken';
+    let tok = '';
+    if (caminho.startsWith('cookie:')) { const m = (r.headers.get('set-cookie') || '').match(new RegExp(caminho.slice(7) + '=([^;]+)')); tok = m ? decodeURIComponent(m[1]) : ''; }
+    else tok = caminho.split('.').reduce((o, k) => (o == null ? o : o[k]), j);
+    if (!tok || typeof tok !== 'string') throw new Error(`O login do IMILE não devolveu o token (HTTP ${r.status}${j && j.message ? ': ' + String(j.message).slice(0, 120) : ''}). Confira IMILE_TOKEN_PATH e o corpo do login.`);
+    tok = tok.replace(/^Bearer\s+/i, '');
+    if (env.SESSAO) await env.SESSAO.put('token', tok, { expirationTtl: Math.max(60, Number(env.IMILE_TOKEN_TTL_MIN || 360) * 60) });
+    return tok;
+  } finally { if (env.SESSAO) await env.SESSAO.delete('login_lock'); }
+}
+// Testa o login de ponta a ponta (força um login novo e faz uma leitura inofensiva). Nunca devolve o token.
+async function loginTeste(env) {
+  if (!loginConfigurado(env)) return { ok: false, erro: 'Login automático não configurado (faltam IMILE_USER, IMILE_PASS ou IMILE_LOGIN_URL).' };
+  if (env.SESSAO) await env.SESSAO.delete('token');
+  const tok = await entrar(env), ctx = { env, sessao: tok, n: 0 };
+  const r = await api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 });
+  return { ok: r.ok, login: true, leitura: r.ok, motoristasEncontrados: r.ok ? (r.json.resultObject || []).length : 0, erro: r.ok ? '' : r.motivo, tamanhoDoToken: tok.length };
 }
 const pausa = (ms) => new Promise((r) => setTimeout(r, ms));
 const cab = (ctx, recurso) => ({
@@ -92,10 +134,18 @@ async function proxy(ctx, b) {
     if (!/^[\w-]{1,40}$/.test(id)) return { ok: false, status: 0, erroRede: 'id inválido' };
     url += '?id=' + encodeURIComponent(id);
   }
-  const get = GETS.has(b.u);
+  const get = GETS.has(b.u), recurso = RECURSOS.has(b.rec) ? b.rec : 'LMOrderManage';
+  const enviar = () => fetch(url, { method: get ? 'GET' : 'POST', headers: cab(ctx, recurso), body: get ? undefined : JSON.stringify(b.corpo ?? {}) });
   ctx.n = (ctx.n || 0) + 1;
   try {
-    const r = await fetch(url, { method: get ? 'GET' : 'POST', headers: cab(ctx, RECURSOS.has(b.rec) ? b.rec : 'LMOrderManage'), body: get ? undefined : JSON.stringify(b.corpo ?? {}) });
+    let r = await enviar();
+    if ((r.status === 401 || r.status === 403) && loginConfigurado(ctx.env) && (ctx.relogos || 0) < 3) { // sessão venceu: entra de novo e repete a chamada
+      ctx.relogos = (ctx.relogos || 0) + 1;
+      if (ctx.env.SESSAO) await ctx.env.SESSAO.delete('token');
+      ctx.sessao = await entrar(ctx.env);
+      ctx.n++;
+      r = await enviar();
+    }
     const tx = await r.text();
     let j = null;
     try { j = JSON.parse(tx); } catch (e) {}
@@ -171,21 +221,30 @@ function compacto(x) {
   for (const k of Object.keys(x)) if (CH_SELLER.test(k) && !CH_FORA.test(k) && typeof x[k] === 'string' && x[k].trim()) vs.push(norm(x[k]));
   return { id: x.id, w: String(x.waybillNo || ''), d: x.driverName || '', dc: x.driverCode || '', vs };
 }
-async function escanear(ctx, dias) {
+async function escanear(ctx, dias, prog) {
+  const par = Math.max(1, Number(ctx.env.ESCANEAR_PARALELO || 6));
   let itens = [], total = 0;
   for (let tent = 1; tent <= 3; tent++) {
     const vistos = new Map();
-    total = 0;
-    for (let pagina = 1; pagina <= 300; pagina++) {
+    const pegar = async (pagina) => {
       const r = await api(ctx, 'emTransito', corpoLista(pagina, dias));
       if (!r.ok) throw new Error('Não consegui listar os pacotes atribuídos: ' + r.motivo);
       const ro = r.json.resultObject || {}, lista = ro.results || [];
       for (const x of lista) if (x && x.id != null && !vistos.has(x.id)) vistos.set(x.id, compacto(x));
-      total = Number(ro.pagination?.totalResult || 0);
-      if (!lista.length || lista.length < 1000 || vistos.size >= total) break;
+      return { total: Number(ro.pagination?.totalResult || 0), n: lista.length };
+    };
+    const p1 = await pegar(1); // a 1ª página informa o total; as demais são lidas várias ao mesmo tempo
+    total = p1.total;
+    const paginas = p1.n >= 1000 ? Math.min(300, Math.max(1, Math.ceil(total / 1000))) : 1;
+    if (prog) prog(1, paginas, vistos.size);
+    if (paginas > 1) {
+      let prox = 2, feitas = 1;
+      await Promise.all(Array.from({ length: Math.min(par, paginas - 1) }, async () => {
+        while (prox <= paginas) { const pg = prox++; await pegar(pg); feitas++; if (prog) prog(feitas, paginas, vistos.size); }
+      }));
     }
     itens = [...vistos.values()];
-    if (itens.length >= total) return { itens, incompleto: false };
+    if (itens.length >= total) return { itens, incompleto: false, paginas };
     await pausa(500 * tent);
   }
   return { itens, incompleto: itens.length < total };
@@ -205,17 +264,35 @@ async function atualizarCatalogo(env, forcar) {
   if (!forcar && antigo && Date.now() - antigo.em < 5 * 60000) return antigo;
   if (!forcar && (await env.SESSAO.get('cat_lock'))) return antigo;
   await env.SESSAO.put('cat_lock', '1', { expirationTtl: 120 });
+  const inicio = Date.now();
+  let ultimo = 0;
+  // Progresso real para a barra da tela (só quando ainda não existe lista pronta; depois a atualização é silenciosa)
+  const gravar = (o, forcarGravar) => {
+    if (antigo || (!forcarGravar && Date.now() - ultimo < 600)) return;
+    ultimo = Date.now();
+    env.SESSAO.put('cat_prog', JSON.stringify({ ...o, inicio, em: ultimo }), { expirationTtl: 300 }).catch(() => {});
+  };
   try {
+    gravar({ fase: 'iniciando', pct: 3, eta: 0, texto: 'Conectando ao IMILE' }, true);
     const ctx = { env, sessao: await sessao(env), n: 0 };
-    const { itens } = await escanear(ctx, DIAS_TROCA);
-    const cont = new Map();
-    for (const x of itens) for (const v of new Set(x.vs)) cont.set(v, (cont.get(v) || 0) + 1);
-    const sellers = [...cont.entries()].sort((a, b) => a[0].localeCompare(b[0]));
     const nomes = new Map(), add = (n) => { const t = String(n || '').trim(), k = norm(t); if (k && !nomes.has(k)) nomes.set(k, t); };
-    for (const n of await nomesRotas(env)) add(n);
-    try { const r = await api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 }); if (r.ok) for (const m of r.json.resultObject || []) add(m.userName); } catch (e) { /* segue */ }
-    const cat = { em: Date.now(), sellers, motoristas: [...nomes.values()].sort((a, b) => a.localeCompare(b)) };
+    const [scan, rotas, imile] = await Promise.all([
+      escanear(ctx, DIAS_TROCA, (feitas, paginas, qtd) => {
+        const dec = (Date.now() - inicio) / 1000, falta = Math.max(1, Math.round((dec / feitas) * (paginas - feitas)) + 1);
+        gravar({ fase: 'lendo', feitas, paginas, itens: qtd, pct: Math.min(88, Math.round(5 + 83 * (feitas / paginas))), eta: feitas >= paginas ? 1 : falta, texto: `Lendo pacotes do IMILE: página ${feitas} de ${paginas}` });
+      }),
+      nomesRotas(env).catch(() => []),
+      api(ctx, 'motorista', { ocCodeList: [HUB], keyword: 'GET', isDriver: 1 }).catch(() => ({ ok: false })),
+    ]);
+    gravar({ fase: 'montando', pct: 94, eta: 1, texto: 'Organizando sellers e motoristas' }, true);
+    const cont = new Map();
+    for (const x of scan.itens) for (const v of new Set(x.vs)) cont.set(v, (cont.get(v) || 0) + 1);
+    const sellers = [...cont.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    for (const n of rotas) add(n);
+    if (imile.ok) for (const m of imile.json.resultObject || []) add(m.userName);
+    const cat = { em: Date.now(), ms: Date.now() - inicio, sellers, motoristas: [...nomes.values()].sort((a, b) => a.localeCompare(b)) };
     await env.SESSAO.put('catalogo', JSON.stringify(cat));
+    await env.SESSAO.delete('cat_prog');
     return cat;
   } catch (e) {
     await env.SESSAO.put('cat_erro', String(e.message || e).slice(0, 200), { expirationTtl: 600 });
@@ -242,8 +319,8 @@ async function lista(env, ctx, b) {
     if (!atual || atual.url !== b.rotas.url || atual.token !== b.rotas.token) await env.SESSAO.put('rotas_cfg', JSON.stringify({ url: b.rotas.url, token: b.rotas.token }));
   }
   const cat = await lerJSON(env, 'catalogo');
-  if (!cat || Date.now() - cat.em > 5 * 60000) ctx.waitUntil(atualizarCatalogo(env, !cat));
-  return cat ? { ok: true, em: cat.em, sellers: cat.sellers, motoristas: cat.motoristas } : { ok: true, vazio: true, erro: await env.SESSAO.get('cat_erro') };
+  if (!cat || Date.now() - cat.em > 5 * 60000) ctx.waitUntil(atualizarCatalogo(env, false)); // o cadeado evita montagens em paralelo
+  return cat ? { ok: true, em: cat.em, ms: cat.ms, sellers: cat.sellers, motoristas: cat.motoristas } : { ok: true, vazio: true, progresso: await lerJSON(env, 'cat_prog'), erro: await env.SESSAO.get('cat_erro') };
 }
 async function lerJSON(env, k) { try { const v = await env.SESSAO.get(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
 
