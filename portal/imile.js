@@ -696,24 +696,68 @@ ${blocoProgresso}${tabelaLog}</div>`;
       .catch((err) => { job.estado = 'erro'; job.html = `<p class="msg err">${esc(err.message || String(err))} Confira no IMILE antes de repetir.</p>`; })
       .finally(() => { ids.forEach((w) => SELL.voo.delete(w)); SELL.ativos.delete(p.seller); SELL.sellers = null; pintarJob(job); A.toast(`Troca de ${job.seller}: ${job.estado === 'ok' ? 'concluída' : 'terminou com atenção'}`); });
   };
+  // Lista suspensa com busca (aparece ao clicar; filtra ao digitar; setas + Enter; Esc fecha)
+  const combo = (input, extra) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'im-cb';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    const seta = document.createElement('button');
+    seta.type = 'button'; seta.className = 'im-seta'; seta.tabIndex = -1; seta.setAttribute('aria-label', 'Abrir lista'); seta.textContent = '▾';
+    const dd = document.createElement('div');
+    dd.className = 'im-dd'; dd.hidden = true; dd.setAttribute('role', 'listbox'); dd.id = (input.id || 'cb') + '-dd';
+    wrap.append(seta, dd);
+    input.setAttribute('role', 'combobox'); input.setAttribute('aria-expanded', 'false'); input.setAttribute('aria-controls', dd.id); input.setAttribute('aria-autocomplete', 'list');
+    let itens = [], vis = [], ativo = -1;
+    const fecha = () => { dd.hidden = true; input.setAttribute('aria-expanded', 'false'); ativo = -1; };
+    const marca = () => dd.querySelectorAll('[role=option]').forEach((o, i) => o.classList.toggle('on', i === ativo));
+    const desenha = () => {
+      const f = norm(input.value);
+      vis = itens.filter((i) => !f || norm(i.v).includes(f));
+      const mostra = vis.slice(0, 300);
+      dd.innerHTML = mostra.length ? mostra.map((i, k) => `<div role="option" class="im-op" data-k="${k}"><span>${esc(i.v)}</span>${i.x ? `<small>${esc(i.x)}</small>` : ''}</div>`).join('') + (vis.length > 300 ? `<div class="im-mais">+${vis.length - 300} — continue digitando para filtrar</div>` : '') : `<div class="im-mais">${itens.length ? 'Nenhum resultado. Você pode digitar o nome completo.' : (extra && extra.vazio) || 'Carregando a lista...'}</div>`;
+      dd.hidden = false; input.setAttribute('aria-expanded', 'true'); ativo = -1;
+    };
+    const escolhe = (k) => { const i = vis[k]; if (!i) return; input.value = i.v; fecha(); };
+    input.addEventListener('focus', desenha);
+    input.addEventListener('click', () => { if (dd.hidden) desenha(); });
+    input.addEventListener('input', desenha);
+    seta.addEventListener('mousedown', (e) => e.preventDefault());
+    seta.addEventListener('click', () => { if (dd.hidden) { input.focus(); desenha(); } else fecha(); });
+    dd.addEventListener('mousedown', (e) => { e.preventDefault(); const o = e.target.closest('.im-op'); if (o) escolhe(+o.dataset.k); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { fecha(); return; }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (dd.hidden) { desenha(); return; }
+        const n = Math.min(vis.length, 300);
+        if (!n) return;
+        ativo = e.key === 'ArrowDown' ? (ativo + 1) % n : (ativo - 1 + n) % n;
+        marca(); const o = dd.querySelectorAll('[role=option]')[ativo]; if (o) o.scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter' && !dd.hidden && ativo >= 0) { e.preventDefault(); escolhe(ativo); }
+    });
+    input.addEventListener('blur', () => setTimeout(fecha, 120));
+    return { set(l) { itens = l; if (!dd.hidden) desenha(); } };
+  };
   const montarSeller = (raiz) => {
     const ok = !!(CF.url && CF.token);
     raiz.innerHTML = `<div class="box"><div class="box-head"><div><h3>Por seller</h3><p>Escolha o seller na lista (ou digite) e o motorista que vai receber os pacotes. Você confere a prévia antes de trocar e pode iniciar outras trocas sem esperar as anteriores.</p></div></div>${aviso(ok)}
-<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" list="tr-lista" required maxlength="120" autocomplete="off" placeholder="Clique e escolha, ou digite"><datalist id="tr-lista"></datalist></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" list="tr-lm" required maxlength="120" autocomplete="off" placeholder="Clique e escolha, ou digite"><datalist id="tr-lm"></datalist></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><p class="hint" id="tr-n"></p><div id="tr-r" class="mt" aria-live="polite"></div></div>
+<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><p class="hint" id="tr-n"></p><div id="tr-r" class="mt" aria-live="polite"></div></div>
 <div id="tr-jobs" class="im-jobs">${SELL.jobs.map((j) => `<div class="box im-job" id="job-${j.id}">${jobHtml(j)}</div>`).join('')}</div>`;
-    const R = q('#tr-r', raiz), B = q('#tr-b', raiz), nota = q('#tr-n', raiz), dl = q('#tr-lista', raiz);
+    const R = q('#tr-r', raiz), B = q('#tr-b', raiz), nota = q('#tr-n', raiz);
+    const cbS = combo(q('#tr-s', raiz), { vazio: 'Nenhum seller com pacotes atribuídos no momento.' }), cbM = combo(q('#tr-m', raiz), { vazio: 'Carregando os motoristas...' });
     const carregar = async (forcar) => {
       if (!ok) return;
       nota.textContent = 'Carregando a lista de sellers...';
       try {
         const l = await listarSellers(forcar);
-        dl.innerHTML = l.lista.map(([n, c]) => `<option value="${esc(n)}" label="${c} pacote(s)"></option>`).join('');
+        cbS.set(l.lista.map(([n, c]) => ({ v: n, x: c + ' pacote(s)' })));
         nota.innerHTML = `${l.lista.length} seller(s) com pacotes atribuídos. <button type="button" class="btn btn-ghost btn-sm" id="tr-at">Atualizar lista</button>`;
         q('#tr-at', raiz).onclick = () => carregar(true);
       } catch (e) { nota.textContent = 'Não consegui carregar a lista de sellers (' + (e.message || e) + '). Você ainda pode digitar o nome.'; }
     };
     carregar(false);
-    if (ok) listarMotoristasBase().then((l) => { q('#tr-lm', raiz).innerHTML = l.map((n) => `<option value="${esc(n)}"></option>`).join(''); }).catch(() => {});
+    if (ok) listarMotoristasBase().then((l) => cbM.set(l.map((n) => ({ v: n })))).catch(() => {});
     let vendo = false;
     const pm = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1]).map(([n, c]) => `<li>${esc(n)}: <b>${c}</b></li>`).join('');
     q('#im-sf', raiz).onsubmit = async (e) => {

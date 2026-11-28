@@ -455,3 +455,14 @@ body.side-hid .side-tg{left:16px;top:18px}
 .im-jt{font-size:.88rem;margin-bottom:8px;opacity:.85}
 .im-ind i{width:40%;animation:imx 1.2s linear infinite}
 @keyframes imx{from{margin-left:-40%}to{margin-left:100%}}
+
+.im-cb{position:relative}
+.im-cb input{width:100%;padding-right:40px}
+.im-seta{position:absolute;right:4px;top:4px;width:38px;height:38px;border:0;background:none;border-radius:8px;cursor:pointer;color:var(--muted);font-size:1rem}
+.im-dd{position:absolute;z-index:40;left:0;right:0;top:100%;margin-top:4px;max-height:280px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(20,35,50,.18);padding:4px}
+.im-op{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:.92rem}
+.im-op small{color:var(--muted);white-space:nowrap}
+.im-op:hover,.im-op.on{background:rgba(254,104,1,.12)}
+.im-mais{padding:10px 12px;font-size:.85rem;color:var(--muted)}
+[data-theme=dark] .im-dd{background:#16203A;border-color:#2E3B5C;color:#E7ECF6}
+[data-theme=dark] .im-op:hover,[data-theme=dark] .im-op.on{background:rgba(254,104,1,.22)}
