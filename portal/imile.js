@@ -201,7 +201,7 @@
     const lista = [...cand.values()];
     for (const n of [2, 1]) {
       const a = lista.filter((m) => nivel(nome, m.userName || '') === n);
-      if (a.length === 1) return { encontrado: true, userCode: a[0].userCode, userName: a[0].userName };
+      if (a.length === 1) return { encontrado: true, userCode: a[0].userCode, userName: a[0].userName, aprox: true };
       if (a.length > 1) return { encontrado: false, motivo: `O nome "${nome}" bate com mais de um motorista no IMILE: ${a.map((m) => `${m.userName} (${m.userCode})`).join('; ')}. Ajuste o nome para o nome exato do IMILE.` };
     }
     const par = lista.filter((m) => !prefixo(nome) || prefixo(m.userName || '') === prefixo(nome)).slice(0, 8).map((m) => m.userName);
@@ -300,9 +300,12 @@
     if (!dest.encontrado) return { ok: false, erro: dest.motivo };
     aviso('Listando os pacotes atribuídos...');
     const todos = await listarAtribuidos(DIAS_TRANSITO, (n) => aviso(`Listando os pacotes atribuídos: ${n}...`));
-    const s = filtrarSeller(todos, seller), certo = certoPara(dest), aTrocar = s.itens.filter((x) => !certo(x)), por = {};
+    const s = filtrarSeller(todos, seller);
+    if (SELL.ativos.has(s.nome)) throw new Error(`O seller ${s.nome} já está sendo trocado agora. Aguarde essa troca terminar.`);
+    s.itens = s.itens.filter((x) => !SELL.voo.has(String(x.waybillNo)));
+    const certo = certoPara(dest), aTrocar = s.itens.filter((x) => !certo(x)), por = {};
     for (const x of aTrocar) por[x.driverName || '(sem nome)'] = (por[x.driverName || '(sem nome)'] || 0) + 1;
-    return { ok: true, seller: s.nome, dest, itens: s.itens, aTrocar, jaCorretos: s.itens.length - aTrocar.length, total: s.itens.length, porMotorista: por, motorista: dest.userName };
+    return { ok: true, seller: s.nome, dest, itens: s.itens, aTrocar, jaCorretos: s.itens.length - aTrocar.length, total: s.itens.length, porMotorista: por, motorista: dest.userName, aprox: !!dest.aprox };
   };
   const executarSeller = async (p, aviso) => {
     const regs = p.aTrocar.map((x) => ({ id: x.id, waybill: String(x.waybillNo) }));
@@ -650,39 +653,89 @@ ${blocoProgresso}${tabelaLog}</div>`;
     };
   };
 
-  // Troca por seller
+  // Troca por seller: lista suspensa com os sellers atribuídos + várias trocas ao mesmo tempo (cada uma em seu cartão)
+  const SELL = { jobs: [], voo: new Set(), ativos: new Set(), sellers: null, seq: 0 };
+  const listarSellers = async (forcar) => {
+    if (!forcar && SELL.sellers && Date.now() - SELL.sellers.em < 180000) return SELL.sellers;
+    const todos = await listarAtribuidos(DIAS_TRANSITO), mapa = new Map();
+    for (const x of todos) for (const v of new Set(valoresSeller(x))) mapa.set(v, (mapa.get(v) || 0) + 1);
+    SELL.sellers = { em: Date.now(), lista: [...mapa.entries()].sort((a, b) => a[0].localeCompare(b[0])) };
+    return SELL.sellers;
+  };
+  const listarMotoristasBase = async () => {
+    if (SELL.mots && Date.now() - SELL.mots.em < 600000) return SELL.mots.lista;
+    const mapa = new Map(), add = (n) => { const t = String(n || '').trim(), k = norm(t); if (k && !mapa.has(k)) mapa.set(k, t); };
+    try { // 1) base de Rotas (mesmos nomes usados nas rotas)
+      if (A.CFG.rotasUrl && A.CFG.rotasToken) {
+        const c = new AbortController(), t = setTimeout(() => c.abort(), 30000);
+        const r = await fetch(A.CFG.rotasUrl + '?token=' + encodeURIComponent(A.CFG.rotasToken) + '&base=semana', { signal: c.signal, cache: 'no-store' });
+        clearTimeout(t);
+        const j = await r.json();
+        for (const n of j.motoristas || []) add(n);
+      }
+    } catch (e) { /* segue só com o IMILE */ }
+    try { for (const m of (await listarMotoristas('GET')).lista || []) add(m.userName); } catch (e) { /* idem */ }
+    SELL.mots = { em: Date.now(), lista: [...mapa.values()].sort((a, b) => a.localeCompare(b)) };
+    return SELL.mots.lista;
+  };
+  const resumoSeller = (x) => {
+    const faltam = x.total - x.confirmados;
+    return `<p class="msg ${faltam ? 'err' : 'ok'}">${x.confirmados} de ${x.total} pacote(s) confirmados com ${esc(x.motorista)}.</p>${x.comOutro.length ? `<p class="hint">Continuam com outro motorista: ${esc(x.comOutro.join(', '))}</p>` : ''}${x.falhas.length ? `<p class="hint">Não desatribuídos: ${esc(x.falhas.map((f) => f[0] + ' (' + f[1] + ')').join('; '))}</p>` : ''}${x.erroAtribuicao ? `<p class="msg err">Erro na atribuição: ${esc(x.erroAtribuicao)}</p>` : ''}${faltam && !x.comOutro.length && !x.falhas.length ? '<p class="hint">Os demais não aparecem mais como atribuídos (podem estar aguardando atribuição no IMILE).</p>' : ''}`;
+  };
+  const jobHtml = (j) => `<div class="im-jh"><span><b>${esc(j.seller)}</b> → ${esc(j.motorista)}</span><span class="im-p im-${j.estado === 'ok' ? 'SUCESSO' : j.estado === 'erro' ? 'ERRO' : 'PARCIAL'}">${j.estado === 'rodando' ? 'EM ANDAMENTO' : j.estado === 'ok' ? 'CONCLUÍDO' : 'ATENÇÃO'}</span></div>${j.estado === 'rodando' ? `<div class="im-jt">${esc(j.texto)}</div><div class="im-bar im-ind"><i></i></div>` : j.html}`;
+  const pintarJob = (j) => { const el = document.getElementById('job-' + j.id); if (el) el.innerHTML = jobHtml(j); };
+  window.addEventListener('beforeunload', (e) => { if (SELL.ativos.size) { e.preventDefault(); e.returnValue = ''; } });
+  const iniciarJob = (p) => {
+    const job = { id: ++SELL.seq, seller: p.seller, motorista: p.motorista, estado: 'rodando', texto: 'Iniciando...', html: '' };
+    const ids = p.aTrocar.map((x) => String(x.waybillNo));
+    SELL.jobs.unshift(job); SELL.ativos.add(p.seller); ids.forEach((w) => SELL.voo.add(w));
+    const lista = document.getElementById('tr-jobs');
+    if (lista) lista.insertAdjacentHTML('afterbegin', `<div class="box im-job" id="job-${job.id}">${jobHtml(job)}</div>`);
+    executarSeller(p, (t) => { job.texto = t; pintarJob(job); })
+      .then((x) => { job.estado = x.confirmados === x.total ? 'ok' : 'erro'; job.html = resumoSeller(x); })
+      .catch((err) => { job.estado = 'erro'; job.html = `<p class="msg err">${esc(err.message || String(err))} Confira no IMILE antes de repetir.</p>`; })
+      .finally(() => { ids.forEach((w) => SELL.voo.delete(w)); SELL.ativos.delete(p.seller); SELL.sellers = null; pintarJob(job); A.toast(`Troca de ${job.seller}: ${job.estado === 'ok' ? 'concluída' : 'terminou com atenção'}`); });
+  };
   const montarSeller = (raiz) => {
     const ok = !!(CF.url && CF.token);
-    raiz.innerHTML = `<div class="box"><div class="box-head"><div><h3>Por seller</h3><p>Digite o nome do seller e do motorista que vai receber os pacotes. Antes de trocar, você confere a prévia.</p></div></div>${aviso(ok)}
-<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off"></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><div id="tr-r" class="mt" aria-live="polite"></div></div>`;
-    const R = q('#tr-r', raiz), B = q('#tr-b', raiz);
-    let busy = false;
-    const trava = (v, txt) => { busy = v; B.disabled = v || !ok; if (txt) R.innerHTML = `<p class="msg">${esc(txt)}</p>`; };
+    raiz.innerHTML = `<div class="box"><div class="box-head"><div><h3>Por seller</h3><p>Escolha o seller na lista (ou digite) e o motorista que vai receber os pacotes. Você confere a prévia antes de trocar e pode iniciar outras trocas sem esperar as anteriores.</p></div></div>${aviso(ok)}
+<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" list="tr-lista" required maxlength="120" autocomplete="off" placeholder="Clique e escolha, ou digite"><datalist id="tr-lista"></datalist></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" list="tr-lm" required maxlength="120" autocomplete="off" placeholder="Clique e escolha, ou digite"><datalist id="tr-lm"></datalist></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><p class="hint" id="tr-n"></p><div id="tr-r" class="mt" aria-live="polite"></div></div>
+<div id="tr-jobs" class="im-jobs">${SELL.jobs.map((j) => `<div class="box im-job" id="job-${j.id}">${jobHtml(j)}</div>`).join('')}</div>`;
+    const R = q('#tr-r', raiz), B = q('#tr-b', raiz), nota = q('#tr-n', raiz), dl = q('#tr-lista', raiz);
+    const carregar = async (forcar) => {
+      if (!ok) return;
+      nota.textContent = 'Carregando a lista de sellers...';
+      try {
+        const l = await listarSellers(forcar);
+        dl.innerHTML = l.lista.map(([n, c]) => `<option value="${esc(n)}" label="${c} pacote(s)"></option>`).join('');
+        nota.innerHTML = `${l.lista.length} seller(s) com pacotes atribuídos. <button type="button" class="btn btn-ghost btn-sm" id="tr-at">Atualizar lista</button>`;
+        q('#tr-at', raiz).onclick = () => carregar(true);
+      } catch (e) { nota.textContent = 'Não consegui carregar a lista de sellers (' + (e.message || e) + '). Você ainda pode digitar o nome.'; }
+    };
+    carregar(false);
+    if (ok) listarMotoristasBase().then((l) => { q('#tr-lm', raiz).innerHTML = l.map((n) => `<option value="${esc(n)}"></option>`).join(''); }).catch(() => {});
+    let vendo = false;
     const pm = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1]).map(([n, c]) => `<li>${esc(n)}: <b>${c}</b></li>`).join('');
     q('#im-sf', raiz).onsubmit = async (e) => {
       e.preventDefault();
-      if (busy) return;
+      if (vendo) return;
       const s = q('#tr-s', raiz).value.trim(), m = q('#tr-m', raiz).value.trim();
-      trava(true, 'Buscando os pacotes no IMILE...');
-      const aviso = (t) => { R.innerHTML = `<p class="msg">${esc(t)}</p>`; };
+      vendo = true; B.disabled = true;
+      const aviso2 = (t) => { R.innerHTML = `<p class="msg">${esc(t)}</p>`; };
+      aviso2('Buscando os pacotes no IMILE...');
       let p;
-      try { p = await planejarSeller(s, m, aviso); } catch (err) { p = { ok: false, erro: err.message || String(err) }; }
-      trava(false);
+      try { p = await planejarSeller(s, m, aviso2); } catch (err) { p = { ok: false, erro: err.message || String(err) }; }
+      vendo = false; B.disabled = !ok;
       if (!p.ok) { R.innerHTML = `<p class="msg err">${esc(p.erro || 'Não consegui buscar.')}</p>`; return; }
       const n = p.aTrocar.length;
       if (!n) { R.innerHTML = `<p class="msg ok">${esc(p.seller)}: os ${p.total} pacote(s) já estão com ${esc(p.motorista)}. Nada a trocar.</p>`; return; }
-      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${n}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p><p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${n} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
+      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${n}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p>${p.aprox ? `<p class="msg err">Nome aproximado: no IMILE o motorista é "${esc(p.motorista)}". Confira se é ele antes de confirmar.</p>` : ''}<p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${n} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
       q('#tr-no', raiz).onclick = () => { R.innerHTML = ''; };
-      q('#tr-ok', raiz).onclick = async () => {
-        if (busy) return;
-        trava(true, 'Trocando os pacotes... não feche esta tela.');
-        let x;
-        try { x = await executarSeller(p, (t) => { R.innerHTML = `<p class="msg">${esc(t)} Não feche esta tela.</p>`; }); } catch (err) { x = { ok: false, erro: err.message || String(err) }; }
-        trava(false);
-        if (!x.ok) { R.innerHTML = `<p class="msg err">${esc(x.erro || 'A troca falhou.')} Confira no IMILE antes de repetir.</p>`; return; }
-        const faltam = x.total - x.confirmados;
-        R.innerHTML = `<p class="msg ${faltam ? 'err' : 'ok'}">${x.confirmados} de ${x.total} pacote(s) confirmados com ${esc(x.motorista)}.</p>${x.comOutro.length ? `<p class="hint">Continuam com outro motorista: ${esc(x.comOutro.join(', '))}</p>` : ''}${x.falhas.length ? `<p class="hint">Não desatribuídos: ${esc(x.falhas.map((f) => f[0] + ' (' + f[1] + ')').join('; '))}</p>` : ''}${x.erroAtribuicao ? `<p class="msg err">Erro na atribuição: ${esc(x.erroAtribuicao)}</p>` : ''}${faltam && !x.comOutro.length && !x.falhas.length ? '<p class="hint">Os demais não aparecem mais como atribuídos (podem estar aguardando atribuição no IMILE).</p>' : ''}`;
-        A.toast('Troca concluída');
+      q('#tr-ok', raiz).onclick = () => {
+        if (SELL.ativos.has(p.seller)) { R.innerHTML = `<p class="msg err">O seller ${esc(p.seller)} já está sendo trocado. Aguarde terminar.</p>`; return; }
+        iniciarJob(p);
+        R.innerHTML = `<p class="msg ok">Troca iniciada abaixo. Você já pode escolher o próximo seller.</p>`;
+        q('#tr-s', raiz).value = ''; q('#tr-m', raiz).value = ''; q('#tr-s', raiz).focus();
       };
     };
   };

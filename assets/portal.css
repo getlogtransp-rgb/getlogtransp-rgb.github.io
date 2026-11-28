@@ -448,3 +448,10 @@ body.side-hid .side-tg{left:16px;top:18px}
 .im-ult{font-size:.85rem;line-height:1.5;white-space:pre-wrap}
 .im-ult.ok{color:#13965a}.im-ult.falha{color:#c62828}
 @media (max-width:640px){.im-regras{grid-template-columns:1fr}}
+
+.im-jobs{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.im-job{padding:16px 18px}
+.im-jh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.im-jt{font-size:.88rem;margin-bottom:8px;opacity:.85}
+.im-ind i{width:40%;animation:imx 1.2s linear infinite}
+@keyframes imx{from{margin-left:-40%}to{margin-left:100%}}
