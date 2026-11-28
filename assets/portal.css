@@ -457,7 +457,7 @@ body.side-hid .side-tg{left:16px;top:18px}
 @keyframes imx{from{margin-left:-40%}to{margin-left:100%}}
 
 .im-cb{position:relative}
-.im-cb input{width:100%;padding-right:40px}
+.im-cb input{box-sizing:border-box;width:100%;padding-right:40px}
 .im-seta{position:absolute;right:4px;top:4px;width:38px;height:38px;border:0;background:none;border-radius:8px;cursor:pointer;color:var(--muted);font-size:1rem}
 .im-dd{position:absolute;z-index:40;left:0;right:0;top:100%;margin-top:4px;max-height:280px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(20,35,50,.18);padding:4px}
 .im-op{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:.92rem}
@@ -466,3 +466,20 @@ body.side-hid .side-tg{left:16px;top:18px}
 .im-mais{padding:10px 12px;font-size:.85rem;color:var(--muted)}
 [data-theme=dark] .im-dd{background:#16203A;border-color:#2E3B5C;color:#E7ECF6}
 [data-theme=dark] .im-op:hover,[data-theme=dark] .im-op.on{background:rgba(254,104,1,.22)}
+
+/* Troca de motorista: seller menor, motorista maior, botão na mesma linha */
+.im-linha{display:grid;grid-template-columns:minmax(200px,.8fr) minmax(300px,1.6fr) auto;gap:14px;align-items:end}
+.im-linha .field{min-width:0}
+.im-bt{height:46px;padding:0 22px;white-space:nowrap}
+.im-bt.im-conf{background:#c62828;box-shadow:0 6px 18px rgba(198,40,40,.28)}
+.im-troca .msg{margin-top:12px}
+.im-hist{margin-top:14px}
+.im-hist .box-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.im-dd{min-width:min(100%,300px)}
+.im-fm .im-dd{min-width:min(100%,360px)}
+@media (max-width:1180px){.im-linha{grid-template-columns:minmax(200px,.8fr) minmax(300px,1.6fr)}.im-bt{grid-column:1/-1;width:100%}}
+@media (max-width:760px){.im-linha{grid-template-columns:minmax(0,1fr)}.im-linha .field input{font-size:.92rem}}
+
+.im-log td{overflow-wrap:anywhere}
+.im-cb input{text-overflow:ellipsis}
+@media (max-width:760px){.im-cb input{padding-right:34px}}
