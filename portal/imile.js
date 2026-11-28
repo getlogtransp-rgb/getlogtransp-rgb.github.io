@@ -267,17 +267,27 @@
   const CH_SELLER = /(consignor|seller|shipper|sender|customer|merchant|client|store|shop|vendor)/i;
   const CH_FORA = /(zip|code|phone|mobile|tel|mail|address|addr|city|province|district|street|id$|no$|date|time|type|count|status)/i;
   const valoresSeller = (x) => { const v = []; for (const k of Object.keys(x)) if (CH_SELLER.test(k) && !CH_FORA.test(k) && typeof x[k] === 'string' && x[k].trim()) v.push(norm(x[k])); return v; };
+  // Lê todas as páginas e confere com o total informado pelo IMILE; se a lista "escorregou" (alguém mexeu nos pacotes durante a leitura), lê de novo.
   const listarAtribuidos = async (dias, prog) => {
-    const mapa = new Map();
-    for (let pagina = 1; pagina <= 200; pagina++) {
-      const r = await chamar('emTransito', { currentPage: pagina, showCount: 1000, numberSearchType: 'waybillNo', numbers: [], startDate: iniDia(dias), endDate: fimDia(), dateSearchType: 'createDate', queryType: 'waybillNo', consignorZipCodes: [] });
-      if (!sucesso(r)) throw new Error('Não consegui listar os pacotes atribuídos: ' + motivo(r, 'listar'));
-      const ro = r.json.resultObject || {}, lista = ro.results || [];
-      for (const x of lista) if (x && x.id != null) mapa.set(String(x.id), x);
-      if (prog) prog(mapa.size);
-      if (!lista.length || lista.length < 1000 || mapa.size >= Number(ro.pagination?.totalResult || 0)) break;
+    let lista = [];
+    for (let tent = 1; tent <= 4; tent++) {
+      const mapa = new Map();
+      let total = 0;
+      for (let pagina = 1; pagina <= 200; pagina++) {
+        const r = await chamar('emTransito', { currentPage: pagina, showCount: 1000, numberSearchType: 'waybillNo', numbers: [], startDate: iniDia(dias), endDate: fimDia(), dateSearchType: 'createDate', queryType: 'waybillNo', consignorZipCodes: [] });
+        if (!sucesso(r)) throw new Error('Não consegui listar os pacotes atribuídos: ' + motivo(r, 'listar'));
+        const ro = r.json.resultObject || {}, pag = ro.results || [];
+        for (const x of pag) if (x && x.id != null) mapa.set(String(x.id), x);
+        total = Number(ro.pagination?.totalResult || 0);
+        if (prog) prog(mapa.size);
+        if (!pag.length || pag.length < 1000 || mapa.size >= total) break;
+      }
+      lista = [...mapa.values()];
+      lista.incompleta = lista.length < total;
+      if (!lista.incompleta) return lista;
+      await pausa(400 * tent);
     }
-    return [...mapa.values()];
+    return lista;
   };
   const filtrarSeller = (lista, seller) => {
     const qn = norm(seller), exato = new Set(), parcial = new Set();
@@ -305,21 +315,60 @@
     s.itens = s.itens.filter((x) => !SELL.voo.has(String(x.waybillNo)));
     const certo = certoPara(dest), aTrocar = s.itens.filter((x) => !certo(x)), por = {};
     for (const x of aTrocar) por[x.driverName || '(sem nome)'] = (por[x.driverName || '(sem nome)'] || 0) + 1;
-    return { ok: true, seller: s.nome, dest, itens: s.itens, aTrocar, jaCorretos: s.itens.length - aTrocar.length, total: s.itens.length, porMotorista: por, motorista: dest.userName, aprox: !!dest.aprox };
+    return { ok: true, incompleta: !!todos.incompleta, seller: s.nome, dest, itens: s.itens, aTrocar, jaCorretos: s.itens.length - aTrocar.length, total: s.itens.length, porMotorista: por, motorista: dest.userName, aprox: !!dest.aprox };
+  };
+  // Garante, em até 3 rodadas, que CADA pacote termine com o motorista destino: confere no IMILE, desatribui quem está com outro,
+  // atribui quem ficou sem motorista e confere de novo. Nada é dado como feito sem a conferência final.
+  const garantir = async (waybills, dest, aviso) => {
+    const certo = certoPara(dest), ws = new Set(waybills), falhasDes = new Map();
+    let erroAtrib = '', atual = new Map(), agiu = false, rodadas = 0;
+    const ler = async () => { const m = new Map(); for (const x of await listarAtribuidos(DIAS_TRANSITO)) { const w = String(x.waybillNo); if (ws.has(w)) m.set(w, x); } return m; };
+    for (let r = 1; r <= 3; r++) {
+      aviso(`Conferindo no IMILE (rodada ${r} de 3)...`);
+      atual = await ler(); agiu = false; rodadas = r;
+      const faltam = waybills.filter((w) => !(atual.has(w) && certo(atual.get(w))));
+      if (!faltam.length) break;
+      const comOutro = faltam.filter((w) => atual.has(w)).map((w) => ({ id: atual.get(w).id, waybill: w })), cancelados = new Set();
+      if (comOutro.length) {
+        const f = await desatribuirRegistros(comOutro, (n) => aviso(`Desatribuindo do motorista atual (rodada ${r}): ${n} de ${comOutro.length}`));
+        for (const [w, m] of f) falhasDes.set(w, m);
+        for (const x of comOutro) if (!f.has(x.waybill)) { cancelados.add(x.waybill); falhasDes.delete(x.waybill); }
+      }
+      const paraAtribuir = faltam.filter((w) => !atual.has(w) || cancelados.has(w));
+      for (let k = 0; k < paraAtribuir.length; k += 300) {
+        aviso(`Atribuindo ao novo motorista (rodada ${r}): ${Math.min(k + 300, paraAtribuir.length)} de ${paraAtribuir.length}`);
+        const a = await atribuir(paraAtribuir.slice(k, k + 300), dest);
+        if (a.sucesso) erroAtrib = ''; else erroAtrib = a.motivo;
+      }
+      agiu = true;
+      if (r < 3) await pausa(1500);
+    }
+    if (agiu) { aviso('Conferência final no IMILE...'); atual = await ler(); }
+    return { atual, falhasDes, erroAtrib, rodadas };
   };
   const executarSeller = async (p, aviso) => {
-    const regs = p.aTrocar.map((x) => ({ id: x.id, waybill: String(x.waybillNo) }));
-    const falhas = await desatribuirRegistros(regs, (f) => aviso(`Desatribuindo do motorista atual: ${f} de ${regs.length}`));
-    const paraAtribuir = regs.map((x) => x.waybill).filter((w) => !falhas.has(w));
-    let erroAtrib = '';
-    for (let k = 0; k < paraAtribuir.length; k += 300) {
-      aviso(`Atribuindo ${Math.min(k + 300, paraAtribuir.length)} de ${paraAtribuir.length} ao novo motorista...`);
-      const a = await atribuir(paraAtribuir.slice(k, k + 300), p.dest);
-      if (!a.sucesso) erroAtrib = a.motivo;
+    const jobId = p.jobId, certo = certoPara(p.dest), antes = new Map(p.itens.map((x) => [String(x.waybillNo), x.driverName || '']));
+    const deOutroJob = (w) => SELL.voo.has(w) && SELL.voo.get(w) !== jobId;
+    let waybills = [...antes.keys()], g = null, achados = 0, varreduras = 0, resto = [];
+    for (let v = 1; v <= 4; v++) {
+      varreduras = v;
+      g = await garantir(waybills, p.dest, aviso);
+      aviso('Varredura final: procurando pacotes do seller que ficaram de fora...');
+      const novos = (await listarAtribuidos(DIAS_TRANSITO)).filter((x) => valoresSeller(x).includes(p.seller) && !certo(x) && !antes.has(String(x.waybillNo)) && !deOutroJob(String(x.waybillNo)));
+      if (!novos.length) break;
+      for (const x of novos) { const w = String(x.waybillNo); antes.set(w, x.driverName || ''); SELL.voo.set(w, jobId); }
+      achados += novos.length;
+      if (v === 4) { resto = novos.map((x) => String(x.waybillNo)); break; }
+      waybills = [...antes.keys()];
     }
-    aviso('Conferindo no IMILE...');
-    const depois = await listarAtribuidos(DIAS_TRANSITO), nosso = new Set(p.itens.map((x) => String(x.waybillNo))), ficou = depois.filter((x) => nosso.has(String(x.waybillNo))), certo = certoPara(p.dest);
-    return { ok: true, seller: p.seller, motorista: p.motorista, total: p.total, confirmados: ficou.filter(certo).length, comOutro: ficou.filter((x) => !certo(x)).map((x) => `${x.waybillNo} (${x.driverName})`).slice(0, 20), falhas: [...falhas.entries()].slice(0, 20), erroAtribuicao: erroAtrib };
+    const todos = [...antes.keys()];
+    const linhas = todos.map((w) => { const x = g.atual.get(w); return { waybill: w, antes: antes.get(w), depois: x ? x.driverName || '' : resto.includes(w) ? antes.get(w) : 'FORA DO IN-TRANSIT', status: x ? (certo(x) ? 'OK' : 'COM OUTRO MOTORISTA') : resto.includes(w) ? 'COM OUTRO MOTORISTA' : 'FORA DO IN-TRANSIT' }; });
+    const confirmados = linhas.filter((l) => l.status === 'OK').length, comOutro = linhas.filter((l) => l.status === 'COM OUTRO MOTORISTA'), fora = linhas.filter((l) => l.status === 'FORA DO IN-TRANSIT');
+    return {
+      ok: true, seller: p.seller, motorista: p.motorista, total: todos.length, confirmados, linhas, rodadas: g.rodadas, varreduras, achados,
+      comOutro: comOutro.map((l) => `${l.waybill} (${l.depois})`), fora: fora.map((l) => l.waybill),
+      falhas: [...g.falhasDes.entries()], erroAtribuicao: g.erroAtrib, fechou: confirmados + comOutro.length + fora.length === todos.length,
+    };
   };
   // --- desatribuição dos últimos 21 dias (manual, com progresso) ---
   const desatribuir21 = async (ui) => {
@@ -654,7 +703,7 @@ ${blocoProgresso}${tabelaLog}</div>`;
   };
 
   // Troca por seller: lista suspensa com os sellers atribuídos + várias trocas ao mesmo tempo (cada uma em seu cartão)
-  const SELL = { jobs: [], voo: new Set(), ativos: new Set(), sellers: null, seq: 0 };
+  const SELL = { jobs: [], voo: new Map(), ativos: new Set(), sellers: null, seq: 0 };
   const listarSellers = async (forcar) => {
     if (!forcar && SELL.sellers && Date.now() - SELL.sellers.em < 180000) return SELL.sellers;
     const todos = await listarAtribuidos(DIAS_TRANSITO), mapa = new Map();
@@ -663,38 +712,71 @@ ${blocoProgresso}${tabelaLog}</div>`;
     return SELL.sellers;
   };
   const listarMotoristasBase = async () => {
-    if (SELL.mots && Date.now() - SELL.mots.em < 600000) return SELL.mots.lista;
-    const mapa = new Map(), add = (n) => { const t = String(n || '').trim(), k = norm(t); if (k && !mapa.has(k)) mapa.set(k, t); };
+    if (SELL.mots && Date.now() - SELL.mots.em < 600000) return SELL.mots;
+    const rotas = new Map(), imile = new Map(), add = (m, n) => { const t = String(n || '').trim(), k = norm(t); if (k && !m.has(k)) m.set(k, t); };
+    let rotasOk = false, imileOk = false;
     try { // 1) base de Rotas (mesmos nomes usados nas rotas)
       if (A.CFG.rotasUrl && A.CFG.rotasToken) {
         const c = new AbortController(), t = setTimeout(() => c.abort(), 30000);
         const r = await fetch(A.CFG.rotasUrl + '?token=' + encodeURIComponent(A.CFG.rotasToken) + '&base=semana', { signal: c.signal, cache: 'no-store' });
         clearTimeout(t);
         const j = await r.json();
-        for (const n of j.motoristas || []) add(n);
+        for (const n of j.motoristas || []) add(rotas, n);
+        rotasOk = Array.isArray(j.motoristas);
       }
     } catch (e) { /* segue só com o IMILE */ }
-    try { for (const m of (await listarMotoristas('GET')).lista || []) add(m.userName); } catch (e) { /* idem */ }
-    SELL.mots = { em: Date.now(), lista: [...mapa.values()].sort((a, b) => a.localeCompare(b)) };
-    return SELL.mots.lista;
+    try { const r = await listarMotoristas('GET'); if (!r.erro) { imileOk = true; for (const m of r.lista || []) add(imile, m.userName); } } catch (e) { /* idem */ }
+    const chaves = [...new Set([...rotas.keys(), ...imile.keys()])].sort();
+    const itens = chaves.map((k) => ({ v: imile.get(k) || rotas.get(k), x: rotas.has(k) && imile.has(k) ? 'Rotas + IMILE' : rotas.has(k) ? 'Rotas' : 'IMILE' }));
+    SELL.mots = { em: Date.now(), itens, rotas: [...rotas.values()], nImile: imile.size, rotasOk, imileOk };
+    return SELL.mots;
   };
-  const resumoSeller = (x) => {
-    const faltam = x.total - x.confirmados;
-    return `<p class="msg ${faltam ? 'err' : 'ok'}">${x.confirmados} de ${x.total} pacote(s) confirmados com ${esc(x.motorista)}.</p>${x.comOutro.length ? `<p class="hint">Continuam com outro motorista: ${esc(x.comOutro.join(', '))}</p>` : ''}${x.falhas.length ? `<p class="hint">Não desatribuídos: ${esc(x.falhas.map((f) => f[0] + ' (' + f[1] + ')').join('; '))}</p>` : ''}${x.erroAtribuicao ? `<p class="msg err">Erro na atribuição: ${esc(x.erroAtribuicao)}</p>` : ''}${faltam && !x.comOutro.length && !x.falhas.length ? '<p class="hint">Os demais não aparecem mais como atribuídos (podem estar aguardando atribuição no IMILE).</p>' : ''}`;
+  // Confere, por valor, se cada motorista da base de Rotas existe no IMILE com o mesmo nome
+  const conferirMotoristas = async (nomes, prog) => {
+    const res = new Array(nomes.length); let prox = 0;
+    await Promise.all(Array.from({ length: Math.min(4, nomes.length) }, async () => {
+      while (prox < nomes.length) {
+        const i = prox++, n = nomes[i];
+        const r = await buscarMotorista(n);
+        res[i] = !r.encontrado ? { nome: n, status: 'NÃO ENCONTRADO', imile: '', detalhe: r.motivo } : norm(r.userName) === norm(n) ? { nome: n, status: 'EXATO', imile: r.userName, detalhe: '' } : { nome: n, status: 'APROXIMADO', imile: r.userName, detalhe: 'Nome diferente no IMILE' };
+        if (prog) prog(i + 1, nomes.length);
+      }
+    }));
+    return res;
+  };
+  const resumoSeller = (x, id) => {
+    const falta = x.total - x.confirmados, mostra = (l) => esc(l.slice(0, 20).join(', ') + (l.length > 20 ? ` ... (+${l.length - 20})` : ''));
+    return `<p class="msg ${falta ? 'err' : 'ok'}">${x.confirmados} de ${x.total} pacote(s) confirmados com ${esc(x.motorista)}.</p>
+<p class="hint">Conferência: ${x.total} = ${x.confirmados} com o novo motorista + ${x.comOutro.length} com outro motorista + ${x.fora.length} fora do In-Transit${x.fechou ? ' (a conta fecha)' : ' — DIVERGÊNCIA, confira o Excel'} · ${x.rodadas} rodada(s) de conferência${x.achados ? ` · ${x.achados} pacote(s) achados só na varredura final (já tratados)` : ''}.</p>
+${x.comOutro.length ? `<p class="hint">Continuam com outro motorista: ${mostra(x.comOutro)}</p>` : ''}${x.fora.length ? `<p class="hint">Não aparecem em Pickup In-Transit (já coletados, aguardando atribuição ou fora da station): ${mostra(x.fora)}</p>` : ''}${x.falhas.length ? `<p class="hint">Não foi possível desatribuir: ${esc(x.falhas.slice(0, 10).map((f) => f[0] + ' (' + f[1] + ')').join('; '))}</p>` : ''}${x.erroAtribuicao ? `<p class="msg err">Último erro na atribuição: ${esc(x.erroAtribuicao)}</p>` : ''}
+<div class="im-botoes"><button type="button" class="btn btn-ghost btn-sm" data-xlsx="${id}">Baixar conferência (Excel)</button>${falta ? `<button type="button" class="btn btn-primary btn-sm" data-retry="${id}">Tentar de novo os que faltam</button>` : ''}</div>`;
   };
   const jobHtml = (j) => `<div class="im-jh"><span><b>${esc(j.seller)}</b> → ${esc(j.motorista)}</span><span class="im-p im-${j.estado === 'ok' ? 'SUCESSO' : j.estado === 'erro' ? 'ERRO' : 'PARCIAL'}">${j.estado === 'rodando' ? 'EM ANDAMENTO' : j.estado === 'ok' ? 'CONCLUÍDO' : 'ATENÇÃO'}</span></div>${j.estado === 'rodando' ? `<div class="im-jt">${esc(j.texto)}</div><div class="im-bar im-ind"><i></i></div>` : j.html}`;
   const pintarJob = (j) => { const el = document.getElementById('job-' + j.id); if (el) el.innerHTML = jobHtml(j); };
   window.addEventListener('beforeunload', (e) => { if (SELL.ativos.size) { e.preventDefault(); e.returnValue = ''; } });
+  const rodarJob = (job, p) => {
+    p.jobId = job.id;
+    job.estado = 'rodando'; job.texto = 'Iniciando...'; job.html = '';
+    SELL.ativos.add(p.seller); p.itens.forEach((x) => SELL.voo.set(String(x.waybillNo), job.id)); pintarJob(job);
+    executarSeller(p, (t) => { job.texto = t; pintarJob(job); })
+      .then((x) => { job.res = x; job.estado = x.confirmados === x.total ? 'ok' : 'erro'; job.html = resumoSeller(x, job.id); })
+      .catch((err) => { job.estado = 'erro'; job.html = `<p class="msg err">${esc(err.message || String(err))} Confira no IMILE antes de repetir.</p><div class="im-botoes"><button type="button" class="btn btn-primary btn-sm" data-retry="${job.id}">Tentar de novo</button></div>`; })
+      .finally(() => { for (const [w, j] of [...SELL.voo]) if (j === job.id) SELL.voo.delete(w); SELL.ativos.delete(p.seller); SELL.sellers = null; pintarJob(job); A.toast(`Troca de ${job.seller}: ${job.estado === 'ok' ? 'concluída e conferida' : 'terminou com atenção'}`); });
+  };
   const iniciarJob = (p) => {
-    const job = { id: ++SELL.seq, seller: p.seller, motorista: p.motorista, estado: 'rodando', texto: 'Iniciando...', html: '' };
-    const ids = p.aTrocar.map((x) => String(x.waybillNo));
-    SELL.jobs.unshift(job); SELL.ativos.add(p.seller); ids.forEach((w) => SELL.voo.add(w));
+    const job = { id: ++SELL.seq, seller: p.seller, motorista: p.motorista, estado: 'rodando', texto: 'Iniciando...', html: '', p, res: null };
+    SELL.jobs.unshift(job);
     const lista = document.getElementById('tr-jobs');
     if (lista) lista.insertAdjacentHTML('afterbegin', `<div class="box im-job" id="job-${job.id}">${jobHtml(job)}</div>`);
-    executarSeller(p, (t) => { job.texto = t; pintarJob(job); })
-      .then((x) => { job.estado = x.confirmados === x.total ? 'ok' : 'erro'; job.html = resumoSeller(x); })
-      .catch((err) => { job.estado = 'erro'; job.html = `<p class="msg err">${esc(err.message || String(err))} Confira no IMILE antes de repetir.</p>`; })
-      .finally(() => { ids.forEach((w) => SELL.voo.delete(w)); SELL.ativos.delete(p.seller); SELL.sellers = null; pintarJob(job); A.toast(`Troca de ${job.seller}: ${job.estado === 'ok' ? 'concluída' : 'terminou com atenção'}`); });
+    rodarJob(job, p);
+  };
+  const acaoJob = (e) => {
+    const b = e.target.closest('[data-xlsx],[data-retry]');
+    if (!b) return;
+    const id = +(b.dataset.xlsx || b.dataset.retry), job = SELL.jobs.find((j) => j.id === id);
+    if (!job) return;
+    if (b.dataset.xlsx && job.res) baixarXlsx('CONFERÊNCIA', [['WAYBILL', 'SELLER', 'MOTORISTA ANTES', 'MOTORISTA DEPOIS', 'STATUS'], ...job.res.linhas.map((l) => [l.waybill, job.seller, l.antes, l.depois, l.status])], [22, 34, 34, 34, 24], `CONFERENCIA TROCA ${job.seller}.xlsx`.slice(0, 100));
+    if (b.dataset.retry && job.estado !== 'rodando' && !SELL.ativos.has(job.seller)) rodarJob(job, job.p);
   };
   // Lista suspensa com busca (aparece ao clicar; filtra ao digitar; setas + Enter; Esc fecha)
   const combo = (input, extra) => {
@@ -742,7 +824,7 @@ ${blocoProgresso}${tabelaLog}</div>`;
   const montarSeller = (raiz) => {
     const ok = !!(CF.url && CF.token);
     raiz.innerHTML = `<div class="box"><div class="box-head"><div><h3>Por seller</h3><p>Escolha o seller na lista (ou digite) e o motorista que vai receber os pacotes. Você confere a prévia antes de trocar e pode iniciar outras trocas sem esperar as anteriores.</p></div></div>${aviso(ok)}
-<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><p class="hint" id="tr-n"></p><div id="tr-r" class="mt" aria-live="polite"></div></div>
+<form class="uform two" id="im-sf"><div class="field"><label for="tr-s">Seller</label><input id="tr-s" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><div class="field"><label for="tr-m">Novo motorista</label><input id="tr-m" required maxlength="120" autocomplete="off" placeholder="Clique para escolher ou digite para buscar"></div><button class="btn btn-primary" id="tr-b"${ok ? '' : ' disabled'}>Ver pacotes</button></form><p class="hint" id="tr-n"></p><p class="hint" id="tr-nm"></p><div id="tr-conf" class="mt" aria-live="polite"></div><div id="tr-r" class="mt" aria-live="polite"></div></div>
 <div id="tr-jobs" class="im-jobs">${SELL.jobs.map((j) => `<div class="box im-job" id="job-${j.id}">${jobHtml(j)}</div>`).join('')}</div>`;
     const R = q('#tr-r', raiz), B = q('#tr-b', raiz), nota = q('#tr-n', raiz);
     const cbS = combo(q('#tr-s', raiz), { vazio: 'Nenhum seller com pacotes atribuídos no momento.' }), cbM = combo(q('#tr-m', raiz), { vazio: 'Carregando os motoristas...' });
@@ -756,8 +838,22 @@ ${blocoProgresso}${tabelaLog}</div>`;
         q('#tr-at', raiz).onclick = () => carregar(true);
       } catch (e) { nota.textContent = 'Não consegui carregar a lista de sellers (' + (e.message || e) + '). Você ainda pode digitar o nome.'; }
     };
+    q('#tr-jobs', raiz).onclick = acaoJob;
     carregar(false);
-    if (ok) listarMotoristasBase().then((l) => cbM.set(l.map((n) => ({ v: n })))).catch(() => {});
+    const nm = q('#tr-nm', raiz);
+    if (ok) listarMotoristasBase().then((m) => {
+      cbM.set(m.itens);
+      nm.innerHTML = `${m.itens.length} motorista(s) na lista · Rotas: ${m.rotasOk ? m.rotas.length : 'indisponível'} · IMILE: ${m.imileOk ? m.nImile : 'indisponível'}. <button type="button" class="btn btn-ghost btn-sm" id="tr-cm"${m.rotas.length ? '' : ' disabled'}>Conferir motoristas da Rotas no IMILE</button>`;
+      const bc = q('#tr-cm', raiz);
+      if (bc) bc.onclick = async () => {
+        const C = q('#tr-conf', raiz); bc.disabled = true;
+        const r = await conferirMotoristas(m.rotas, (a, t) => { C.innerHTML = `<p class="msg">Conferindo ${a} de ${t} motoristas no IMILE...</p>`; });
+        const c = (st) => r.filter((x) => x.status === st), ruins = r.filter((x) => x.status !== 'EXATO');
+        C.innerHTML = `<p class="msg ${ruins.length ? 'err' : 'ok'}">${r.length} motorista(s) da Rotas: ${c('EXATO').length} exatos no IMILE, ${c('APROXIMADO').length} com nome aproximado, ${c('NÃO ENCONTRADO').length} não encontrados.</p>${ruins.length ? `<ul>${ruins.slice(0, 40).map((x) => `<li><b>${esc(x.nome)}</b> — ${esc(x.status)}${x.imile ? ' → ' + esc(x.imile) : ''}${x.detalhe && x.status === 'NÃO ENCONTRADO' ? ': ' + esc(x.detalhe) : ''}</li>`).join('')}</ul>${ruins.length > 40 ? `<p class="hint">+${ruins.length - 40} no Excel</p>` : ''}` : ''}<div class="im-botoes"><button type="button" class="btn btn-ghost btn-sm" id="tr-cx">Baixar conferência dos motoristas (Excel)</button></div>`;
+        q('#tr-cx', raiz).onclick = () => baixarXlsx('MOTORISTAS', [['NOME NA ROTAS', 'STATUS', 'NOME NO IMILE', 'DETALHE'], ...r.map((x) => [x.nome, x.status, x.imile, x.detalhe])], [38, 20, 38, 70], 'CONFERENCIA MOTORISTAS ROTAS x IMILE.xlsx');
+        bc.disabled = false;
+      };
+    }).catch(() => {});
     let vendo = false;
     const pm = (o) => Object.entries(o || {}).sort((a, b) => b[1] - a[1]).map(([n, c]) => `<li>${esc(n)}: <b>${c}</b></li>`).join('');
     q('#im-sf', raiz).onsubmit = async (e) => {
@@ -773,7 +869,7 @@ ${blocoProgresso}${tabelaLog}</div>`;
       if (!p.ok) { R.innerHTML = `<p class="msg err">${esc(p.erro || 'Não consegui buscar.')}</p>`; return; }
       const n = p.aTrocar.length;
       if (!n) { R.innerHTML = `<p class="msg ok">${esc(p.seller)}: os ${p.total} pacote(s) já estão com ${esc(p.motorista)}. Nada a trocar.</p>`; return; }
-      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${n}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p>${p.aprox ? `<p class="msg err">Nome aproximado: no IMILE o motorista é "${esc(p.motorista)}". Confira se é ele antes de confirmar.</p>` : ''}<p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${n} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
+      R.innerHTML = `<p><b>${esc(p.seller)}</b>: ${p.total} pacote(s) atribuídos. <b>${n}</b> vão para <b>${esc(p.motorista)}</b>${p.jaCorretos ? ` (${p.jaCorretos} já estavam com ele)` : ''}.</p>${p.incompleta ? '<p class="hint">O IMILE mudou enquanto eu lia a lista; a varredura final da troca confere e pega o que faltar.</p>' : ''}${p.aprox ? `<p class="msg err">Nome aproximado: no IMILE o motorista é "${esc(p.motorista)}". Confira se é ele antes de confirmar.</p>` : ''}<p class="hint">Hoje estão com:</p><ul>${pm(p.porMotorista)}</ul><div class="mt"><button class="btn btn-primary" id="tr-ok" type="button">Confirmar troca de ${n} pacote(s)</button> <button class="btn btn-ghost" id="tr-no" type="button">Cancelar</button></div>`;
       q('#tr-no', raiz).onclick = () => { R.innerHTML = ''; };
       q('#tr-ok', raiz).onclick = () => {
         if (SELL.ativos.has(p.seller)) { R.innerHTML = `<p class="msg err">O seller ${esc(p.seller)} já está sendo trocado. Aguarde terminar.</p>`; return; }
